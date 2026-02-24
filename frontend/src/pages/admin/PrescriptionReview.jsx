@@ -1,114 +1,103 @@
-import React from 'react';
-import { Check, X, FileText, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Check, X, FileText, AlertCircle, Loader2 } from 'lucide-react';
+import { fetchPrescriptions, updatePrescription } from '../../services/api';
 
 const PrescriptionReview = () => {
-    // Mock data for a single review task
-    const mockOrder = {
-        id: 'ORD-1023',
-        customer: 'Emma Thompson',
-        date: '2026-02-23 04:45 PM',
-        medicines: [
-            { name: 'Amoxicillin', dosage: '250mg', quantity: 14, notes: 'Take 1 capsule every 8 hours for 7 days' }
-        ]
+    const [prescriptions, setPrescriptions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selected, setSelected] = useState(null);
+
+    const load = () => {
+        setLoading(true);
+        fetchPrescriptions().then((data) => {
+            setPrescriptions(data);
+            // Auto-select first pending one
+            const pending = data.find(p => !p.approved);
+            setSelected(pending || data[0] || null);
+        }).catch(console.error).finally(() => setLoading(false));
     };
 
-    return (
-        <div className="space-y-6 max-w-4xl mx-auto">
+    useEffect(load, []);
 
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-text">Prescription Review</h1>
-                    <p className="text-text-muted text-sm mt-1">Review {mockOrder.id} to authorize dispatch.</p>
-                </div>
-                <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-card border border-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium">
-                        <X className="w-4 h-4" /> Reject
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
-                        <Check className="w-4 h-4" /> Approve Prescription
-                    </button>
-                </div>
+    const handleAction = async (id, approved) => {
+        try {
+            await updatePrescription(id, { approved });
+            load();
+        } catch (err) { console.error(err); }
+    };
+
+    if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-text">Prescription Review</h1>
+                <p className="text-text-muted text-sm mt-1">Review and authorize prescription-based orders.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                {/* Order Meta Data */}
-                <div className="space-y-6">
-                    <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
-                        <h3 className="font-semibold text-text mb-4 flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-primary" /> Order Details
-                        </h3>
-                        <dl className="space-y-3 text-[14px]">
-                            <div className="flex justify-between">
-                                <dt className="text-text-muted">Customer Name</dt>
-                                <dd className="font-medium text-text">{mockOrder.customer}</dd>
-                            </div>
-                            <div className="flex justify-between">
-                                <dt className="text-text-muted">Order Date</dt>
-                                <dd className="font-medium text-text">{mockOrder.date}</dd>
-                            </div>
-                        </dl>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* List */}
+                <div className="lg:col-span-1 bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-black/5 dark:border-white/5">
+                        <h3 className="font-semibold text-text text-sm">All Prescriptions ({prescriptions.length})</h3>
                     </div>
-
-                    <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
-                        <h3 className="font-semibold text-text mb-4">Requested Medicines</h3>
-                        <div className="space-y-4">
-                            {mockOrder.medicines.map((med, idx) => (
-                                <div key={idx} className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
-                                    <div className="flex justify-between font-medium text-text">
-                                        <span>{med.name} {med.dosage}</span>
-                                        <span>Qty: {med.quantity}</span>
-                                    </div>
-                                    <p className="text-sm text-text-muted mt-2 bg-bg p-2 rounded border border-black/5 dark:border-white/5">
-                                        {med.notes}
-                                    </p>
+                    <div className="divide-y divide-black/5 dark:divide-white/5 max-h-[500px] overflow-y-auto">
+                        {prescriptions.map((rx) => (
+                            <button key={rx._id} onClick={() => setSelected(rx)}
+                                className={`w-full text-left px-5 py-3.5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors ${selected?._id === rx._id ? 'bg-primary/5 border-l-2 border-primary' : ''}`}>
+                                <div className="flex justify-between items-center">
+                                    <span className="font-medium text-text text-sm">{rx.user?.name || 'N/A'}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${rx.approved ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'}`}>
+                                        {rx.approved ? 'Approved' : 'Pending'}
+                                    </span>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 text-amber-700 dark:text-amber-400 text-sm">
-                        <AlertCircle className="w-5 h-5 shrink-0" />
-                        <p>Verify that the uploaded prescription matches the requested dosage and quantity exactly before approving.</p>
-                    </div>
-                </div>
-
-                {/* Prescription Image Viewer */}
-                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm flex flex-col h-full min-h-[500px]">
-                    <h3 className="font-semibold text-text mb-4 flex items-center justify-between">
-                        Prescription Document
-                        <span className="text-xs font-normal text-text-muted bg-bg px-2 py-1 rounded border border-black/5 dark:border-white/5">
-                            scanned_rx_492.pdf
-                        </span>
-                    </h3>
-
-                    <div className="flex-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 flex items-center justify-center p-4 relative overflow-hidden group">
-                        {/* Mock Image Placeholder for Prescription */}
-                        <div className="w-full h-full bg-white dark:bg-gray-800 rounded shadow-sm opacity-50 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
-                            <div className="text-center space-y-2 opacity-50">
-                                <FileText className="w-12 h-12 mx-auto text-gray-400" />
-                                <p className="text-sm text-gray-500 font-medium">Document Viewer</p>
-                            </div>
-
-                            {/* Abstract lines to simulate text */}
-                            <div className="absolute inset-8 flex flex-col gap-4 opacity-20 hidden md:flex">
-                                <div className="h-4 bg-gray-400 rounded w-1/3"></div>
-                                <div className="h-2 bg-gray-400 rounded w-1/4"></div>
-                                <div className="h-2 bg-gray-400 rounded w-1/2 mt-4"></div>
-                                <div className="h-2 bg-gray-400 rounded w-3/4"></div>
-                                <div className="h-2 bg-gray-400 rounded w-2/3"></div>
-                                <div className="h-12 bg-gray-400 rounded w-full mt-4"></div>
-                            </div>
-                        </div>
-
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center transition-colors">
-                            <button className="opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-black text-text px-4 py-2 rounded-lg shadow-sm border border-black/10 text-sm font-medium">
-                                Expand Image
+                                <p className="text-text-muted text-xs mt-1">{rx.medicine?.name || 'Unknown Medicine'}</p>
                             </button>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
+                {/* Detail Panel */}
+                <div className="lg:col-span-2 space-y-5">
+                    {selected ? (
+                        <>
+                            <div className="flex items-center justify-between">
+                                <h2 className="font-semibold text-text">Prescription Details</h2>
+                                {!selected.approved && (
+                                    <div className="flex gap-3">
+                                        <button onClick={() => handleAction(selected._id, false)} className="flex items-center gap-2 px-4 py-2 bg-card border border-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium">
+                                            <X className="w-4 h-4" /> Reject
+                                        </button>
+                                        <button onClick={() => handleAction(selected._id, true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
+                                            <Check className="w-4 h-4" /> Approve
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
+                                <h3 className="font-semibold text-text mb-4 flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-primary" /> Details
+                                </h3>
+                                <dl className="space-y-3 text-[14px]">
+                                    <div className="flex justify-between"><dt className="text-text-muted">Patient</dt><dd className="font-medium text-text">{selected.user?.name}</dd></div>
+                                    <div className="flex justify-between"><dt className="text-text-muted">Medicine</dt><dd className="font-medium text-text">{selected.medicine?.name}</dd></div>
+                                    <div className="flex justify-between"><dt className="text-text-muted">Valid Until</dt><dd className="font-medium text-text">{selected.validUntil ? new Date(selected.validUntil).toLocaleDateString() : 'N/A'}</dd></div>
+                                    <div className="flex justify-between"><dt className="text-text-muted">Status</dt><dd className="font-medium text-text">{selected.approved ? '✅ Approved' : '⏳ Pending'}</dd></div>
+                                </dl>
+                            </div>
+
+                            {!selected.approved && (
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 text-amber-700 dark:text-amber-400 text-sm">
+                                    <AlertCircle className="w-5 h-5 shrink-0" />
+                                    <p>Verify that the prescription matches the requested medicine before approving.</p>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="flex items-center justify-center h-64 text-text-muted">Select a prescription to review.</div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -1,29 +1,70 @@
 import React, { useState } from 'react';
 import { Mic, Send, Square } from 'lucide-react';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
+import { sendChatMessage } from '../../services/api';
 
 const InputArea = () => {
     const [text, setText] = useState('');
-    const { addMessage, aiStatus, setAiStatus, setTyping, updateLastAiMessageTool } = useAppStore();
+    const { addMessage, aiStatus, setAiStatus, setTyping } = useAppStore();
 
     const isListening = aiStatus === AI_STATUS.LISTENING;
 
-    const handleSend = (e) => {
+    const handleSend = async (e) => {
         e?.preventDefault();
         if (!text.trim() && !isListening) return;
 
         if (isListening) {
-            // Stop listening manually
             setAiStatus(AI_STATUS.READY);
             return;
         }
 
-        // Add user message
-        addMessage({ id: Date.now(), role: 'user', text: text.trim() });
+        const userText = text.trim();
         setText('');
 
-        // Simulate AI Processing and Tool Calls
-        simulateAiResponse();
+        // Add user message
+        addMessage({ id: Date.now(), role: 'user', text: userText });
+
+        // Show processing state
+        setAiStatus(AI_STATUS.PROCESSING);
+        setTyping(true);
+
+        try {
+            const result = await sendChatMessage(userText);
+
+            setTyping(false);
+            setAiStatus(AI_STATUS.SPEAKING);
+
+            // Parse the AI response — the backend returns the orchestrator result
+            const aiText = result.response || result.finalOutput || result.message || JSON.stringify(result);
+
+            // Extract tool steps if present
+            const tools = (result.toolCalls || result.steps || []).map(step => ({
+                icon: 'success',
+                text: step.toolName || step.name || step,
+                status: 'success'
+            }));
+
+            const aiMessage = { id: Date.now(), role: 'ai', text: aiText, tools };
+
+            // If the result contains an order, attach an order card
+            if (result.order || result.orderCard) {
+                const o = result.order || result.orderCard;
+                aiMessage.orderCard = {
+                    orderId: o.orderId || o._id || 'N/A',
+                    medicine: o.medicine || o.items?.map(i => i.name || i.medicine).join(', ') || 'N/A',
+                    status: o.status || 'Confirmed',
+                    eta: o.eta || 'Processing'
+                };
+            }
+
+            addMessage(aiMessage);
+
+            setTimeout(() => setAiStatus(AI_STATUS.READY), 3000);
+        } catch (err) {
+            setTyping(false);
+            setAiStatus(AI_STATUS.READY);
+            addMessage({ id: Date.now(), role: 'ai', text: `Sorry, I encountered an error: ${err.message}. Please try again.`, tools: [] });
+        }
     };
 
     const toggleVoice = () => {
@@ -31,68 +72,16 @@ const InputArea = () => {
             setAiStatus(AI_STATUS.READY);
         } else {
             setAiStatus(AI_STATUS.LISTENING);
-            // Mocking transcription...
+            // Demo: simulate voice transcription
             setTimeout(() => {
                 setText("Could you order a refill of my Metformin?");
                 setTimeout(() => {
                     setAiStatus(AI_STATUS.PROCESSING);
-                    handleSend(); // Auto send after voice input
+                    // Trigger send via form submit
+                    document.querySelector('#chat-form')?.requestSubmit();
                 }, 1500);
             }, 2000);
         }
-    };
-
-    const simulateAiResponse = () => {
-        setAiStatus(AI_STATUS.PROCESSING);
-        setTyping(true);
-
-        setTimeout(() => {
-            // Add empty AI message first to append tools to
-            addMessage({ id: Date.now(), role: 'ai', text: '', tools: [] });
-            let currentToolCount = 0;
-
-            // Simulate step 1
-            setTimeout(() => {
-                updateLastAiMessageTool({ icon: 'search', text: 'Checking inventory for Metformin 500mg...', status: 'loading' });
-            }, 500);
-
-            // Simulate step 2
-            setTimeout(() => {
-                // Update previous to success implicitly or just add next
-                updateLastAiMessageTool({ icon: 'validate', text: 'Validating prescription...', status: 'loading' });
-            }, 1500);
-
-            // Simulate final response
-            setTimeout(() => {
-                setTyping(false);
-                setAiStatus(AI_STATUS.SPEAKING);
-
-                // Update the actual message text and add order card
-                useAppStore.setState(state => {
-                    const newMessages = [...state.messages];
-                    const lastMsg = newMessages[newMessages.length - 1];
-                    lastMsg.text = "I've checked our stock and validated your prescription. I've successfully placed a refill order for your Metformin 500mg. It will be dispatched soon.";
-                    lastMsg.orderCard = {
-                        orderId: 'ORD-' + Math.floor(Math.random() * 90000 + 10000),
-                        medicine: 'Metformin 500mg (60 Tabs)',
-                        status: 'Confirmed',
-                        eta: 'Tomorrow, 2:00 PM'
-                    };
-                    // Replace tools to show final success states for simplicity in mock
-                    lastMsg.tools = [
-                        { icon: 'success', text: 'Stock validated', status: 'success' },
-                        { icon: 'success', text: 'Prescription verified', status: 'success' }
-                    ];
-                    return { messages: newMessages };
-                });
-
-                setTimeout(() => {
-                    setAiStatus(AI_STATUS.READY);
-                }, 4000); // Time it takes to "speak"
-
-            }, 3000);
-
-        }, 500);
     };
 
 
@@ -104,6 +93,7 @@ const InputArea = () => {
             )}
 
             <form
+                id="chat-form"
                 onSubmit={handleSend}
                 className={`relative z-10 flex items-center gap-3 w-full bg-card border border-black/5 dark:border-white/5 rounded-[2rem] p-2 pr-3 shadow-soft transition-all duration-300
           ${isListening ? 'ring-2 ring-primary bg-bg' : 'focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-white/10'}
