@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* Allow manual dark mode toggling */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-medical-blue: #2563EB;
+  --color-medical-accent: #0EA5E9;
+  --color-medical-success: #22C55E;
+  --color-medical-warning: #F59E0B;
+  --color-medical-error: #EF4444;
+  
+  /* Beige / Warm Light Theme */
+  --color-beige-50: #FDFBF7;
+  --color-beige-100: #F4F0E6;
+  --color-beige-200: #E6DED1;
+  --color-beige-300: #D5C9B8;
+
+  /* Dark Theme */
+  --color-dark-50: #1E293B;
+  --color-dark-100: #0F172A;
+  --color-dark-200: #334155;
+  --color-dark-300: #475569;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  @apply bg-beige-100 text-slate-800 dark:bg-dark-100 dark:text-slate-100 transition-colors duration-300;
+}
