@@ -1,31 +1,59 @@
 @import "tailwindcss";
 
-/* Allow manual dark mode toggling */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-medical-blue: #2563EB;
-  --color-medical-accent: #0EA5E9;
-  --color-medical-success: #22C55E;
-  --color-medical-warning: #F59E0B;
-  --color-medical-error: #EF4444;
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-glass: var(--glass);
   
-  /* Beige / Warm Light Theme */
-  --color-beige-50: #FDFBF7;
-  --color-beige-100: #F4F0E6;
-  --color-beige-200: #E6DED1;
-  --color-beige-300: #D5C9B8;
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.05);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.4);
+}
 
-  /* Dark Theme */
-  --color-dark-50: #1E293B;
-  --color-dark-100: #0F172A;
-  --color-dark-200: #334155;
-  --color-dark-300: #475569;
+:root {
+  /* Request Beige Premium Theme */
+  --bg: #F5F1E8;
+  --card: #EDE6DA;
+  --text: #1F2937;
+  --text-muted: #4B5563;
+  --primary: #2563EB;
+  --secondary: #84A98C;
+  --glass: rgba(237, 230, 218, 0.7);
+}
+
+.dark {
+  /* Request Dark Mode */
+  --bg: #1E1B18;
+  --card: #2A2622;
+  --text: #F4F1EC;
+  --text-muted: #9CA3AF;
+  --primary: #3B82F6; /* Soft blue glow */
+  --secondary: #84A98C;
+  --glass: rgba(42, 38, 34, 0.7);
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
-  @apply bg-beige-100 text-slate-800 dark:bg-dark-100 dark:text-slate-100 transition-colors duration-300;
+  @apply bg-bg text-text transition-colors duration-500 ease-in-out;
+}
+
+/* Custom scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-black/10 dark:bg-white/10 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-black/20 dark:bg-white/20;
 }

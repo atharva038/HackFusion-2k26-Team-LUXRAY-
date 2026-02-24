@@ -1,39 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import ChatWindow from './features/chat/ChatWindow';
-import AdminPanel from './features/admin/AdminPanel';
-import { Moon, Sun } from 'lucide-react';
+import React, { useEffect } from 'react';
+import useAppStore from './store/useAppStore';
+import Header from './components/layout/Header';
+import AiAvatar from './components/avatar/AiAvatar';
+import ChatArea from './components/chat/ChatArea';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme } = useAppStore();
 
   useEffect(() => {
-    if (darkMode) {
+    // Initial theme setup done via Zustand state but let's ensure body has right class on load
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]);
+  }, [theme]);
 
   return (
-    <div className="flex h-screen bg-beige-100 dark:bg-dark-100 overflow-hidden text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-bg text-text transition-colors duration-500">
+      <Header />
 
-      {/* Dark Mode Toggle */}
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className="absolute top-4 right-4 z-50 p-2.5 rounded-full bg-beige-200 dark:bg-dark-200 text-slate-700 dark:text-slate-200 hover:scale-105 transition-transform shadow-sm flex items-center justify-center"
-      >
-        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-      </button>
+      <main className="flex-1 flex flex-col md:flex-row w-full max-w-[1600px] mx-auto overflow-hidden relative">
+        {/* Left Side: Avatar Panel */}
+        <section className="w-full md:w-1/3 lg:w-2/5 md:h-full flex-shrink-0 border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 shrink-0 transition-colors duration-500 bg-black/5 dark:bg-black/20">
+          <AiAvatar />
+        </section>
 
-      {/* Left Panel: Chat Interface */}
-      <div className="w-full md:w-1/2 lg:w-5/12 h-full flex flex-col border-r border-beige-200 dark:border-dark-200 bg-beige-50 dark:bg-dark-50 transition-colors duration-300">
-        <ChatWindow />
-      </div>
-
-      {/* Right Panel: Admin / Live Status */}
-      <div className="hidden md:flex flex-1 h-full flex-col bg-beige-100 dark:bg-dark-100 transition-colors duration-300">
-        <AdminPanel />
-      </div>
+        {/* Right Side: Chat Panel */}
+        <section className="w-full md:flex-1 h-full flex flex-col relative bg-bg transition-colors duration-500">
+          <ChatArea />
+        </section>
+      </main>
     </div>
   );
 }
