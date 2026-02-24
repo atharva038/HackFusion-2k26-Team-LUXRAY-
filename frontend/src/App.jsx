@@ -1,8 +1,14 @@
-import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import useAppStore from './store/useAppStore';
-import Header from './components/layout/Header';
-import AiAvatar from './components/avatar/AiAvatar';
-import ChatArea from './components/chat/ChatArea';
+import { useEffect } from 'react';
+import ChatPage from './pages/chat/ChatPage';
+import AdminLayout from './pages/admin/AdminLayout';
+import Overview from './pages/admin/Overview';
+import Orders from './pages/admin/Orders';
+import PrescriptionReview from './pages/admin/PrescriptionReview';
+import Inventory from './pages/admin/Inventory';
+import Alerts from './pages/admin/Alerts';
+import Logs from './pages/admin/Logs';
 
 function App() {
   const { theme } = useAppStore();
@@ -17,21 +23,26 @@ function App() {
   }, [theme]);
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-bg text-text transition-colors duration-500">
-      <Header />
+    <Router>
+      <Routes>
+        {/* Consumer Chat Route */}
+        <Route path="/" element={<ChatPage />} />
 
-      <main className="flex-1 flex flex-col md:flex-row w-full max-w-[1600px] mx-auto overflow-hidden relative">
-        {/* Left Side: Avatar Panel */}
-        <section className="w-full md:w-1/3 lg:w-2/5 md:h-full flex-shrink-0 border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 shrink-0 transition-colors duration-500 bg-black/5 dark:bg-black/20">
-          <AiAvatar />
-        </section>
+        {/* Admin Dashboard Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Overview />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="prescriptions" element={<PrescriptionReview />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="logs" element={<Logs />} />
+          <Route path="settings" element={<div className="p-4">Settings Content</div>} />
+        </Route>
 
-        {/* Right Side: Chat Panel */}
-        <section className="w-full md:flex-1 h-full flex flex-col relative bg-bg transition-colors duration-500">
-          <ChatArea />
-        </section>
-      </main>
-    </div>
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

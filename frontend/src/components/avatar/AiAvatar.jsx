@@ -14,7 +14,7 @@ const AiAvatar = () => {
         },
         [AI_STATUS.LISTENING]: {
             scale: 1.05,
-            boxShadow: '0px 0px 40px rgba(37, 99, 235, 0.4)',
+            boxShadow: '0px 0px 40px rgba(8, 41, 112, 0.4)',
             transition: { duration: 1, repeat: Infinity, repeatType: 'reverse' }
         },
         [AI_STATUS.PROCESSING]: {
