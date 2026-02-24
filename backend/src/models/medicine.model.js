@@ -8,9 +8,24 @@ const medicineSchema = new mongoose.Schema(
       index: true,
     },
 
-    dosage: {
+    pzn: {
       type: String,
+      unique: true,
       required: true,
+      trim: true,
+      index: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: [0, 'Price cannot be negative'],
+    },
+
+    description: {
+      type: String,
+      trim: true,
+      default: '',
     },
 
     unitType: {

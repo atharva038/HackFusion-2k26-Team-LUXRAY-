@@ -23,6 +23,18 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'admin', 'pharmacist'],
       default: 'customer',
     },
+
+    age: {
+      type: Number,
+      min: [0, 'Age cannot be negative'],
+      max: [150, 'Age seems unrealistic'],
+    },
+
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other'],
+    },
+
   },
   { timestamps: true }
 );

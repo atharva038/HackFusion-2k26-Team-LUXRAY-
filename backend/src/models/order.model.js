@@ -6,10 +6,9 @@ const orderItemSchema = new mongoose.Schema({
     ref: 'Medicine',
     required: true,
   },
-
-  name: String,
-  dosage: String,
-
+  dosage: {
+      type: String,
+    },
   quantity: {
     type: Number,
     required: true,
@@ -24,6 +23,26 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    age: {
+      type: Number,
+    },
+
+    purchasingDate: {
+      type: Date,
+      default: Date.now,
+    },
+
+  
+
+    prescription: {
+      type: Boolean,
+      default: false,
+    },
+
+    prescriptionProof: {
+      type: String, // image URL
+    },
+
     items: [orderItemSchema],
 
     status: {
@@ -33,6 +52,7 @@ const orderSchema = new mongoose.Schema(
     },
 
     totalItems: Number,
+    totalAmount: Number,
 
     rejectionReason: String,
 
@@ -45,3 +65,4 @@ const orderSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Order', orderSchema);
+
