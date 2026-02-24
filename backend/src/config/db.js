@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 /**
  * Connect to MongoDB Atlas.
@@ -14,4 +14,4 @@ async function connectDB() {
   }
 }
 
-module.exports = { connectDB };
+export { connectDB };

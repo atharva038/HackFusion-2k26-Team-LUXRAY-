@@ -1,7 +1,7 @@
-const RefillAlert = require('../models/refill.model');
-const User = require('../models/user.model');
-const Medicine = require('../models/medicine.model');
-const logger = require('../utils/logger');
+import RefillAlert from '../models/refill.model.js';
+import User from '../models/user.model.js';
+import Medicine from '../models/medicine.model.js';
+import logger from '../utils/logger.js';
 
 /**
  * Tool: check_refill_eligibility
@@ -39,4 +39,4 @@ async function checkRefillEligibility({ patientName, medicineName }) {
   return { eligible: true, message: `${patientName} is eligible for a refill of ${medicineName}.` };
 }
 
-module.exports = { checkRefillEligibility };
+export { checkRefillEligibility };

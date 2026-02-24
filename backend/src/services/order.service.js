@@ -1,4 +1,4 @@
-const Order = require('../models/order.model');
+import Order from '../models/order.model.js';
 
 /**
  * Business logic for order operations.
@@ -17,4 +17,4 @@ const orderService = {
   },
 };
 
-module.exports = orderService;
+export default orderService;

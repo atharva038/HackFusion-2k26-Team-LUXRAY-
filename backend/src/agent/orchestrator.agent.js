@@ -1,11 +1,11 @@
-const { openai } = require('../config/openai');
-const { SYSTEM_PROMPT, TOOL_DEFINITIONS } = require('./prompts');
-const inventoryTool = require('../tools/inventory.tool');
-const prescriptionTool = require('../tools/prescription.tool');
-const orderTool = require('../tools/order.tool');
-const warehouseTool = require('../tools/warehouse.tool');
-const refillTool = require('../tools/refill.tool');
-const logger = require('../utils/logger');
+import { openai  } from '../config/openai.js';
+import { SYSTEM_PROMPT, TOOL_DEFINITIONS  } from './prompts.js';
+import * as inventoryTool from '../tools/inventory.tool.js';
+import * as prescriptionTool from '../tools/prescription.tool.js';
+import * as orderTool from '../tools/order.tool.js';
+import * as warehouseTool from '../tools/warehouse.tool.js';
+import * as refillTool from '../tools/refill.tool.js';
+import logger from '../utils/logger.js';
 
 // Map tool names to their handler functions
 const TOOL_HANDLERS = {
@@ -80,4 +80,4 @@ async function runOrchestrator(userMessage) {
   };
 }
 
-module.exports = { runOrchestrator };
+export { runOrchestrator };

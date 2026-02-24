@@ -1,4 +1,4 @@
-const Medicine = require('../models/medicine.model');
+import Medicine from '../models/medicine.model.js';
 
 /**
  * Business logic for inventory operations.
@@ -17,4 +17,4 @@ const inventoryService = {
   },
 };
 
-module.exports = inventoryService;
+export default inventoryService;

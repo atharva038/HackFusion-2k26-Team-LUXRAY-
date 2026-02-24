@@ -1,7 +1,7 @@
-const Medicine = require('../models/medicine.model');
-const Prescription = require('../models/prescription.model');
-const User = require('../models/user.model');
-const logger = require('../utils/logger');
+import Medicine from '../models/medicine.model.js';
+import Prescription from '../models/prescription.model.js';
+import User from '../models/user.model.js';
+import logger from '../utils/logger.js';
 
 /**
  * Tool: validate_prescription
@@ -49,4 +49,4 @@ async function validatePrescription({ medicineName, patientId }) {
   };
 }
 
-module.exports = { validatePrescription };
+export { validatePrescription };

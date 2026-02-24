@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+import logger from '../utils/logger.js';
 
 /**
  * Tool: check_warehouse
@@ -16,4 +16,4 @@ async function checkWarehouse({ medicineName }) {
   };
 }
 
-module.exports = { checkWarehouse };
+export { checkWarehouse };

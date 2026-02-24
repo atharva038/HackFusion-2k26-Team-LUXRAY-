@@ -2,14 +2,14 @@
  * Seed script — populates MongoDB Atlas with initial pharmacy data.
  * Run: npm run seed
  */
-require('dotenv').config();
-const mongoose = require('mongoose');
-const Medicine = require('./models/medicine.model');
-const Order = require('./models/order.model');
-const RefillAlert = require('./models/refill.model');
-const User = require('./models/user.model');
-const Prescription = require('./models/prescription.model');
-const InventoryLog = require('./models/inventoryLog.model');
+import 'dotenv/config';
+import mongoose from 'mongoose';
+import Medicine from './models/medicine.model.js';
+import Order from './models/order.model.js';
+import RefillAlert from './models/refill.model.js';
+import User from './models/user.model.js';
+import Prescription from './models/prescription.model.js';
+import InventoryLog from './models/inventoryLog.model.js';
 
 async function seed() {
   try {

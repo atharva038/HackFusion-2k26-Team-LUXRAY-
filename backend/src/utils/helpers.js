@@ -17,4 +17,4 @@ function generateId(prefix = 'ID', length = 6) {
   return id;
 }
 
-module.exports = { asyncHandler, generateId };
+export { asyncHandler, generateId };

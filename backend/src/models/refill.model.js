@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const refillAlertSchema = new mongoose.Schema(
   {
@@ -25,4 +25,4 @@ const refillAlertSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('RefillAlert', refillAlertSchema);
+export default mongoose.model('RefillAlert', refillAlertSchema);

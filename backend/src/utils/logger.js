@@ -7,4 +7,4 @@ const logger = {
   error: (...args) => console.error(`[ERROR] ${new Date().toISOString()}`, ...args),
 };
 
-module.exports = logger;
+export default logger;

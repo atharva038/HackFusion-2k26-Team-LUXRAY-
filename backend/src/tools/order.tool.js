@@ -1,8 +1,8 @@
-const Order = require('../models/order.model');
-const Medicine = require('../models/medicine.model');
-const User = require('../models/user.model');
-const InventoryLog = require('../models/inventoryLog.model');
-const logger = require('../utils/logger');
+import Order from '../models/order.model.js';
+import Medicine from '../models/medicine.model.js';
+import User from '../models/user.model.js';
+import InventoryLog from '../models/inventoryLog.model.js';
+import logger from '../utils/logger.js';
 
 /**
  * Tool: create_order
@@ -59,4 +59,4 @@ async function createOrder({ medicineName, dosage, quantity, patientName }) {
   };
 }
 
-module.exports = { createOrder };
+export { createOrder };

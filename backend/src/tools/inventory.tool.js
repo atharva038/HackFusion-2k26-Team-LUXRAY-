@@ -1,5 +1,5 @@
-const Medicine = require('../models/medicine.model');
-const logger = require('../utils/logger');
+import Medicine from '../models/medicine.model.js';
+import logger from '../utils/logger.js';
 
 /**
  * Tool: check_inventory
@@ -33,4 +33,4 @@ async function checkInventory({ medicineName, dosage }) {
   };
 }
 
-module.exports = { checkInventory };
+export { checkInventory };

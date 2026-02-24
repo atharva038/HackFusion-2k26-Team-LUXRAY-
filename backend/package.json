@@ -1,6 +1,7 @@
 {
   "name": "agentic-pharmacy-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Express backend for the Agentic AI Pharmacy System",
   "main": "src/app.js",
   "scripts": {
@@ -9,15 +10,15 @@
     "seed": "node src/seed.js"
   },
   "dependencies": {
+    "@openai/agents": "^0.4.15",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mongoose": "^8.10.1",
-    "openai": "^4.82.0",
-    "node-cron": "^3.0.3",
     "morgan": "^1.10.0",
-    "@openai/agents": "^0.4.15",
+    "node-cron": "^3.0.3",
     "nodemailer": "^8.0.1",
+    "openai": "^6.24.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },

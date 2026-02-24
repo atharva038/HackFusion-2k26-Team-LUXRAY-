@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const chatController = require('../controllers/chat.controller');
+import * as chatController from '../controllers/chat.controller.js';
 
 /** POST /api/chat — Send a message to the AI pharmacist */
 router.post('/', chatController.handleMessage);
@@ -8,4 +8,4 @@ router.post('/', chatController.handleMessage);
 /** GET /api/chat/history — Retrieve chat history */
 router.get('/history', chatController.getHistory);
 
-module.exports = router;
+export default router;

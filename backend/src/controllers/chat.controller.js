@@ -1,10 +1,10 @@
-const { runOrchestrator } = require('../agents/orchestrator.agent');
-const logger = require('../utils/logger');
+import { runOrchestrator  } from '../agent/orchestrator.agent.js';
+import logger from '../utils/logger.js';
 
 /**
  * Handle an incoming chat message by passing it through the AI orchestrator.
  */
-exports.handleMessage = async (req, res) => {
+export const handleMessage = async (req, res) => {
   try {
     const { message } = req.body;
     if (!message) return res.status(400).json({ error: 'Message is required' });
@@ -21,7 +21,7 @@ exports.handleMessage = async (req, res) => {
 /**
  * Return chat history (placeholder — extend with DB persistence).
  */
-exports.getHistory = async (req, res) => {
+export const getHistory = async (req, res) => {
   // TODO: Fetch from a ChatHistory model
   res.json({ history: [] });
 };

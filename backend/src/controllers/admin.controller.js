@@ -1,12 +1,12 @@
-const Medicine = require('../models/medicine.model');
-const Order = require('../models/order.model');
-const RefillAlert = require('../models/refill.model');
-const User = require('../models/user.model');
-const Prescription = require('../models/prescription.model');
-const logger = require('../utils/logger');
+import Medicine from '../models/medicine.model.js';
+import Order from '../models/order.model.js';
+import RefillAlert from '../models/refill.model.js';
+import User from '../models/user.model.js';
+import Prescription from '../models/prescription.model.js';
+import logger from '../utils/logger.js';
 
 /** List all medicines in inventory */
-exports.getInventory = async (req, res) => {
+export const getInventory = async (req, res) => {
   try {
     const medicines = await Medicine.find().sort({ name: 1 });
     res.json(medicines);
@@ -17,7 +17,7 @@ exports.getInventory = async (req, res) => {
 };
 
 /** Update medicine stock by ID */
-exports.updateInventory = async (req, res) => {
+export const updateInventory = async (req, res) => {
   try {
     const updated = await Medicine.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
@@ -28,7 +28,7 @@ exports.updateInventory = async (req, res) => {
 };
 
 /** List all orders (populated with user and medicine refs) */
-exports.getOrders = async (req, res) => {
+export const getOrders = async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('user', 'name email')
@@ -42,7 +42,7 @@ exports.getOrders = async (req, res) => {
 };
 
 /** Update order status */
-exports.updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res) => {
   try {
     const updateData = { status: req.body.status };
     if (req.body.rejectionReason) updateData.rejectionReason = req.body.rejectionReason;
@@ -55,7 +55,7 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 /** Get refill alerts (populated with user and medicine names) */
-exports.getRefillAlerts = async (req, res) => {
+export const getRefillAlerts = async (req, res) => {
   try {
     const alerts = await RefillAlert.find({ status: 'active' })
       .populate('user', 'name')
@@ -69,7 +69,7 @@ exports.getRefillAlerts = async (req, res) => {
 };
 
 /** Get AI traces (placeholder) */
-exports.getTraces = async (req, res) => {
+export const getTraces = async (req, res) => {
   // TODO: Persist AI traces in a dedicated model
   res.json({ traces: [] });
 };

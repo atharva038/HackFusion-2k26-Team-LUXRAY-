@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const adminController = require('../controllers/admin.controller');
+import * as adminController from '../controllers/admin.controller.js';
 
 /** GET /api/admin/inventory — List all medicines */
 router.get('/inventory', adminController.getInventory);
@@ -20,4 +20,4 @@ router.get('/refills', adminController.getRefillAlerts);
 /** GET /api/admin/traces — Get AI reasoning traces */
 router.get('/traces', adminController.getTraces);
 
-module.exports = router;
+export default router;

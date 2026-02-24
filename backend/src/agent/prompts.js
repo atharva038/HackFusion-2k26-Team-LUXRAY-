@@ -91,4 +91,4 @@ const TOOL_DEFINITIONS = [
   },
 ];
 
-module.exports = { SYSTEM_PROMPT, TOOL_DEFINITIONS };
+export { SYSTEM_PROMPT, TOOL_DEFINITIONS };

@@ -1,13 +1,13 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const { connectDB } = require('./config/db');
-const { initScheduler } = require('./scheduler/refill.scheduler');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import { connectDB  } from './config/db.js';
+import { initScheduler  } from './scheduler/refill.scheduler.js';
 
-const chatRoutes = require('./routes/chat.routes');
-const adminRoutes = require('./routes/admin.routes');
-const webhookRoutes = require('./routes/webhook.routes');
+import chatRoutes from './routes/chat.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import webhookRoutes from './routes/webhook.routes.js';
 
 const app = express();
 
@@ -35,4 +35,4 @@ async function start() {
 
 start();
 
-module.exports = app;
+export default app;

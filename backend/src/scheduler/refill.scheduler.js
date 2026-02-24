@@ -1,7 +1,7 @@
-const cron = require('node-cron');
-const RefillAlert = require('../models/refill.model');
-const Medicine = require('../models/medicine.model');
-const logger = require('../utils/logger');
+import cron from 'node-cron';
+import RefillAlert from '../models/refill.model.js';
+import Medicine from '../models/medicine.model.js';
+import logger from '../utils/logger.js';
 
 /**
  * Initialize the refill scheduler.
@@ -32,4 +32,4 @@ function initScheduler() {
   logger.info('🕐 Refill scheduler initialized (daily at midnight).');
 }
 
-module.exports = { initScheduler };
+export { initScheduler };
