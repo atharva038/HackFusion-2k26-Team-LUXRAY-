@@ -1,4 +1,4 @@
-import cloudinary from "../config/multer.js"; 
+import cloudinary from "../config/cloudinary.js"; 
 
 export const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {

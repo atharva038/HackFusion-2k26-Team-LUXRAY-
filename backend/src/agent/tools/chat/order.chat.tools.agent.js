@@ -50,7 +50,7 @@ export const order = tool({
       return `❌ Insufficient stock. Available: ${currentQty}`;
     }
 
-    const updateResult = reduceQuantity({
+    const updateResult = await reduceQuantity({
       productId: product["product id"],
       quantity,
     });

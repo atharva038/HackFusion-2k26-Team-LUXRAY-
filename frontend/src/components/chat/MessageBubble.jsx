@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ShieldCheck, Search, Loader2 } from 'lucide-react';
 import OrderCard from './OrderCard';
+import PrescriptionCard from '../../features/prescription/PrescriptionCard';
 
 const ToolExecutionBadge = ({ tool, index }) => {
     const icons = {
@@ -51,12 +52,23 @@ const MessageBubble = ({ message }) => {
 
                 {/* The Message Bubble */}
                 <div className={`
-                    relative px-5 py-4 text-[15px] leading-relaxed
+                    relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden
                     ${isAi
                         ? 'rounded-3xl rounded-tl-sm bg-card text-text border border-black/5 dark:border-white/5 shadow-sm'
                         : 'rounded-3xl rounded-tr-sm bg-primary text-white shadow-soft font-medium'
                     }
                 `}>
+                    {/* Image Preview (uploaded prescription) */}
+                    {message.imagePreview && (
+                        <div className="mb-3 -mx-1 -mt-1">
+                            <img
+                                src={message.imagePreview}
+                                alt="Prescription"
+                                className="w-full max-h-48 object-cover rounded-xl border border-white/20"
+                            />
+                        </div>
+                    )}
+
                     {message.text}
 
                     {/* Subtle shimmer on AI messages */}
@@ -70,6 +82,11 @@ const MessageBubble = ({ message }) => {
                     <div className="mt-2 text-text">
                         <OrderCard details={message.orderCard} />
                     </div>
+                )}
+
+                {/* Optional Prescription Card */}
+                {isAi && message.prescriptionData && (
+                    <PrescriptionCard data={message.prescriptionData} />
                 )}
             </div>
         </motion.div>

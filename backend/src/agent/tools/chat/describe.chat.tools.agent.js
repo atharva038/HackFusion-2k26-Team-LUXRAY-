@@ -10,7 +10,7 @@ export const describeMed = tool({
     medicineName: z.string().describe("Medicine name to describe"),
   }),
   execute: async ({ medicineName }) => {
-    const products = loadProducts(2);
+    const products = await loadProducts(2);
 
     const product = products.find((p) =>
       p["product name"]?.toLowerCase().includes(medicineName.toLowerCase()),

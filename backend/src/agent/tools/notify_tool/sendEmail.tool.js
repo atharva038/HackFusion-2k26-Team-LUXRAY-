@@ -22,7 +22,7 @@ export const sendEmailTool = tool({
         });
 
         const mailOptions = {
-            from: '"AI Pharmacy Assistant" <your-email@gmail.com>',
+            from: `"AI Pharmacy Assistant" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: `💊 Time for your medication: ${medicineName}`,
             text: `Hi ${userName},\n\nThis is a reminder to take your ${medicineName} (${dosage}).\nInstructions: ${instructions}\n\nStay healthy!`

@@ -9,7 +9,7 @@ import chatRoutes from './routes/chat.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
-import notifyRoutes from './routes/notiifcation.routes.js'
+import notifyRoutes from './routes/notification.routes.js'
 import ttsRoutes from './routes/tts.routes.js';
 
 const app = express();
@@ -62,7 +62,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/tts', ttsRoutes);
 
-app.use('/prescription', notifyRoutes);
+app.use('/api/prescription', notifyRoutes);
 
 // ─── Health Check ────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));

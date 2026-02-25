@@ -26,6 +26,17 @@ export const handlePrescriptionUpload = async (req, res) => {
         console.log("🤖 Agent processing image URL:", imageUrl);
         const agentData = await runImageExtraction(imageUrl);
 
+        // 2.5 Check if it's actually a prescription
+        if (!agentData.isPrescription) {
+            return res.status(200).json({
+                success: false,
+                isPrescription: false,
+                message: agentData.rejection_reason || "This image does not appear to be a medical prescription.",
+                imageUrl,
+                medications: []
+            });
+        }
+
         // 3. Store prescriptionData on MongoDB
         console.log("💾 Saving to MongoDB...");
 
@@ -37,10 +48,10 @@ export const handlePrescriptionUpload = async (req, res) => {
                         imageUrl: imageUrl,
                         // Mapping Agent data to your medicineSchema fields
                         extractedData: agentData.medicines.map(med => ({
-                            doctor_name: agentData.doctor_name || "Unknown Doctor",
-                            hospital_name: agentData.hospital_name || "General Hospital",
-                            user_name: userName,
-                            name: med.name,
+                            doctor_name: med.doctor_name || "Unknown Doctor",
+                            hospital_name: med.hospital_name || "General Hospital",
+                            user_name: med.user_name || userName,
+                            name: med.name || med.dosage,
                             dosage: med.dosage,
                             frequency: med.frequency,
                             total_quantity: med.total_quantity,
@@ -64,6 +75,7 @@ export const handlePrescriptionUpload = async (req, res) => {
         // 4. Final Response
         res.status(200).json({
             success: true,
+            isPrescription: true,
             message: "Prescription processed and saved successfully",
             imageUrl,
             recordId: savedRecord._id,
