@@ -47,17 +47,9 @@ Routes customer queries to the correct pharmacy agent:
   handoffs: [receptionist, orderAgent],
 });
 
-export async function chat(q = "") {
+async function chat(q = "") {
   const result = await run(parentAgent, q);
-  console.log(result.finalOutput);
+  return result.finalOutput;
 }
-// chat("Do you have Ramipril in stock?");
-// chat("Check availability of Paracetamol");
-// chat("Is Minoxidil available?");
-// chat("How many units of Aqualibra are left?");
-// chat("Is Mucosolvan currently available?");
-// chat("Suggest something for dry eyes and check stock and order");
-// chat("order this Hyaluron-ratiopharm® Augentropfen with quantity 1 ")
-chat(
-  "Order medicine NORSAN Omega-3 Vegan, Patient ID P1001, Age 25, Gender Male, Quantity 1, Dosage 2 times daily, Prescription No",
-);
+
+export { parentAgent, chat };

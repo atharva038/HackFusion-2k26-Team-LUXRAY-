@@ -1,8 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Mic, Send, Square, Loader2 } from 'lucide-react';
+import { Mic, Send, Square, Loader2, Camera, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import { sendChatMessage, fetchTTSAudio } from '../../services/api';
+import PrescriptionUpload from '../../features/prescription/PrescriptionUpload';
+import { uploadPrescription } from '../../features/prescription/uploadService';
 
 // Get browser SpeechRecognition constructor
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -16,6 +18,8 @@ const InputArea = () => {
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
     const manualStopRef = useRef(false);
+    const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+    const fileUploadRef = useRef(null);
 
     const isListening = aiStatus === AI_STATUS.LISTENING;
     const isProcessing = aiStatus === AI_STATUS.PROCESSING;
@@ -214,6 +218,78 @@ const InputArea = () => {
         return "Type your message or tap the mic…";
     };
 
+    // ─── Prescription Upload Result Handler ──────────────────────
+    const handlePrescriptionResult = (result, previewUrl = null) => {
+        const imageUrl = previewUrl || result.imageUrl;
+
+        // Non-prescription detection
+        if (result.isPrescription === false) {
+            addMessage({
+                id: Date.now() + 1,
+                role: 'ai',
+                text: `⚠️ ${result.message || 'This image does not appear to be a medical prescription. Please upload a valid prescription image.'}`,
+                tools: [
+                    { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
+                    { icon: 'success', text: 'Mistral OCR', status: 'success' },
+                    { icon: 'search', text: 'Not a prescription', status: 'warning' },
+                ],
+            });
+            return;
+        }
+
+        const meds = result.medications || [];
+        const medNames = meds.map(m => m.name || m.dosage).filter(Boolean);
+        const summary = medNames.length > 0
+            ? `📄 Prescription extracted! Found ${medNames.length} medicine${medNames.length > 1 ? 's' : ''}: ${medNames.join(', ')}.`
+            : '📄 Prescription uploaded and saved to your profile.';
+
+        addMessage({
+            id: Date.now() + 1,
+            role: 'ai',
+            text: summary,
+            tools: [
+                { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
+                { icon: 'success', text: 'Mistral OCR', status: 'success' },
+                { icon: 'success', text: 'AI Data Extraction', status: 'success' },
+            ],
+            prescriptionData: {
+                medications: meds,
+                imageUrl: result.imageUrl,
+                recordId: result.recordId,
+            },
+        });
+    };
+
+    // ─── Direct File Upload Handler ──────────────────────────────
+    const handleDirectFileUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = ''; // reset
+
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+
+        addMessage({
+            id: Date.now(),
+            role: 'user',
+            text: '📎 Uploaded a prescription image',
+            imagePreview: previewUrl,
+        });
+        setAiStatus(AI_STATUS.PROCESSING);
+        setTyping(true);
+
+        try {
+            const result = await uploadPrescription(file);
+            setTyping(false);
+            setAiStatus(AI_STATUS.READY);
+            handlePrescriptionResult(result, previewUrl);
+        } catch (err) {
+            setTyping(false);
+            setAiStatus(AI_STATUS.READY);
+            addMessage({ id: Date.now(), role: 'ai', text: `❌ Upload failed: ${err.message}`, tools: [] });
+        }
+    };
+
     return (
         <div className="relative w-full pb-4">
             <AnimatePresence>
@@ -246,6 +322,43 @@ const InputArea = () => {
                         : 'border-black/5 dark:border-white/5 shadow-soft focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-white/10'
                     }`}
             >
+                {/* Camera Button — opens camera modal */}
+                <button
+                    type="button"
+                    onClick={() => setShowPrescriptionModal(true)}
+                    disabled={isBusy || isListening}
+                    title="Scan Prescription"
+                    className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300
+                        ${isBusy || isListening
+                            ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
+                            : 'bg-black/5 dark:bg-white/5 text-text-muted hover:bg-primary/10 hover:text-primary'
+                        }`}
+                >
+                    <Camera className="w-[18px] h-[18px]" />
+                </button>
+
+                {/* File Upload Button — direct file picker */}
+                <button
+                    type="button"
+                    onClick={() => fileUploadRef.current?.click()}
+                    disabled={isBusy || isListening}
+                    title="Upload Prescription Image"
+                    className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300
+                        ${isBusy || isListening
+                            ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
+                            : 'bg-black/5 dark:bg-white/5 text-text-muted hover:bg-primary/10 hover:text-primary'
+                        }`}
+                >
+                    <Paperclip className="w-[18px] h-[18px]" />
+                </button>
+                <input
+                    ref={fileUploadRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleDirectFileUpload}
+                    className="hidden"
+                />
+
                 <button
                     type="button"
                     onClick={toggleVoice}
@@ -301,6 +414,21 @@ const InputArea = () => {
             <div className="text-center mt-3">
                 <p className="text-[11px] text-text-muted font-medium opacity-50">AI can make mistakes. Please verify medical information.</p>
             </div>
+
+            {/* Prescription Upload Modal */}
+            <PrescriptionUpload
+                isOpen={showPrescriptionModal}
+                onClose={() => setShowPrescriptionModal(false)}
+                onResult={(result, capturedPreviewUrl) => {
+                    addMessage({
+                        id: Date.now(),
+                        role: 'user',
+                        text: '📷 Captured a prescription image',
+                        imagePreview: capturedPreviewUrl || result.imageUrl,
+                    });
+                    handlePrescriptionResult(result, capturedPreviewUrl);
+                }}
+            />
         </div>
     );
 };
