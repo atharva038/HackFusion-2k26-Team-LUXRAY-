@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, Check, X, Truck, Loader2 } from 'lucide-react';
+import { Eye, Check, X, Truck, Loader2, Search, Filter } from 'lucide-react';
 import { fetchOrders, updateOrderStatus } from '../../services/api';
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
 
     const load = () => {
         setLoading(true);
@@ -31,6 +33,16 @@ const Orders = () => {
         }
     };
 
+    const filteredOrders = orders.filter((order) => {
+        const matchesSearch =
+            order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (order.user?.name && order.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesFilter = filterStatus === 'all' || order.status === filterStatus;
+
+        return matchesSearch && matchesFilter;
+    });
+
     if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
     return (
@@ -38,6 +50,39 @@ const Orders = () => {
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-text">Orders Management</h1>
                 <p className="text-text-muted text-sm mt-1">Review and process all incoming pharmacy orders.</p>
+            </div>
+
+            {/* Custom Control Bar */}
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-grow">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-text-muted" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search by Order ID or Customer..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                    />
+                </div>
+                <div className="relative min-w-[180px]">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Filter className="h-4 w-4 text-text-muted" />
+                    </div>
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="pl-10 pr-8 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text"
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="awaiting_prescription">Awaiting Rx</option>
+                        <option value="approved">Approved</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
             </div>
 
             <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden">
@@ -54,7 +99,7 @@ const Orders = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
-                            {orders.map((order) => (
+                            {filteredOrders.length > 0 ? filteredOrders.map((order) => (
                                 <tr key={order._id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
                                     <td className="px-6 py-4 font-mono text-text text-xs">{order._id.slice(-6).toUpperCase()}</td>
                                     <td className="px-6 py-4 text-text-muted">{order.user?.name || 'N/A'}</td>
@@ -85,7 +130,13 @@ const Orders = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-8 text-center text-text-muted text-sm">
+                                        No orders found matching your criteria.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
