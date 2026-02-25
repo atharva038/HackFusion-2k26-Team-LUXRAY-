@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Package,
@@ -10,9 +10,12 @@ import {
     Settings,
     Stethoscope,
     Moon,
-    Sun
+    Sun,
+    LogOut,
+    User,
 } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
+import useAuthStore from '../../store/useAuthStore';
 
 const NavItem = ({ to, icon: Icon, label, end = false }) => (
     <NavLink
@@ -33,6 +36,13 @@ const NavItem = ({ to, icon: Icon, label, end = false }) => (
 
 const AdminLayout = () => {
     const { theme, toggleTheme } = useAppStore();
+    const { user, logout } = useAuthStore();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     return (
         <div className="flex h-screen bg-bg text-text transition-colors duration-300 font-sans overflow-hidden font-sans">
@@ -59,17 +69,34 @@ const AdminLayout = () => {
                     <NavItem to="/admin/logs" icon={History} label="Inventory Logs" />
                 </nav>
 
-                {/* Footer Settings & Theme Toggle */}
+                {/* Footer: User Info + Controls */}
                 <div className="p-4 border-t border-black/5 dark:border-white/5 space-y-1">
+                    {/* Logged-in user chip */}
+                    {user && (
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-text text-sm font-semibold truncate">{user.name}</p>
+                                <p className="text-text-muted text-xs capitalize">{user.role}</p>
+                            </div>
+                        </div>
+                    )}
                     <NavItem to="/admin/settings" icon={Settings} label="Settings" />
                     <button
                         onClick={toggleTheme}
-                        className="w-full mt-2 flex items-center justify-between px-4 py-2.5 rounded-lg text-[15px] font-medium text-text-muted hover:bg-black/5 dark:hover:bg-white/5 hover:text-text transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-text-muted hover:bg-black/5 dark:hover:bg-white/5 hover:text-text transition-colors"
                     >
-                        <span className="flex items-center gap-3">
-                            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                        </span>
+                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-500/80 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
                     </button>
                 </div>
             </aside>

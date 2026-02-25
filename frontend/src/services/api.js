@@ -1,8 +1,13 @@
 const BASE = '/api';
 
 async function request(path, options = {}) {
+  const token = localStorage.getItem('pharmacy_token');
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
     ...options,
   });
   if (!res.ok) {
@@ -11,6 +16,15 @@ async function request(path, options = {}) {
   }
   return res.json();
 }
+
+// ─── Auth ─────────────────────────────────────────────────────
+export const loginUser = (email, password) =>
+  request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+
+export const registerUser = (data) =>
+  request('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+
+export const fetchCurrentUser = () => request('/auth/me');
 
 // ─── Admin: Dashboard ─────────────────────────────────────────
 export const fetchDashboardStats = () => request('/admin/stats');
