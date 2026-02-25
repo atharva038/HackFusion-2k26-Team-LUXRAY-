@@ -1,8 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ShieldCheck, Search, Loader2 } from 'lucide-react';
 import OrderCard from './OrderCard';
 import PrescriptionCard from '../../features/prescription/PrescriptionCard';
+
+const TypewriterText = ({ text, delayStart = 800, typingSpeed = 20, onComplete }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [started, setStarted] = useState(false);
+
+    useEffect(() => {
+        let timeout;
+        if (delayStart > 0) {
+            timeout = setTimeout(() => {
+                setStarted(true);
+            }, delayStart);
+        } else {
+            setStarted(true);
+        }
+        return () => clearTimeout(timeout);
+    }, [delayStart]);
+
+    useEffect(() => {
+        if (!started || !text) return;
+
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length - 1) {
+                setDisplayedText(text.substring(0, i + 1));
+                i++;
+            } else {
+                setDisplayedText(text);
+                clearInterval(interval);
+                if (onComplete) onComplete();
+            }
+        }, typingSpeed);
+
+        return () => clearInterval(interval);
+    }, [text, started, typingSpeed, onComplete]);
+
+    if (!started) {
+        return (
+            <div className="flex items-center gap-1.5 h-[22px] text-primary">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+        );
+    }
+
+    return <span>{displayedText}</span>;
+};
 
 const ToolExecutionBadge = ({ tool, index }) => {
     const icons = {
@@ -69,7 +116,11 @@ const MessageBubble = ({ message }) => {
                         </div>
                     )}
 
-                    {message.text}
+                    {isAi && message.isStreaming ? (
+                        <TypewriterText text={message.text} />
+                    ) : (
+                        message.text
+                    )}
 
                     {/* Subtle shimmer on AI messages */}
                     {isAi && (

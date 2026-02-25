@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateSpeech } from '../controllers/tts.controller.js';
+import { generateSpeech, generateSpeechStream } from '../controllers/tts.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -38,7 +38,10 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// POST /api/tts — protected + rate limited
+// POST /api/tts — protected + rate limited (legacy, full buffer)
 router.post('/', protect, ttsRateLimit, generateSpeech);
+
+// POST /api/tts/stream — protected + rate limited (streamed, low-latency)
+router.post('/stream', protect, ttsRateLimit, generateSpeechStream);
 
 export default router;

@@ -240,5 +240,89 @@
         }
       }
     ]
+  },
+  {
+    "timestamp": "2026-02-25T17:01:10.059Z",
+    "user": "hello I want Paracetamol and Crocin that is 500 mg because I have fear fever",
+    "ai": "I'm sorry, but we currently don't have either Paracetamol or Crocin 500 mg in stock. For treating a fever, you might consider checking back later, or visiting a nearby pharmacy. If your symptoms persist, it's best to consult with a healthcare professional.",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol",
+          "dosage": "500mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol not found in inventory."
+        }
+      },
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Crocin",
+          "dosage": "500mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Crocin not found in inventory."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T17:01:49.295Z",
+    "user": "OK then I will going to the doctor but the doctor will give me medicines so do you going to like you will going to have that medicines like the Paracetamol or the Crocin or the Azithromycin",
+    "ai": "I can definitely help with those if you have a prescription from your doctor. Medicines like Paracetamol and Azithromycin often require a prescription. Once you have it, I can check our inventory and proceed with your order. Let me know when you're ready!",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T17:07:11.948Z",
+    "user": "hello it's mike testing",
+    "ai": "Hello Mike! How can I assist you with your pharmacy needs today?",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T17:07:27.191Z",
+    "user": "I want Paracetamol Crocin and Azithromycin",
+    "ai": "Paracetamol Crocin isn't currently in stock. Regarding Azithromycin, we do have it available, but it requires a valid prescription. If you have a prescription, we can proceed; otherwise, please consult your physician. Thank you for understanding.",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol Crocin"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol Crocin not found in inventory."
+        }
+      },
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Azithromycin"
+        },
+        "result": {
+          "available": true,
+          "name": "Azithromycin 500mg",
+          "unitType": "strip",
+          "stock": 100,
+          "prescriptionRequired": true,
+          "lowStock": false,
+          "message": "100 strip(s) of Azithromycin 500mg available."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Azithromycin"
+        },
+        "result": {
+          "valid": false,
+          "required": true,
+          "message": "Azithromycin 500mg requires a valid prescription. Please provide your prescription details or visit a physician."
+        }
+      }
+    ]
   }
 ]
