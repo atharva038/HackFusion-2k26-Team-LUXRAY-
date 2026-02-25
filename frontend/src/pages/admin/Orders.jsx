@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Eye, Check, X, Truck, Loader2, Search, Filter } from 'lucide-react';
 import { fetchOrders, updateOrderStatus } from '../../services/api';
+import ActionModal from '../../components/ui/ActionModal';
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [modalConfig, setModalConfig] = useState({ isOpen: false, id: null, status: null, type: 'warning' });
 
     const load = () => {
         setLoading(true);
@@ -15,11 +17,32 @@ const Orders = () => {
 
     useEffect(load, []);
 
-    const handleAction = async (id, status, reason) => {
+    const handleActionConfirm = async () => {
         try {
-            await updateOrderStatus(id, status, reason);
+            await updateOrderStatus(modalConfig.id, modalConfig.status, modalConfig.status === 'rejected' ? 'Rejected by pharmacist.' : '');
             load(); // refresh
         } catch (err) { console.error(err); }
+    };
+
+    const triggerModal = (id, status) => {
+        let title, message, type, color;
+        if (status === 'approved') {
+            title = 'Approve Order';
+            message = 'Are you sure you want to approve this order for processing?';
+            type = 'approve';
+            color = 'bg-green-600 hover:bg-green-700 text-white';
+        } else if (status === 'rejected') {
+            title = 'Reject Order';
+            message = 'Are you sure you want to reject this order? This action cannot be undone.';
+            type = 'reject';
+            color = 'bg-red-600 hover:bg-red-700 text-white';
+        } else if (status === 'dispatched') {
+            title = 'Dispatch Order';
+            message = 'Confirm that this order has been packaged and handed over to the delivery partner.';
+            type = 'dispatch';
+            color = 'bg-blue-600 hover:bg-blue-700 text-white';
+        }
+        setModalConfig({ isOpen: true, id, status, title, message, type, color });
     };
 
     const getStatusColor = (status) => {
@@ -114,16 +137,16 @@ const Orders = () => {
                                         <div className="flex items-center justify-end gap-2">
                                             {(order.status === 'pending' || order.status === 'awaiting_prescription') && (
                                                 <>
-                                                    <button onClick={() => handleAction(order._id, 'approved')} className="p-1.5 rounded-md hover:bg-green-500/10 text-text-muted hover:text-green-600 dark:hover:text-green-400 transition-colors" title="Approve">
+                                                    <button onClick={() => triggerModal(order._id, 'approved')} className="p-1.5 rounded-md hover:bg-green-500/10 text-text-muted hover:text-green-600 dark:hover:text-green-400 transition-colors" title="Approve">
                                                         <Check className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleAction(order._id, 'rejected', 'Rejected by pharmacist.')} className="p-1.5 rounded-md hover:bg-red-500/10 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Reject">
+                                                    <button onClick={() => triggerModal(order._id, 'rejected')} className="p-1.5 rounded-md hover:bg-red-500/10 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Reject">
                                                         <X className="w-4 h-4" />
                                                     </button>
                                                 </>
                                             )}
                                             {order.status === 'approved' && (
-                                                <button onClick={() => handleAction(order._id, 'dispatched')} className="p-1.5 rounded-md hover:bg-blue-500/10 text-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Dispatch">
+                                                <button onClick={() => triggerModal(order._id, 'dispatched')} className="p-1.5 rounded-md hover:bg-blue-500/10 text-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Dispatch">
                                                     <Truck className="w-4 h-4" />
                                                 </button>
                                             )}
@@ -141,6 +164,16 @@ const Orders = () => {
                     </table>
                 </div>
             </div>
+
+            <ActionModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onConfirm={handleActionConfirm}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                iconType={modalConfig.type}
+                confirmColorClass={modalConfig.color}
+            />
         </div>
     );
 };

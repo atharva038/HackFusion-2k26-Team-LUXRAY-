@@ -9,23 +9,19 @@ export const AI_STATUS = {
 };
 
 const useAppStore = create((set) => ({
-  // Theme state
-  theme: 'light',
+  // Theme state: 'light', 'dark', or 'system'
+  theme: localStorage.getItem('theme') || 'system',
   toggleTheme: () => set((state) => {
-    const newTheme = state.theme === 'light' ? 'dark' : 'light';
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    let newTheme;
+    if (state.theme === 'light') newTheme = 'dark';
+    else if (state.theme === 'dark') newTheme = 'system';
+    else newTheme = 'light';
+    
+    localStorage.setItem('theme', newTheme);
     return { theme: newTheme };
   }),
   setTheme: (theme) => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    localStorage.setItem('theme', theme);
     set({ theme });
   },
 

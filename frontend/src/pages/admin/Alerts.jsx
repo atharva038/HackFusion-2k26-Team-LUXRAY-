@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { BellRing, Check, MessageSquare, Loader2, Search, Filter } from 'lucide-react';
 import { fetchRefillAlerts, updateRefillAlert } from '../../services/api';
+import ActionModal from '../../components/ui/ActionModal';
 
 const Alerts = () => {
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [modalConfig, setModalConfig] = useState({ isOpen: false, id: null, status: null, type: 'warning' });
 
     const load = () => {
         setLoading(true);
@@ -15,11 +17,27 @@ const Alerts = () => {
 
     useEffect(load, []);
 
-    const handleAction = async (id, status) => {
+    const handleActionConfirm = async () => {
         try {
-            await updateRefillAlert(id, status);
+            await updateRefillAlert(modalConfig.id, modalConfig.status);
             load();
         } catch (err) { console.error(err); }
+    };
+
+    const triggerModal = (id, status) => {
+        let title, message, type, color;
+        if (status === 'notified') {
+            title = 'Send Customer Notification';
+            message = 'Are you sure you want to trigger a refill reminder SMS/Email to this customer?';
+            type = 'notify';
+            color = 'bg-blue-600 hover:bg-blue-700 text-white';
+        } else if (status === 'completed') {
+            title = 'Mark Alert Completed';
+            message = 'Confirm that this refill alert has been processed and handled successfully.';
+            type = 'approve';
+            color = 'bg-green-600 hover:bg-green-700 text-white';
+        }
+        setModalConfig({ isOpen: true, id, status, title, message, type, color });
     };
 
     const getStatusColor = (status) => {
@@ -109,12 +127,12 @@ const Alerts = () => {
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             {alert.status === 'active' && (
-                                                <button onClick={() => handleAction(alert._id, 'notified')} className="p-1.5 rounded-md hover:bg-primary/10 text-text-muted hover:text-primary transition-colors flex items-center gap-1.5 text-xs font-semibold" title="Notify">
+                                                <button onClick={() => triggerModal(alert._id, 'notified')} className="p-1.5 rounded-md hover:bg-primary/10 text-text-muted hover:text-primary transition-colors flex items-center gap-1.5 text-xs font-semibold" title="Notify">
                                                     <MessageSquare className="w-4 h-4" /> Notify
                                                 </button>
                                             )}
                                             {(alert.status === 'active' || alert.status === 'notified') && (
-                                                <button onClick={() => handleAction(alert._id, 'completed')} className="p-1.5 rounded-md hover:bg-green-500/10 text-text-muted hover:text-green-600 transition-colors" title="Complete">
+                                                <button onClick={() => triggerModal(alert._id, 'completed')} className="p-1.5 rounded-md hover:bg-green-500/10 text-text-muted hover:text-green-600 transition-colors" title="Complete">
                                                     <Check className="w-4 h-4" />
                                                 </button>
                                             )}
@@ -132,6 +150,16 @@ const Alerts = () => {
                     </table>
                 </div>
             </div>
+
+            <ActionModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onConfirm={handleActionConfirm}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                iconType={modalConfig.type}
+                confirmColorClass={modalConfig.color}
+            />
         </div>
     );
 };
