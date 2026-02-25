@@ -16,9 +16,28 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
-  origin: isProduction
-    ? process.env.FRONTEND_URL || 'https://your-domain.com'
-    : ['http://localhost:5173', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://hack-fusion-2k26-team-luxray.vercel.app',
+      'https://coral-app-neg9t.ondigitalocean.app',
+    ];
+    
+    // Also allow all Vercel preview deployments for this project
+    if (origin.includes('hack-fusion-2k26') && origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
+    if (allowed.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
