@@ -1,0 +1,187 @@
+[
+  {
+    "timestamp": "2026-02-25T10:16:02.002Z",
+    "user": "hello",
+    "ai": "Hello! How can I assist you with your pharmacy needs today?",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:16:18.782Z",
+    "user": "my name is Atharva and I need Paracetamol 500 mg",
+    "ai": "Unfortunately, Paracetamol 500 mg is currently not available in our local inventory. However, it is available in our central warehouse, and we can have it delivered to our location in 2-3 business days.\n\nWould you like me to proceed with the order from the warehouse for you?",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol",
+          "dosage": "500 mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol not found in inventory."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Paracetamol"
+        },
+        "result": {
+          "valid": true,
+          "required": false,
+          "message": "Paracetamol 500mg is available over the counter. No prescription needed."
+        }
+      },
+      {
+        "name": "check_warehouse",
+        "args": {
+          "medicineName": "Paracetamol"
+        },
+        "result": {
+          "available": true,
+          "estimatedDelivery": "2-3 business days",
+          "message": "Paracetamol is available from the central warehouse. Estimated delivery: 2-3 business days."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T10:24:53.332Z",
+    "user": "hello hello mike testing",
+    "ai": "Hello! How can I assist you with your pharmacy needs today?",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:28:02.199Z",
+    "user": "hello hello I am Atharvashirsha I want Paracetamol 500 mg",
+    "ai": "It appears that we currently do not have Paracetamol 500 mg in our inventory. Since it is available over the counter and doesn't require a prescription, I recommend checking with another pharmacy or returning to us later, as we might restock it soon. If you have any other questions or need further assistance, please let me know!",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol",
+          "dosage": "500 mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol not found in inventory."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Paracetamol",
+          "patientId": "Atharvashirsha"
+        },
+        "result": {
+          "valid": true,
+          "required": false,
+          "message": "Paracetamol 500mg is available over the counter. No prescription needed."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T10:31:48.095Z",
+    "user": "hello I want Crocin and Paracetamol my headache and fever",
+    "ai": "It seems that Crocin is currently not available in our inventory. However, we do have Paracetamol 500mg in stock, with 800 strips available, and it does not require a prescription.\n\nWould you like to proceed with an order for Paracetamol, or do you need further assistance?",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Crocin"
+        },
+        "result": {
+          "available": false,
+          "message": "Crocin not found in inventory."
+        }
+      },
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol"
+        },
+        "result": {
+          "available": true,
+          "name": "Paracetamol 500mg",
+          "unitType": "strip",
+          "stock": 800,
+          "prescriptionRequired": false,
+          "lowStock": false,
+          "message": "800 strip(s) of Paracetamol 500mg available."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T10:35:50.983Z",
+    "user": "hello hello Himanshu is AIDS positive so what's the medicine",
+    "ai": "I'm here to assist with medication inquiries and ensure the appropriate process is followed. Treating AIDS typically involves antiretroviral therapy (ART), which requires a prescription from a qualified healthcare provider. Could you please provide the name of the medicine you are inquiring about, or let me know if you have a specific treatment in mind? I can then check the inventory and prescription requirements for it.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:43:53.066Z",
+    "user": "hello hello hello hello hello",
+    "ai": "Hello! How can I assist you with your pharmacy needs today?",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:46:45.753Z",
+    "user": "hello I need Paracetamol",
+    "ai": "Hello! Could you please let me know the dosage you require and if you have a prescription for it? This will help me determine the next steps for you.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:47:05.896Z",
+    "user": "ok ok I will upload it",
+    "ai": "Please let me know how I can assist you with your pharmacy needs. If you're referring to uploading a prescription or any other document, ensure you have followed the relevant protocols for that. If you have any questions or need further assistance, feel free to ask!",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:51:53.228Z",
+    "user": "Royal Enfield Paracetamol 500 mg",
+    "ai": "Currently, Paracetamol 500 mg is not available in our local inventory. However, it does not require a prescription and is usually available over the counter. Please check back later or consider visiting a different pharmacy for this medication. If you have further questions or need assistance with something else, feel free to ask.",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol",
+          "dosage": "500 mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol not found in inventory."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Paracetamol"
+        },
+        "result": {
+          "valid": true,
+          "required": false,
+          "message": "Paracetamol 500mg is available over the counter. No prescription needed."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T10:58:14.713Z",
+    "user": "hello I need Paracetamol 500 mg",
+    "ai": "Do you have a prescription for the Paracetamol 500 mg, or is it an over-the-counter requirement?",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:58:28.402Z",
+    "user": "hits and over the counter requirement",
+    "ai": "I need a bit more information to assist you better. Could you specify the medicine you're interested in? This will help me check if it's over-the-counter or requires a prescription.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T10:59:17.884Z",
+    "user": "I need crossing 500 mg",
+    "ai": "I can help with that. Let's check if \"Crossing\" requires a prescription and if you have a valid one on file. Also, I'll verify its availability. Can you provide your name and, if possible, any patient identifier?",
+    "toolCalls": []
+  }
+]

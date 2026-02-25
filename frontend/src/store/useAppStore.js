@@ -29,6 +29,12 @@ const useAppStore = create((set) => ({
   aiStatus: AI_STATUS.READY,
   setAiStatus: (status) => set({ aiStatus: status }),
 
+  // Voice Subtitle State
+  liveTranscript: '',
+  setLiveTranscript: (text) => set({ liveTranscript: text }),
+  activeSubtitle: '',
+  setActiveSubtitle: (text) => set({ activeSubtitle: text }),
+
   // Chat State
   messages: [
     {

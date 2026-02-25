@@ -80,3 +80,20 @@ export const sendChatMessage = (message) =>
     method: 'POST',
     body: JSON.stringify({ message }),
   });
+
+// ─── TTS (OpenAI Voice) ──────────────────────────────────────
+export const fetchTTSAudio = async (text) => {
+  const token = localStorage.getItem('pharmacy_token');
+  const res = await fetch(`${BASE}/tts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) {
+    throw new Error('TTS request failed');
+  }
+  return res.blob();
+};

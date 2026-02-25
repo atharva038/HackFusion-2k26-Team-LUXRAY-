@@ -9,8 +9,17 @@ const ChatPage = () => {
             <Header />
 
             <main className="flex-1 flex flex-col md:flex-row w-full max-w-[1600px] mx-auto overflow-hidden relative">
+
                 {/* Left Side: Avatar Panel */}
-                <section className="w-full md:w-1/3 lg:w-2/5 md:h-full flex-shrink-0 border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 shrink-0 transition-colors duration-500 bg-black/5 dark:bg-black/20 z-10">
+                <section className="
+                    w-full h-[220px] md:h-full md:w-[38%] lg:w-[40%]
+                    flex-shrink-0
+                    border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5
+                    transition-colors duration-500
+                    bg-gradient-to-b md:bg-gradient-to-br from-transparent via-primary/[0.02] to-primary/[0.05]
+                    dark:from-transparent dark:via-primary/[0.03] dark:to-primary/[0.06]
+                    relative z-10
+                ">
                     <AiAvatar />
                 </section>
 
@@ -18,6 +27,7 @@ const ChatPage = () => {
                 <section className="w-full md:flex-1 h-full flex flex-col relative bg-bg transition-colors duration-500 z-0">
                     <ChatArea />
                 </section>
+
             </main>
         </div>
     );
