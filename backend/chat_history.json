@@ -324,5 +324,124 @@
         }
       }
     ]
+  },
+  {
+    "timestamp": "2026-02-25T17:11:18.777Z",
+    "user": "so u have other medicines like citrizin",
+    "ai": "We have Cetirizine 10mg in stock, and no prescription is needed. Would you like to place an order?",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Cetirizine"
+        },
+        "result": {
+          "available": true,
+          "name": "Cetirizine 10mg",
+          "unitType": "strip",
+          "stock": 700,
+          "prescriptionRequired": false,
+          "lowStock": false,
+          "message": "700 strip(s) of Cetirizine 10mg available."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T17:13:09.961Z",
+    "user": "i need 2 strips of cetrizin",
+    "ai": "It seems we don't have Cetirizine in stock, and I couldn't verify its prescription requirements. You might want to check with us later or try another pharmacy. If you have a doctor's prescription, please ensure you have it for future purchases.",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Cetrizin"
+        },
+        "result": {
+          "available": false,
+          "message": "Cetrizin not found in inventory."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Cetrizin"
+        },
+        "result": {
+          "valid": false,
+          "message": "Medicine \"Cetrizin\" not found."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T17:15:58.100Z",
+    "user": "do u have cetrizin 10mg",
+    "ai": "I'm sorry, we currently don't have Cetrizin 10mg in stock. Would you like me to check our warehouse availability?",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "cetrizin",
+          "dosage": "10mg"
+        },
+        "result": {
+          "available": false,
+          "message": "cetrizin not found in inventory."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T17:16:20.523Z",
+    "user": "i might write wrong spellilng but it's cetrizine",
+    "ai": "Are you looking for Cetirizine? Please let me know your dosage needs and if you have a specific quantity in mind. I'll also need to check if you have a prescription if it's necessary.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T17:16:41.691Z",
+    "user": "yes, i need 2 strips of this medicine",
+    "ai": "Could you please provide the name and dosage of the medicine you need? This will help me check availability and prescription requirements.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T17:17:08.958Z",
+    "user": "i need Cetirizine and i need 5 days dosage",
+    "ai": "We have Cetirizine 10mg in stock. For a 5-day dosage, would you like a single strip with 10 tablets?",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Cetirizine"
+        },
+        "result": {
+          "available": true,
+          "name": "Cetirizine 10mg",
+          "unitType": "strip",
+          "stock": 700,
+          "prescriptionRequired": false,
+          "lowStock": false,
+          "message": "700 strip(s) of Cetirizine 10mg available."
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-02-25T17:17:18.646Z",
+    "user": "yes",
+    "ai": "Hello! How can I help you today with your medication needs?",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T17:17:35.582Z",
+    "user": "give me above medicines",
+    "ai": "Could you please specify the names of the medicines you need? I'll check availability and assist you further.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T17:19:47.754Z",
+    "user": "hi",
+    "ai": "Hello! How can I assist you today?",
+    "toolCalls": []
   }
 ]

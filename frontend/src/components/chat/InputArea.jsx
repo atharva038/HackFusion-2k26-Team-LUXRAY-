@@ -19,6 +19,7 @@ const InputArea = () => {
     const audioRef = useRef(null);
     const manualStopRef = useRef(false);
     const cancelSpeechRef = useRef(false);
+    const inputRef = useRef(null);
     const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
     const fileUploadRef = useRef(null);
 
@@ -81,7 +82,7 @@ const InputArea = () => {
 
             // Only send if there's actual text
             if (currentText && currentText.trim()) {
-                processSend(currentText.trim());
+                processSend(currentText.trim(), true); // Pass true because this came from voice
             }
             // If no text was captured (silence), just go idle — don't send "didn't catch"
         };
@@ -169,7 +170,7 @@ const InputArea = () => {
     }, [setActiveSubtitle, setAiStatus, startListening, playAudioBlob]);
 
     // ─── Send Message Logic ─────────────────────────────────────
-    const processSend = async (userText) => {
+    const processSend = async (userText, isVoiceInput = false) => {
         if (!userText.trim()) return;
 
         addMessage({ id: Date.now(), role: 'user', text: userText });
@@ -188,7 +189,14 @@ const InputArea = () => {
                 status: 'success'
             }));
 
-            const aiMessage = { id: Date.now(), role: 'ai', text: aiText, tools, isStreaming: true };
+            const aiMessage = {
+                id: Date.now(),
+                role: 'ai',
+                text: aiText,
+                tools,
+                isStreaming: true,
+                isVoice: isVoiceInput // Pass flag to determine initial delay in UI
+            };
 
             if (result.order || result.orderCard) {
                 const o = result.order || result.orderCard;
@@ -201,8 +209,16 @@ const InputArea = () => {
             }
 
             addMessage(aiMessage);
-            // Fire TTS in parallel — don't await, so text shows instantly
-            speakText(aiText);
+
+            // Only fire TTS if the user spoke to us
+            if (isVoiceInput) {
+                speakText(aiText);
+            } else {
+                // If it's a text input, we're done immediately
+                setAiStatus(AI_STATUS.READY);
+                // Auto-focus input for next message
+                setTimeout(() => inputRef.current?.focus(), 100);
+            }
         } catch (err) {
             setTyping(false);
             setAiStatus(AI_STATUS.READY);
@@ -415,6 +431,7 @@ const InputArea = () => {
                 </button>
 
                 <input
+                    ref={inputRef}
                     type="text"
                     value={text}
                     onChange={(e) => setText(e.target.value)}

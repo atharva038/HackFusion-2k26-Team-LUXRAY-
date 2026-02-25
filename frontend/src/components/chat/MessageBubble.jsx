@@ -117,7 +117,11 @@ const MessageBubble = ({ message }) => {
                     )}
 
                     {isAi && message.isStreaming ? (
-                        <TypewriterText text={message.text} />
+                        <TypewriterText
+                            text={message.text}
+                            delayStart={message.isVoice ? 800 : 0}
+                            typingSpeed={message.isVoice ? 30 : 15}
+                        />
                     ) : (
                         message.text
                     )}
