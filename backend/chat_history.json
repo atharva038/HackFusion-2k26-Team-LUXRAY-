@@ -183,5 +183,40 @@
     "user": "I need crossing 500 mg",
     "ai": "I can help with that. Let's check if \"Crossing\" requires a prescription and if you have a valid one on file. Also, I'll verify its availability. Can you provide your name and, if possible, any patient identifier?",
     "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T12:07:13.054Z",
+    "user": "hello I need Paracetamol of 1500 mg",
+    "ai": "Paracetamol usually comes in common strengths like 500mg or 1000mg. Are you sure about 1500mg, or do you need a different dosage? If you need a total of 1500mg, we could provide multiple tablets of a smaller dosage. Let me know how you'd like to proceed.",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-25T12:07:54.793Z",
+    "user": "I need Paracetamol of 500 mg",
+    "ai": "It seems we're currently out of stock for Paracetamol 500 mg in our inventory. However, it doesn't require a prescription, so you might try another local pharmacy or check back with us later.",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol",
+          "dosage": "500 mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol not found in inventory."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Paracetamol"
+        },
+        "result": {
+          "valid": true,
+          "required": false,
+          "message": "Paracetamol 500mg is available over the counter. No prescription needed."
+        }
+      }
+    ]
   }
 ]

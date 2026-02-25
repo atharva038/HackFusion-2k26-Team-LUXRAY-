@@ -16,9 +16,31 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
-  origin: isProduction
-    ? process.env.FRONTEND_URL || 'https://your-domain.com'
-    : ['http://localhost:5173', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Normalize: strip trailing slash
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://hack-fusion-2k26-team-luxray.vercel.app',
+      'https://coral-app-neg9t.ondigitalocean.app',
+    ];
+    
+    // Allow all Vercel preview deployments for this project
+    if (normalizedOrigin.includes('hack-fusion-2k26') && normalizedOrigin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
+    if (allowed.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -41,21 +63,6 @@ app.use('/api/tts', ttsRoutes);
 
 // ─── Health Check ────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
-
-// ─── Serve static frontend in production ─────────
-if (isProduction) {
-  const { dirname, join } = await import('path');
-  const { fileURLToPath } = await import('url');
-  const __dirname = dirname(fileURLToPath(import.meta.url));
-  const frontendPath = join(__dirname, '..', '..', 'frontend', 'dist');
-
-  app.use(express.static(frontendPath));
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(join(frontendPath, 'index.html'));
-    }
-  });
-}
 
 // ─── Global Error Handler ────────────────────────
 app.use((err, req, res, next) => {
