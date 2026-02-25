@@ -74,14 +74,61 @@ export const sendChatMessage = (message) =>
   api.post('/chat', { message });
 
 // ─── TTS (OpenAI Voice) ──────────────────────────────────────
+
+/**
+ * Fetch TTS audio as a blob (streaming endpoint — low latency).
+ * Falls back to the legacy buffered endpoint if streaming fails.
+ */
 export const fetchTTSAudio = async (text) => {
   const token = localStorage.getItem('pharmacy_token');
-  const res = await axios.post(`${BASE}/tts`, { text }, {
-    responseType: 'blob',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  return res.data;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  try {
+    // Try streaming endpoint first (lower latency)
+    const res = await fetch(`${BASE}/tts/stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ text }),
+    });
+
+    if (!res.ok) throw new Error(`TTS stream failed: ${res.status}`);
+    return await res.blob();
+  } catch (streamErr) {
+    console.warn('[TTS] Stream failed, falling back to buffered:', streamErr.message);
+    // Fallback to legacy buffered endpoint
+    const res = await axios.post(`${BASE}/tts`, { text }, {
+      responseType: 'blob',
+      headers,
+    });
+    return res.data;
+  }
+};
+
+/**
+ * Split text into sentence-level chunks for faster TTS playback.
+ * Returns array of non-empty sentence strings.
+ */
+export const splitIntoSentences = (text) => {
+  if (!text || typeof text !== 'string') return [text || ''];
+
+  // Split on sentence-ending punctuation, keeping the punctuation
+  const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g);
+
+  if (!sentences || sentences.length === 0) return [text.trim()];
+
+  // Trim each sentence and filter empty ones
+  return sentences.map(s => s.trim()).filter(s => s.length > 0);
+};
+
+/**
+ * Fetch TTS for multiple sentences in parallel, returning an array of blob promises.
+ * The first sentence starts fetching immediately; subsequent sentences are pre-fetched.
+ * Caller can await them sequentially for back-to-back playback.
+ */
+export const fetchTTSChunked = (sentences) => {
+  // Fire all fetches in parallel — returns array of Promises<Blob>
+  return sentences.map(sentence => fetchTTSAudio(sentence));
 };

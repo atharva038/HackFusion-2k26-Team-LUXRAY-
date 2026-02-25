@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Mic, Send, Square, Loader2, Camera, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
-import { sendChatMessage, fetchTTSAudio } from '../../services/api';
+import { sendChatMessage, fetchTTSAudio, splitIntoSentences, fetchTTSChunked } from '../../services/api';
 import PrescriptionUpload from '../../features/prescription/PrescriptionUpload';
 import { uploadPrescription } from '../../features/prescription/uploadService';
 
@@ -18,6 +18,7 @@ const InputArea = () => {
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
     const manualStopRef = useRef(false);
+    const cancelSpeechRef = useRef(false);
     const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
     const fileUploadRef = useRef(null);
 
@@ -95,46 +96,77 @@ const InputArea = () => {
         recognition.start();
     }, []);
 
-    // ─── OpenAI TTS Playback ────────────────────────────────────
-    const speakText = useCallback(async (textToSpeak) => {
-        try {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current = null;
-            }
-
-            setActiveSubtitle(textToSpeak);
-            setAiStatus(AI_STATUS.SPEAKING);
-
-            const blob = await fetchTTSAudio(textToSpeak);
+    // ─── Sentence-Chunked TTS Playback (Low Latency) ────────────
+    const playAudioBlob = useCallback((blob) => {
+        return new Promise((resolve, reject) => {
             const url = URL.createObjectURL(blob);
             const audio = new Audio(url);
             audioRef.current = audio;
 
             audio.onended = () => {
-                setActiveSubtitle('');
-                setAiStatus(AI_STATUS.READY);
                 URL.revokeObjectURL(url);
                 audioRef.current = null;
+                resolve();
+            };
 
-                // Auto-open mic after AI finishes speaking
+            audio.onerror = (e) => {
+                URL.revokeObjectURL(url);
+                audioRef.current = null;
+                reject(e);
+            };
+
+            audio.play().catch(reject);
+        });
+    }, []);
+
+    const speakText = useCallback(async (textToSpeak) => {
+        try {
+            // Stop any current playback
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+
+            cancelSpeechRef.current = false;
+            setAiStatus(AI_STATUS.SPEAKING);
+
+            // Split into sentences for faster time-to-first-audio
+            const sentences = splitIntoSentences(textToSpeak);
+
+            // Fire ALL TTS requests in parallel immediately
+            const blobPromises = fetchTTSChunked(sentences);
+
+            // Play back-to-back as each resolves (in order)
+            for (let i = 0; i < sentences.length; i++) {
+                if (cancelSpeechRef.current) break;
+
+                // Show current sentence as subtitle
+                setActiveSubtitle(sentences[i]);
+
+                try {
+                    const blob = await blobPromises[i];
+                    if (cancelSpeechRef.current) break;
+                    await playAudioBlob(blob);
+                } catch (chunkErr) {
+                    console.warn(`[TTS] Sentence ${i + 1} failed, skipping:`, chunkErr.message);
+                    // Skip failed sentence, continue to next
+                }
+            }
+
+            // All done
+            setActiveSubtitle('');
+            setAiStatus(AI_STATUS.READY);
+
+            // Auto-open mic after AI finishes speaking
+            if (!cancelSpeechRef.current) {
                 setTimeout(() => startListening(), 500);
-            };
-
-            audio.onerror = () => {
-                setActiveSubtitle('');
-                setAiStatus(AI_STATUS.READY);
-                URL.revokeObjectURL(url);
-                audioRef.current = null;
-            };
-
-            audio.play().catch(console.error);
+            }
         } catch (err) {
             console.error('TTS playback error:', err);
             setActiveSubtitle('');
             setAiStatus(AI_STATUS.READY);
         }
-    }, [setActiveSubtitle, setAiStatus, startListening]);
+    }, [setActiveSubtitle, setAiStatus, startListening, playAudioBlob]);
 
     // ─── Send Message Logic ─────────────────────────────────────
     const processSend = async (userText) => {
@@ -156,7 +188,7 @@ const InputArea = () => {
                 status: 'success'
             }));
 
-            const aiMessage = { id: Date.now(), role: 'ai', text: aiText, tools };
+            const aiMessage = { id: Date.now(), role: 'ai', text: aiText, tools, isStreaming: true };
 
             if (result.order || result.orderCard) {
                 const o = result.order || result.orderCard;
