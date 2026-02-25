@@ -20,6 +20,9 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
+    // Normalize: strip trailing slash
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    
     const allowed = [
       'http://localhost:5173',
       'http://localhost:3000',
@@ -27,12 +30,12 @@ app.use(cors({
       'https://coral-app-neg9t.ondigitalocean.app',
     ];
     
-    // Also allow all Vercel preview deployments for this project
-    if (origin.includes('hack-fusion-2k26') && origin.includes('vercel.app')) {
+    // Allow all Vercel preview deployments for this project
+    if (normalizedOrigin.includes('hack-fusion-2k26') && normalizedOrigin.includes('vercel.app')) {
       return callback(null, true);
     }
     
-    if (allowed.includes(origin)) {
+    if (allowed.includes(normalizedOrigin)) {
       return callback(null, true);
     }
     
@@ -60,21 +63,6 @@ app.use('/api/tts', ttsRoutes);
 
 // ─── Health Check ────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
-
-// ─── Serve static frontend in production ─────────
-if (isProduction) {
-  const { dirname, join } = await import('path');
-  const { fileURLToPath } = await import('url');
-  const __dirname = dirname(fileURLToPath(import.meta.url));
-  const frontendPath = join(__dirname, '..', '..', 'frontend', 'dist');
-
-  app.use(express.static(frontendPath));
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(join(frontendPath, 'index.html'));
-    }
-  });
-}
 
 // ─── Global Error Handler ────────────────────────
 app.use((err, req, res, next) => {
