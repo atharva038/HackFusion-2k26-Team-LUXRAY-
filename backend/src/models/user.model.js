@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
       default: 'customer',
     },
 
-    age: {
+    age: {  
       type: Number,
       min: [0, 'Age cannot be negative'],
       max: [150, 'Age seems unrealistic'],

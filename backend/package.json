@@ -11,14 +11,17 @@
     "create-admin": "node src/createAdmin.js"
   },
   "dependencies": {
+    "@mistralai/mistralai": "^1.14.0",
     "@openai/agents": "^0.4.15",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.10.1",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^8.0.1",
     "openai": "^6.24.0",
