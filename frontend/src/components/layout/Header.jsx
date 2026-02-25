@@ -1,23 +1,24 @@
 import React from 'react';
-import { Moon, Sun, Activity, Phone, Stethoscope } from 'lucide-react';
+import { Moon, Sun, Stethoscope, LogOut, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
+import useAuthStore from '../../store/useAuthStore';
 
 const AiStatusIndicator = () => {
     const aiStatus = useAppStore(state => state.aiStatus);
 
-    let statusConfig = { text: 'Ready', color: 'bg-medical-success', dot: 'bg-green-500' };
+    let statusConfig = { text: 'Ready', dot: 'bg-green-400' };
     switch (aiStatus) {
         case AI_STATUS.LISTENING:
-            statusConfig = { text: 'Listening', color: 'bg-blue-500', dot: 'bg-blue-400 animate-pulse' };
+            statusConfig = { text: 'Listening', dot: 'bg-blue-400 animate-pulse' };
             break;
         case AI_STATUS.PROCESSING:
-            statusConfig = { text: 'Processing', color: 'bg-purple-500', dot: 'bg-purple-400 animate-bounce' };
+            statusConfig = { text: 'Processing', dot: 'bg-purple-400 animate-bounce' };
             break;
         case AI_STATUS.SPEAKING:
-            statusConfig = { text: 'Speaking', color: 'bg-teal-500', dot: 'bg-teal-400 animate-pulse' };
+            statusConfig = { text: 'Speaking', dot: 'bg-teal-400 animate-pulse' };
             break;
         default:
-            statusConfig = { text: 'AI Ready', color: 'bg-green-500', dot: 'bg-green-400' };
             break;
     }
 
@@ -31,6 +32,13 @@ const AiStatusIndicator = () => {
 
 const Header = () => {
     const { theme, toggleTheme } = useAppStore();
+    const { user, logout } = useAuthStore();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     return (
         <header className="h-16 flex items-center justify-between px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
@@ -46,20 +54,33 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* AI Status (Centered if space permits, hidden on very small screens) */}
+            {/* AI Status (Centered) */}
             <div className="hidden md:flex flex-1 justify-center">
                 <AiStatusIndicator />
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={toggleTheme}
+            <div className="flex items-center gap-3">
+                {user && (
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-black/5 dark:border-white/5">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="w-3 h-3 text-primary" />
+                        </div>
+                        <span className="text-xs font-medium text-text-muted truncate max-w-[100px]">{user.name}</span>
+                    </div>
+                )}
+                <button onClick={toggleTheme}
                     className="p-2.5 rounded-full bg-card hover:scale-105 transition-transform shadow-soft flex items-center justify-center text-text-muted hover:text-text cursor-pointer"
-                    aria-label="Toggle Theme"
-                >
+                    aria-label="Toggle Theme">
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </button>
+                {user && (
+                    <button onClick={handleLogout}
+                        className="p-2.5 rounded-full bg-card hover:scale-105 transition-transform shadow-soft flex items-center justify-center text-text-muted hover:text-red-500 cursor-pointer"
+                        aria-label="Logout" title="Logout">
+                        <LogOut className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
         </header>
@@ -67,3 +88,4 @@ const Header = () => {
 };
 
 export default Header;
+

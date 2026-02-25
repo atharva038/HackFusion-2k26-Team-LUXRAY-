@@ -7,6 +7,7 @@ import { initScheduler  } from './scheduler/refill.scheduler.js';
 
 import chatRoutes from './routes/chat.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // ─── Routes ──────────────────────────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/webhook', webhookRoutes);

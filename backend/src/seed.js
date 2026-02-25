@@ -28,21 +28,21 @@ async function seed() {
     console.log('🗑  Cleared all collections');
 
     // ─── Users ──────────────────────────────────────────────────
-    const users = await User.insertMany([
-      // Customers
-      { name: 'Michael Torres',  email: 'michael@example.com',   phone: '+91-9876543210', role: 'customer', age: 42, gender: 'male' },
-      { name: 'Sarah Jenkins',   email: 'sarah@example.com',     phone: '+91-9876543211', role: 'customer', age: 34, gender: 'female' },
-      { name: 'Robert Walker',   email: 'robert@example.com',    phone: '+91-9876543212', role: 'customer', age: 55, gender: 'male' },
-      { name: 'James Wilson',    email: 'james@example.com',     phone: '+91-9876543213', role: 'customer', age: 28, gender: 'male' },
-      { name: 'Emma Thompson',   email: 'emma@example.com',      phone: '+91-9876543214', role: 'customer', age: 45, gender: 'female' },
-      { name: 'William Davis',   email: 'william@example.com',   phone: '+91-9876543215', role: 'customer', age: 61, gender: 'male' },
-      { name: 'Priya Sharma',    email: 'priya@example.com',     phone: '+91-9876543216', role: 'customer', age: 30, gender: 'female' },
-      { name: 'Arun Mehta',      email: 'arun@example.com',      phone: '+91-9876543217', role: 'customer', age: 52, gender: 'male' },
-      { name: 'Lisa Park',       email: 'lisa@example.com',      phone: '+91-9876543218', role: 'customer', age: 38, gender: 'female' },
-      { name: 'David Chen',      email: 'david@example.com',     phone: '+91-9876543219', role: 'customer', age: 47, gender: 'male' },
-      // Staff
-      { name: 'Dr. Admin',       email: 'admin@pharmacy.com',    phone: '+91-9000000001', role: 'admin',      age: 50, gender: 'male' },
-      { name: 'Dr. Neha Patel',  email: 'neha@pharmacy.com',     phone: '+91-9000000002', role: 'pharmacist', age: 35, gender: 'female' },
+    const users = await User.create([
+      // Customers (password: password123)
+      { name: 'Michael Torres',  email: 'michael@example.com',   password: 'password123', phone: '+91-9876543210', role: 'customer', age: 42, gender: 'male' },
+      { name: 'Sarah Jenkins',   email: 'sarah@example.com',     password: 'password123', phone: '+91-9876543211', role: 'customer', age: 34, gender: 'female' },
+      { name: 'Robert Walker',   email: 'robert@example.com',    password: 'password123', phone: '+91-9876543212', role: 'customer', age: 55, gender: 'male' },
+      { name: 'James Wilson',    email: 'james@example.com',     password: 'password123', phone: '+91-9876543213', role: 'customer', age: 28, gender: 'male' },
+      { name: 'Emma Thompson',   email: 'emma@example.com',      password: 'password123', phone: '+91-9876543214', role: 'customer', age: 45, gender: 'female' },
+      { name: 'William Davis',   email: 'william@example.com',   password: 'password123', phone: '+91-9876543215', role: 'customer', age: 61, gender: 'male' },
+      { name: 'Priya Sharma',    email: 'priya@example.com',     password: 'password123', phone: '+91-9876543216', role: 'customer', age: 30, gender: 'female' },
+      { name: 'Arun Mehta',      email: 'arun@example.com',      password: 'password123', phone: '+91-9876543217', role: 'customer', age: 52, gender: 'male' },
+      { name: 'Lisa Park',       email: 'lisa@example.com',      password: 'password123', phone: '+91-9876543218', role: 'customer', age: 38, gender: 'female' },
+      { name: 'David Chen',      email: 'david@example.com',     password: 'password123', phone: '+91-9876543219', role: 'customer', age: 47, gender: 'male' },
+      // Staff (password: adminpass123)
+      { name: 'Dr. Admin',       email: 'admin@pharmacy.com',    password: 'adminpass123', phone: '+91-9000000001', role: 'admin',      age: 50, gender: 'male' },
+      { name: 'Dr. Neha Patel',  email: 'neha@pharmacy.com',     password: 'adminpass123', phone: '+91-9000000002', role: 'pharmacist', age: 35, gender: 'female' },
     ]);
     console.log(`👤 Inserted ${users.length} users`);
 
