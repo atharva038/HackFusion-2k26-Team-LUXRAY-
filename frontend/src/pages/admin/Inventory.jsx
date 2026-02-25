@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { PackagePlus, Edit2, Loader2, Search, Filter } from 'lucide-react';
+import { Edit2, Loader2, Search, Filter } from 'lucide-react';
 import { fetchInventory, restockMedicine } from '../../services/api';
+import InventoryStockModal from '../../components/ui/InventoryStockModal';
 
 const Inventory = () => {
     const [inventory, setInventory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [modalConfig, setModalConfig] = useState({ isOpen: false, item: null });
 
     const load = () => {
         setLoading(true);
@@ -15,13 +17,15 @@ const Inventory = () => {
 
     useEffect(load, []);
 
-    const handleRestock = async (id) => {
-        const qty = prompt('Enter restock quantity:');
-        if (!qty || isNaN(qty) || Number(qty) <= 0) return;
+    const handleRestockConfirm = async (qtyDelta) => {
         try {
-            await restockMedicine(id, Number(qty));
+            await restockMedicine(modalConfig.item._id, qtyDelta);
             load();
         } catch (err) { console.error(err); }
+    };
+
+    const triggerModal = (item) => {
+        setModalConfig({ isOpen: true, item });
     };
 
     const getStockStatusColor = (stock, threshold) => {
@@ -111,8 +115,8 @@ const Inventory = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button onClick={() => handleRestock(item._id)} className="p-1.5 rounded-md hover:bg-green-500/10 text-text-muted hover:text-green-600 transition-colors" title="Restock">
-                                            <PackagePlus className="w-4 h-4" />
+                                        <button onClick={() => triggerModal(item)} className="p-1.5 rounded-md hover:bg-primary/10 text-text-muted hover:text-primary transition-colors" title="Adjust Stock">
+                                            <Edit2 className="w-4 h-4" />
                                         </button>
                                     </td>
                                 </tr>
@@ -127,6 +131,14 @@ const Inventory = () => {
                     </table>
                 </div>
             </div>
+
+            <InventoryStockModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onConfirm={handleRestockConfirm}
+                medicineName={modalConfig.item?.name}
+                currentStock={modalConfig.item?.stock}
+            />
         </div>
     );
 };

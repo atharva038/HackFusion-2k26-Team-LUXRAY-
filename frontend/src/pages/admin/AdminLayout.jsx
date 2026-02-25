@@ -11,6 +11,7 @@ import {
     Stethoscope,
     Moon,
     Sun,
+    Monitor,
     LogOut,
     User,
 } from 'lucide-react';
@@ -88,8 +89,8 @@ const AdminLayout = () => {
                         onClick={toggleTheme}
                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-text-muted hover:bg-black/5 dark:hover:bg-white/5 hover:text-text transition-colors"
                     >
-                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                        {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'light' ? <Sun className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
+                        <span className="capitalize">{theme} Mode</span>
                     </button>
                     <button
                         onClick={handleLogout}
@@ -111,7 +112,7 @@ const AdminLayout = () => {
                     </div>
                     {/* Simplified mobile menu toggle or theme toggle for now */}
                     <button onClick={toggleTheme} className="p-2 text-text-muted">
-                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'light' ? <Sun className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
                     </button>
                 </header>
 

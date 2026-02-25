@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, X, FileText, AlertCircle, Loader2, Search, Filter } from 'lucide-react';
 import { fetchPrescriptions, updatePrescription } from '../../services/api';
+import ActionModal from '../../components/ui/ActionModal';
 
 const PrescriptionReview = () => {
     const [prescriptions, setPrescriptions] = useState([]);
@@ -8,6 +9,7 @@ const PrescriptionReview = () => {
     const [selected, setSelected] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [modalConfig, setModalConfig] = useState({ isOpen: false, id: null, approvedStatus: false, type: 'warning' });
 
     const load = () => {
         setLoading(true);
@@ -21,11 +23,23 @@ const PrescriptionReview = () => {
 
     useEffect(load, []);
 
-    const handleAction = async (id, approved) => {
+    const handleActionConfirm = async () => {
         try {
-            await updatePrescription(id, { approved });
+            await updatePrescription(modalConfig.id, { approved: modalConfig.approvedStatus });
             load();
         } catch (err) { console.error(err); }
+    };
+
+    const triggerModal = (id, approved) => {
+        setModalConfig({
+            isOpen: true,
+            id,
+            approvedStatus: approved,
+            title: approved ? 'Approve Prescription' : 'Reject Prescription',
+            message: approved ? 'Are you sure you want to approve this prescription and authorize dispensing?' : 'Are you sure you want to reject this prescription? The order will be halted.',
+            type: approved ? 'approve' : 'reject',
+            color: approved ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
+        });
     };
 
     const filteredPrescriptions = prescriptions.filter((rx) => {
@@ -111,10 +125,10 @@ const PrescriptionReview = () => {
                                 <h2 className="font-semibold text-text">Prescription Details</h2>
                                 {!selected.approved && (
                                     <div className="flex gap-3">
-                                        <button onClick={() => handleAction(selected._id, false)} className="flex items-center gap-2 px-4 py-2 bg-card border border-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium">
+                                        <button onClick={() => triggerModal(selected._id, false)} className="flex items-center gap-2 px-4 py-2 bg-card border border-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium">
                                             <X className="w-4 h-4" /> Reject
                                         </button>
-                                        <button onClick={() => handleAction(selected._id, true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
+                                        <button onClick={() => triggerModal(selected._id, true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">
                                             <Check className="w-4 h-4" /> Approve
                                         </button>
                                     </div>
@@ -145,6 +159,16 @@ const PrescriptionReview = () => {
                     )}
                 </div>
             </div>
+
+            <ActionModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onConfirm={handleActionConfirm}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                iconType={modalConfig.type}
+                confirmColorClass={modalConfig.color}
+            />
         </div>
     );
 };

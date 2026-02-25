@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun, Stethoscope, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Monitor, Stethoscope, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -72,7 +72,7 @@ const Header = () => {
                 <button onClick={toggleTheme}
                     className="p-2.5 rounded-full bg-card hover:scale-105 transition-transform shadow-soft flex items-center justify-center text-text-muted hover:text-text cursor-pointer"
                     aria-label="Toggle Theme">
-                    {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    {theme === 'dark' ? <Moon className="w-4 h-4" /> : theme === 'light' ? <Sun className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
                 </button>
                 {user && (
                     <button onClick={handleLogout}
