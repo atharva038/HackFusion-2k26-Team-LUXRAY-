@@ -5,8 +5,8 @@
   "description": "Express backend for the Agentic AI Pharmacy System",
   "main": "src/app.js",
   "scripts": {
-    "dev": "nodemon src/app.js",
-    "start": "node src/app.js",
+    "dev": "nodemon --ignore chat_history.json src/app.js",
+    "start": "NODE_ENV=production node src/app.js",
     "seed": "node src/seed.js",
     "create-admin": "node src/createAdmin.js"
   },

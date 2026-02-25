@@ -10,7 +10,17 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
+        configure: (proxy) => {
+          // Allow long-running requests like TTS
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setTimeout(120000);
+          });
+        },
       },
     },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
   },
 })

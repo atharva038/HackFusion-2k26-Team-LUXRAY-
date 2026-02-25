@@ -1,0 +1,11 @@
+{
+    "watch": [
+        "src"
+    ],
+    "ext": "js,mjs",
+    "ignore": [
+        "chat_history.json",
+        "*.json",
+        "node_modules"
+    ]
+}
