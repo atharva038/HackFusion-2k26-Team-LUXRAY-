@@ -43,15 +43,15 @@ export const handlePrescriptionUpload = async (req, res) => {
         console.log("💾 Saving to MongoDB...");
 
         const savedRecord = await Prescription.findOneAndUpdate(
-            { user: req.user.id }, // Find the document for this user
+            { user: req.user.id },
             {
                 $push: {
                     prescriptions: {
                         imageUrl: imageUrl,
-                        // Mapping Agent data to your medicineSchema fields
+                        // doctor_name / hospital_name live inside each medicine entry per the OCR schema
                         extractedData: agentData.medicines.map(med => ({
-                            doctor_name: agentData.doctor_name || "Unknown Doctor",
-                            hospital_name: agentData.hospital_name || "General Hospital",
+                            doctor_name: med.doctor_name || "Unknown Doctor",
+                            hospital_name: med.hospital_name || "General Hospital",
                             user_name: userName,
                             medi_name: med.medi_name || "Unknown medicine",
                             dosage: med.dosage,
@@ -61,17 +61,18 @@ export const handlePrescriptionUpload = async (req, res) => {
                             instructions: med.instructions || ""
                         })),
                         uploadedAt: new Date(),
-                        startDate: new Date(), // Explicitly setting for the Notification Agent
+                        startDate: new Date(),
                         isActive: true
                     }
                 },
                 $set: {
-                    // Setting a default validity for the whole document (e.g., 30 days)
                     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                    approved: false
+                    // Auto-approve: the OCR agent already confirmed this is a valid
+                    // medical prescription. Admin can still review the order in the dashboard.
+                    approved: true
                 }
             },
-            { upsert: true, new: true } // Create if doesn't exist, return the new version
+            { upsert: true, new: true }
         );
 
         // 4. Final Response
