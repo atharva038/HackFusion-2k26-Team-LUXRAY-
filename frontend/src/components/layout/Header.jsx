@@ -1,8 +1,8 @@
 import React from 'react';
-import { Moon, Sun, Monitor, Stethoscope, LogOut, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Moon, Sun, Monitor, Stethoscope, LogOut, User, ShoppingBag, FileText } from 'lucide-react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
-import useAuthStore from '../../store/useAuthStore';
+import useAuthStore, { STAFF_ROLES } from '../../store/useAuthStore';
 
 const AiStatusIndicator = () => {
     const aiStatus = useAppStore(state => state.aiStatus);
@@ -34,6 +34,7 @@ const Header = () => {
     const { theme, toggleTheme } = useAppStore();
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogout = () => {
         logout();
@@ -53,6 +54,36 @@ const Header = () => {
                     <p className="text-xs text-text-muted">Autonomous Pharmacy Assistant</p>
                 </div>
             </div>
+
+            {/* Customer Nav Links — hidden for admin/pharmacist */}
+            {user && !STAFF_ROLES.includes(user.role) && (
+                <div className="flex items-center gap-1">
+                    <Link
+                        to="/my-orders"
+                        title="My Orders"
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                            location.pathname === '/my-orders'
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
+                        }`}
+                    >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span className="hidden sm:inline">My Orders</span>
+                    </Link>
+                    <Link
+                        to="/my-prescriptions"
+                        title="My Prescriptions"
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                            location.pathname === '/my-prescriptions'
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
+                        }`}
+                    >
+                        <FileText className="w-4 h-4" />
+                        <span className="hidden sm:inline">My Prescriptions</span>
+                    </Link>
+                </div>
+            )}
 
             {/* AI Status (Centered) */}
             <div className="hidden md:flex flex-1 justify-center">
