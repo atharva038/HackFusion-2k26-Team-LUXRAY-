@@ -6,6 +6,7 @@ import Prescription from '../models/prescription.model.js';
 export const handlePrescriptionUpload = async (req, res) => {
     try {
         const userData = await User.findById(req.user.id);
+        console.log("this is the userData in handlePerescriptionUpload", userData);
         if (!userData) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -25,6 +26,7 @@ export const handlePrescriptionUpload = async (req, res) => {
         // 2. Pass the secure_url to your Agent
         console.log("🤖 Agent processing image URL:", imageUrl);
         const agentData = await runImageExtraction(imageUrl);
+        console.log("this is image data extractor agent data: ", agentData);
 
         // 2.5 Check if it's actually a prescription
         if (!agentData.isPrescription) {
@@ -48,10 +50,10 @@ export const handlePrescriptionUpload = async (req, res) => {
                         imageUrl: imageUrl,
                         // Mapping Agent data to your medicineSchema fields
                         extractedData: agentData.medicines.map(med => ({
-                            doctor_name: med.doctor_name || "Unknown Doctor",
-                            hospital_name: med.hospital_name || "General Hospital",
-                            user_name: med.user_name || userName,
-                            name: med.name || med.dosage,
+                            doctor_name: agentData.doctor_name || "Unknown Doctor",
+                            hospital_name: agentData.hospital_name || "General Hospital",
+                            user_name: userName,
+                            medi_name: med.medi_name || "Unknown medicine",
                             dosage: med.dosage,
                             frequency: med.frequency,
                             total_quantity: med.total_quantity,

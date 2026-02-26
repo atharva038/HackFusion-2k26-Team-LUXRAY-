@@ -220,6 +220,12 @@
     ]
   },
   {
+<<<<<<< HEAD
+    "timestamp": "2026-02-25T17:34:41.116Z",
+    "user": "Where is the prescription upload through camera feature?",
+    "ai": "I'm sorry, but the prescription upload feature is not something I can assist with, as I'm here to help with conversational orders and inventory checks. For prescription uploads, please check your pharmacy's online platform or mobile app, where such features are typically available.",
+    "toolCalls": []
+=======
     "timestamp": "2026-02-25T15:46:52.898Z",
     "user": "Do you have Paracetamol available?",
     "ai": "We have Paracetamol 500mg in stock with 800 strips available. No prescription is required for this medicine.",
@@ -478,5 +484,6 @@
         }
       }
     ]
+>>>>>>> 85e00d0caea860a0e11d89c0dfa6f2faa439e304
   }
 ]

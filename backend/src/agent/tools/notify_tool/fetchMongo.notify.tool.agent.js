@@ -54,7 +54,7 @@ export const fetchDosesTool = tool({
                             activeMedications.push({
                                 user_email: doc.user.email,
                                 user_name: doc.user.name,
-                                medicine_name: med.name,
+                                medicine_name: med.medi_name,
                                 dosage: med.dosage,
                                 frequency: med.frequency,
                                 instructions: med.instructions,
