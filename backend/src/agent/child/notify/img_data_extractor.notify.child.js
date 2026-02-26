@@ -7,6 +7,7 @@ const PrescriptionSchema = z.object({
         doctor_name: z.string(),
         hospital_name: z.string(),
         user_name: z.string(),
+        medi_name: z.string().describe("name of the medicine"),
         dosage: z.string(),
         frequency: z.string().describe("e.g., '8am and 8pm' or '1-0-1'"),
         total_quantity: z.number().optional().describe("Total number of pills/units prescribed"),

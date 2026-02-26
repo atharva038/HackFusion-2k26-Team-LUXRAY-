@@ -6,6 +6,7 @@ import Prescription from '../models/prescription.model.js';
 export const handlePrescriptionUpload = async (req, res) => {
     try {
         const userData = await User.findById(req.user.id);
+        console.log("this is the userData in handlePerescriptionUpload", userData);
         if (!userData) {
             return res.status(404).json({ error: 'User not found' });
         }

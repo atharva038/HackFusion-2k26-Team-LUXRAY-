@@ -5,6 +5,7 @@ const medicineSchema = new mongoose.Schema({
   doctor_name: { type: String, required: true },
   hospital_name: { type: String, required: true },
   user_name: { type: String, required: true },
+  medi_name: { type: String, required: true },
   dosage: { type: String },
   frequency: { type: String },
   total_quantity: { type: Number },

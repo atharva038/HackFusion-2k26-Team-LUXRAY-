@@ -14,3 +14,5 @@ NOW CREATE A CAMERA ON FRONTEND THAT SENDS IMAGE TO BACKEND ON --> handlePrescri
 
 handlePrescriptionUpload --> router is notiifcation.routes.js, use only the /upload route, the other one is for test
 
+changes made==> 1. manually added email and pass to send email for medication to user
+                2. created test route to check send email in notifyroutes
