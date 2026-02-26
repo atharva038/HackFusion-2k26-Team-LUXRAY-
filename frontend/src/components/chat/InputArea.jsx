@@ -193,7 +193,15 @@ const InputArea = () => {
                 setCurrentSessionId(result.sessionId);
             }
 
-            const aiText = result.text || result.response || result.finalOutput || result.message || 'I processed your request.';
+            let aiText = result.text || result.response || result.finalOutput || result.message || 'I processed your request.';
+            let requiresPrescription = false;
+
+            // Intercept PRESCRIPTION REQUIRED action
+            const REQUIRE_ACTION = '[ACTION: REQUIRE_PRESCRIPTION]';
+            if (aiText.includes(REQUIRE_ACTION)) {
+                aiText = aiText.replace(REQUIRE_ACTION, '').trim();
+                requiresPrescription = true;
+            }
 
             const tools = (result.toolCalls || result.steps || []).map(step => ({
                 icon: 'success',
@@ -207,7 +215,8 @@ const InputArea = () => {
                 text: aiText,
                 tools,
                 isStreaming: true,
-                isVoice: isVoiceInput // Pass flag to determine initial delay in UI
+                isVoice: isVoiceInput, // Pass flag to determine initial delay in UI
+                requiresPrescription
             };
 
             if (result.order || result.orderCard) {
@@ -241,13 +250,51 @@ const InputArea = () => {
     // Keep ref up to date so the mount effect can call the latest processSend
     processSendRef.current = processSend;
 
-    // On mount: if another page (e.g. MyOrders Reorder) pre-filled a pending message,
-    // automatically send it to the AI agent to start a conversational flow.
+    // On mount: bind chat actions to store and handle pending messages
     useEffect(() => {
-        const pending = useAppStore.getState().pendingChatMessage;
-        if (pending) {
+        // Expose critical functions to the global store so deep components can trigger them
+        useAppStore.getState().setChatActions({
+            processSend: processSendRef.current,
+            setShowPrescriptionModal,
+            handlePrescriptionResult
+        });
+
+        const pendingMsg = useAppStore.getState().pendingChatMessage;
+        const pendingRx = useAppStore.getState().pendingPrescription;
+
+        if (pendingMsg || pendingRx) {
             useAppStore.getState().clearPendingChatMessage();
-            const timer = setTimeout(() => processSendRef.current?.(pending), 400);
+            useAppStore.getState().clearPendingPrescription();
+
+            // Setup a small delay so the chat UI has time to mount
+            const timer = setTimeout(() => {
+                // If a prescription payload was passed, fake-trigger the prescription upload flow
+                if (pendingRx) {
+                    addMessage({
+                        id: Date.now(),
+                        role: 'user',
+                        text: '📷 Attached an existing prescription',
+                        imagePreview: pendingRx.imageUrl,
+                    });
+
+                    addMessage({
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        text: '📄 Attached existing prescription. Sending to the pharmacy agent…',
+                        tools: [
+                            { icon: 'success', text: 'Database Retreival', status: 'success' },
+                            { icon: 'success', text: 'Active Prescription Attached', status: 'success' },
+                        ],
+                        prescriptionData: pendingRx,
+                    });
+                }
+
+                // If a message was also provided, send it to the AI agent
+                if (pendingMsg) {
+                    processSendRef.current?.(pendingMsg);
+                }
+            }, 400);
+
             return () => clearTimeout(timer);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -316,9 +363,7 @@ const InputArea = () => {
         addMessage({
             id: Date.now() + 1,
             role: 'ai',
-            text: medNames.length > 0
-                ? `📄 Prescription scanned! Detected ${medNames.length} medicine${medNames.length > 1 ? 's' : ''}: ${medNames.join(', ')}. Sending to the pharmacy agent for validation…`
-                : '📄 Prescription uploaded and saved. Sending to the pharmacy agent for validation…',
+            text: '📄 Prescription uploaded and saved. Sending to the pharmacy agent for validation…',
             tools: [
                 { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
                 { icon: 'success', text: 'Mistral OCR', status: 'success' },
@@ -333,8 +378,7 @@ const InputArea = () => {
 
         // Auto-send a chat message so the agent can validate the prescription
         // against the pending order context already in the conversation history.
-        const medList = medNames.length > 0 ? medNames.join(', ') : 'the prescribed medicines';
-        const agentMessage = `I have just uploaded my prescription. The OCR extracted the following medicines: ${medList}. Please check my prescription on file, validate it, and complete my pending order.`;
+        const agentMessage = `I have just uploaded my prescription to my file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
         processSend(agentMessage);
     };
 

@@ -191,14 +191,21 @@ const MyPrescriptions = () => {
     };
 
     const handleUseForOrder = (entry) => {
-        const medNames = (entry.extractedData || [])
+        const meds = entry.extractedData || [];
+        const medNames = meds
             .map(m => m.medi_name)
             .filter(Boolean)
             .join(', ');
         const msg = medNames
             ? `I have a prescription on file. I'd like to order: ${medNames}. Please help me place an order.`
             : `I have a prescription on file. Please help me place a new order using it.`;
+
+        // Pass both the message and the rich prescription data to the chat
         useAppStore.getState().setPendingChatMessage(msg);
+        useAppStore.getState().setPendingPrescription({
+            imageUrl: entry.imageUrl,
+            medications: meds
+        });
         navigate('/');
     };
 

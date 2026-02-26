@@ -76,6 +76,14 @@ const useAppStore = create((set) => ({
   setPendingChatMessage: (msg) => set({ pendingChatMessage: msg }),
   clearPendingChatMessage: () => set({ pendingChatMessage: null }),
 
+  pendingPrescription: null,
+  setPendingPrescription: (data) => set({ pendingPrescription: data }),
+  clearPendingPrescription: () => set({ pendingPrescription: null }),
+
+  // ── Injectable Chat Actions for Deep Components ─────────────────
+  chatActions: null,
+  setChatActions: (actions) => set({ chatActions: actions }),
+
   // Example complex tool addition for the LAST AI message
   updateLastAiMessageTool: (toolUpdate) => set((state) => {
     const newMessages = [...state.messages];
