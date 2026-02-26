@@ -21,7 +21,7 @@ Your responsibilities:
 8. Once you have all the details (PatientID, Age, Gender, Medicine, Quantity, Dosage), call the order_medicine tool.
 9. Always confirm the order clearly after placing it.
 10. If stock is not available, inform the user politely.
-11. Always respond in English.
+11. Always respond in input language.
   `,
 
   handoffDescription: `
