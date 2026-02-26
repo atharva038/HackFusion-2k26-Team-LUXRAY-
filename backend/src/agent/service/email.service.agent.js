@@ -3,8 +3,8 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "araut7798@gmail.com",
-    pass: "dlop caea mcjn zgyo",
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -16,8 +16,8 @@ export const orderConfirmation = async (
   totalPrice,
 ) => {
   const mailOptions = {
-    from: "araut7798@gmail.com",
-    to: "2023bcs035@sggs.ac.in",
+    from: process.env.EMAIL_USER,
+    to: "2023bcs035@sggs.ac.in", // TODO: replace with dynamic recipient
     subject: "Order Confirmation - Pharmacy",
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">

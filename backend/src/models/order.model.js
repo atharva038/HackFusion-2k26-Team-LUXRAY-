@@ -1,14 +1,14 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
   medicine: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Medicine',
+    type: String,
+    ref: "Medicine",
     required: true,
   },
   dosage: {
-      type: String,
-    },
+    type: String,
+  },
   quantity: {
     type: Number,
     required: true,
@@ -19,20 +19,22 @@ const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
 
     age: {
       type: Number,
     },
-
+    gender: {
+      type: String,
+      enum: ["M", "F"],
+      default: "M",
+    },
     purchasingDate: {
       type: Date,
       default: Date.now,
     },
-
-  
 
     prescription: {
       type: Boolean,
@@ -40,15 +42,22 @@ const orderSchema = new mongoose.Schema(
     },
 
     prescriptionProof: {
-      type: String, // image URL
+      type: String,
+      default: "", // important
     },
 
     items: [orderItemSchema],
 
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'awaiting_prescription', 'dispatched'],
-      default: 'pending',
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "awaiting_prescription",
+        "dispatched",
+      ],
+      default: "pending",
     },
 
     totalItems: Number,
@@ -58,11 +67,10 @@ const orderSchema = new mongoose.Schema(
 
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model('Order', orderSchema);
-
+export default mongoose.model("Order", orderSchema);

@@ -47,21 +47,22 @@ Routes customer queries to the correct pharmacy agent:
   handoffs: [receptionist, orderAgent],
 });
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/hackfusion-2k26");
-    console.log("MongoDB Connected");
-  } catch (err) {
-    console.error("MongoDB connection error:", err.message);
-    process.exit(1);
-  }
-};
+// const connectDB = async () => {
+//   try {
+//     await mongoose.connect("mongodb://127.0.0.1:27017/hackfusion-2k26");
+//     console.log("MongoDB Connected");
+//   } catch (err) {
+//     console.error("MongoDB connection error:", err.message);
+//     process.exit(1);
+//   }
+// };
 
-await connectDB();
+// await connectDB();
 
-export async function chat(q = "") {
+async function chatPharma(q = "") {
   const result = await run(parentAgent, q);
   console.log(result.finalOutput);
+  return result.finalOutput;
 }
 // chat("Do you have NORSAN Omega-3 Total in stock?");
 // chat("Check availability of Paracetamol");
@@ -69,8 +70,10 @@ export async function chat(q = "") {
 // chat("How many units of Aqualibra are left?");
 // chat("Is Mucosolvan currently available?");
 // chat("why we use nORSAN Omega-3 Total")
-chat("Suggest something for high blood presure ");
+// chat("Suggest something for high blood presure ");
 // chat("order this Hyaluron-ratiopharm® Augentropfen with quantity 1 ")
 // chat(
-//   "Order medicine NORSAN Omega-3 Vegan, Patient ID P1001, Age 25, Gender Male, Quantity 1, Dosage 2 times daily, Prescription No",
+// "Order medicine NORSAN Omega-3 total, userId 65f1c2a9e4b0c123456789ab, age 25, gender M, quantity 1, dosage 2 times daily, prescription no"
 // );
+
+export default chatPharma;
