@@ -41,7 +41,7 @@ export const handlePrescriptionUpload = async (req, res) => {
                             doctor_name: agentData.doctor_name || "Unknown Doctor",
                             hospital_name: agentData.hospital_name || "General Hospital",
                             user_name: userName,
-                            name: med.name,
+                            medi_name: med.name,
                             dosage: med.dosage,
                             frequency: med.frequency,
                             total_quantity: med.total_quantity,
