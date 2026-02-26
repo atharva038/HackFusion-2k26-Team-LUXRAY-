@@ -193,3 +193,6 @@ export const fetchUserOrders = (page = 1, limit = 10) =>
 
 export const fetchUserPrescriptions = () =>
   api.get('/user/prescriptions');
+
+export const deleteUserPrescription = (entryId) =>
+  api.delete(`/prescription/${entryId}`);
