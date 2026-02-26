@@ -70,6 +70,12 @@ const useAppStore = create((set) => ({
     }]
   }),
   
+  // ── Reorder / prescription chat bridge ──────────────────────────
+  // Any page can set this; InputArea reads it on mount, sends it, then clears it.
+  pendingChatMessage: null,
+  setPendingChatMessage: (msg) => set({ pendingChatMessage: msg }),
+  clearPendingChatMessage: () => set({ pendingChatMessage: null }),
+
   // Example complex tool addition for the LAST AI message
   updateLastAiMessageTool: (toolUpdate) => set((state) => {
     const newMessages = [...state.messages];

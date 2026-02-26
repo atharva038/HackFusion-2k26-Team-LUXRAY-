@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Send, Square, Loader2, Camera, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
@@ -28,6 +28,10 @@ const InputArea = () => {
     const isProcessing = aiStatus === AI_STATUS.PROCESSING;
     const isSpeaking = aiStatus === AI_STATUS.SPEAKING;
     const isBusy = isProcessing || isSpeaking;
+
+    // ─── Reorder / Prescription Chat Bridge ─────────────────────
+    // Keeps a live ref to processSend so the mount effect below never stales
+    const processSendRef = useRef(null);
 
     // ─── Start Listening Helper ─────────────────────────────────
     const startListening = useCallback(() => {
@@ -233,6 +237,20 @@ const InputArea = () => {
             addMessage({ id: Date.now(), role: 'ai', text: 'Sorry, I encountered an error. Please try again.', tools: [] });
         }
     };
+
+    // Keep ref up to date so the mount effect can call the latest processSend
+    processSendRef.current = processSend;
+
+    // On mount: if another page (e.g. MyOrders Reorder) pre-filled a pending message,
+    // automatically send it to the AI agent to start a conversational flow.
+    useEffect(() => {
+        const pending = useAppStore.getState().pendingChatMessage;
+        if (pending) {
+            useAppStore.getState().clearPendingChatMessage();
+            const timer = setTimeout(() => processSendRef.current?.(pending), 400);
+            return () => clearTimeout(timer);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSend = async (e) => {
         e?.preventDefault();

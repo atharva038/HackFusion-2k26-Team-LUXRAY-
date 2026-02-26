@@ -186,3 +186,10 @@ export const fetchTTSChunked = (sentences) => {
   // Fire all fetches in parallel — returns array of Promises<Blob>
   return sentences.map(sentence => fetchTTSAudio(sentence));
 };
+
+// ─── User: My Orders & My Prescriptions ──────────────────────
+export const fetchUserOrders = (page = 1, limit = 10) =>
+  api.get(`/user/orders?page=${page}&limit=${limit}`);
+
+export const fetchUserPrescriptions = () =>
+  api.get('/user/prescriptions');

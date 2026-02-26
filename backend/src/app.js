@@ -13,6 +13,7 @@ import authRoutes from './routes/auth.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import notifyRoutes from './routes/notification.routes.js';
 import ttsRoutes from './routes/tts.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -98,6 +99,7 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/chat', chatLimiter, chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/tts', ttsLimiter, ttsRoutes);
 app.use('/api/prescription', prescriptionLimiter, notifyRoutes);
