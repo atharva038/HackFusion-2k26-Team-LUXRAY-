@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Pill, User, Stethoscope, Building2, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { Pill, User, Stethoscope, Building2, Clock, Calendar, AlertCircle, Hash } from 'lucide-react';
 
 /**
  * PrescriptionCard — renders extracted prescription data as a premium card inside the chat.
@@ -68,12 +68,20 @@ const PrescriptionCard = ({ data }) => {
                                 <span className="text-xs font-bold text-primary">{i + 1}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-text leading-tight">{med.name || med.dosage}</p>
+                                <p className="text-sm font-semibold text-text leading-tight">
+                                    {med.medi_name || med.name || 'Unknown Medicine'}
+                                </p>
                                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-text-muted">
                                     {med.dosage && (
                                         <span className="flex items-center gap-1">
                                             <Pill className="w-3 h-3 opacity-50" />
                                             {med.dosage}
+                                        </span>
+                                    )}
+                                    {med.total_quantity != null && (
+                                        <span className="flex items-center gap-1">
+                                            <Hash className="w-3 h-3 opacity-50" />
+                                            Qty: {med.total_quantity}
                                         </span>
                                     )}
                                     {med.frequency && (
