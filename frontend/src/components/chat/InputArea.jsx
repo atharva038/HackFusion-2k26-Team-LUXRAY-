@@ -276,8 +276,6 @@ const InputArea = () => {
 
     // ─── Prescription Upload Result Handler ──────────────────────
     const handlePrescriptionResult = (result, previewUrl = null) => {
-        const imageUrl = previewUrl || result.imageUrl;
-
         // Non-prescription detection
         if (result.isPrescription === false) {
             addMessage({
@@ -294,15 +292,15 @@ const InputArea = () => {
         }
 
         const meds = result.medications || [];
-        const medNames = meds.map(m => m.name || m.dosage).filter(Boolean);
-        const summary = medNames.length > 0
-            ? `📄 Prescription extracted! Found ${medNames.length} medicine${medNames.length > 1 ? 's' : ''}: ${medNames.join(', ')}.`
-            : '📄 Prescription uploaded and saved to your profile.';
+        // Backend returns medi_name from the OCR schema
+        const medNames = meds.map(m => m.medi_name || m.name || m.medicine).filter(Boolean);
 
         addMessage({
             id: Date.now() + 1,
             role: 'ai',
-            text: summary,
+            text: medNames.length > 0
+                ? `📄 Prescription scanned! Detected ${medNames.length} medicine${medNames.length > 1 ? 's' : ''}: ${medNames.join(', ')}. Sending to the pharmacy agent for validation…`
+                : '📄 Prescription uploaded and saved. Sending to the pharmacy agent for validation…',
             tools: [
                 { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
                 { icon: 'success', text: 'Mistral OCR', status: 'success' },
@@ -314,6 +312,12 @@ const InputArea = () => {
                 recordId: result.recordId,
             },
         });
+
+        // Auto-send a chat message so the agent can validate the prescription
+        // against the pending order context already in the conversation history.
+        const medList = medNames.length > 0 ? medNames.join(', ') : 'the prescribed medicines';
+        const agentMessage = `I have just uploaded my prescription. The OCR extracted the following medicines: ${medList}. Please check my prescription on file, validate it, and complete my pending order.`;
+        processSend(agentMessage);
     };
 
     // ─── Direct File Upload Handler ──────────────────────────────
