@@ -13,7 +13,8 @@ const InputArea = () => {
     const [text, setText] = useState('');
     const {
         addMessage, aiStatus, setAiStatus, setTyping,
-        setLiveTranscript, setActiveSubtitle
+        setLiveTranscript, setActiveSubtitle,
+        setCurrentAudioElement,
     } = useAppStore();
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
@@ -103,22 +104,26 @@ const InputArea = () => {
             const url = URL.createObjectURL(blob);
             const audio = new Audio(url);
             audioRef.current = audio;
+            // Expose to the avatar so it can drive lip-sync via Web Audio API
+            setCurrentAudioElement(audio);
 
             audio.onended = () => {
                 URL.revokeObjectURL(url);
                 audioRef.current = null;
+                setCurrentAudioElement(null);
                 resolve();
             };
 
             audio.onerror = (e) => {
                 URL.revokeObjectURL(url);
                 audioRef.current = null;
+                setCurrentAudioElement(null);
                 reject(e);
             };
 
             audio.play().catch(reject);
         });
-    }, []);
+    }, [setCurrentAudioElement]);
 
     const speakText = useCallback(async (textToSpeak) => {
         try {
@@ -141,12 +146,11 @@ const InputArea = () => {
             for (let i = 0; i < sentences.length; i++) {
                 if (cancelSpeechRef.current) break;
 
-                // Show current sentence as subtitle
-                setActiveSubtitle(sentences[i]);
-
                 try {
                     const blob = await blobPromises[i];
                     if (cancelSpeechRef.current) break;
+                    // Show subtitle exactly when audio begins — not before
+                    setActiveSubtitle(sentences[i]);
                     await playAudioBlob(blob);
                 } catch (chunkErr) {
                     console.warn(`[TTS] Sentence ${i + 1} failed, skipping:`, chunkErr.message);

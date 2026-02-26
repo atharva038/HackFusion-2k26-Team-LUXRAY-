@@ -90,7 +90,29 @@ body {
   100% { opacity: 1; transform: translateY(0); }
 }
 
-.animate-breathe { animation: breathe 4s ease-in-out infinite; }
-.animate-ripple { animation: ripple 1.4s ease-out infinite; }
-.animate-orbit { animation: orbit 3s linear infinite; }
+.animate-breathe    { animation: breathe    4s   ease-in-out infinite; }
+.animate-ripple     { animation: ripple     1.5s ease-out  infinite; }
+.animate-orbit      { animation: orbit      3s   linear    infinite; }
 .animate-fade-in-up { animation: fade-in-up 0.3s ease-out; }
+
+/* ── Avatar-specific ──────────────────────────────────────── */
+
+/* Smooth eye-blink scale: used as fallback if Framer Motion not applied */
+@keyframes eye-blink {
+  0%, 92%, 100% { transform: scaleY(1);    }
+  94%, 98%      { transform: scaleY(0.08); }
+}
+
+/* Subtle idle breath pulse on the aura ring */
+@keyframes aura-breathe {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50%      { opacity: 0.22; transform: scale(1.025); }
+}
+.animate-aura-breathe { animation: aura-breathe 4s ease-in-out infinite; }
+
+/* Speaking waveform halo fade-pulse */
+@keyframes halo-pulse {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 0.35; }
+}
+.animate-halo-pulse { animation: halo-pulse 0.7s ease-in-out infinite; }

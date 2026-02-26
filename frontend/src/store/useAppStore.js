@@ -35,6 +35,10 @@ const useAppStore = create((set) => ({
   activeSubtitle: '',
   setActiveSubtitle: (text) => set({ activeSubtitle: text }),
 
+  // Live audio element for lip-sync (set by InputArea during TTS playback)
+  currentAudioElement: null,
+  setCurrentAudioElement: (el) => set({ currentAudioElement: el }),
+
   // Chat State
   messages: [
     {

@@ -445,18 +445,38 @@
     "toolCalls": []
   },
   {
-    "timestamp": "2026-02-26T06:00:21.464Z",
-    "user": "hi",
+    "timestamp": "2026-02-26T05:41:38.153Z",
+    "user": "hello hello",
+    "ai": "Hi there! How can I assist you today?",
     "toolCalls": []
   },
   {
-    "timestamp": "2026-02-26T06:01:01.140Z",
-    "user": "hi",
-    "toolCalls": []
-  },
-  {
-    "timestamp": "2026-02-26T06:13:07.629Z",
-    "user": "Do you have NORSAN Omega-3 Total in stock?",
-    "toolCalls": []
+    "timestamp": "2026-02-26T05:59:42.615Z",
+    "user": "hello can I get 500 mg Paracetamol",
+    "ai": "I'm sorry, but we're currently out of stock on Paracetamol 500mg. It's available over the counter, so no prescription is needed. You might want to check another pharmacy for availability.",
+    "toolCalls": [
+      {
+        "name": "check_inventory",
+        "args": {
+          "medicineName": "Paracetamol",
+          "dosage": "500mg"
+        },
+        "result": {
+          "available": false,
+          "message": "Paracetamol not found in inventory."
+        }
+      },
+      {
+        "name": "validate_prescription",
+        "args": {
+          "medicineName": "Paracetamol"
+        },
+        "result": {
+          "valid": true,
+          "required": false,
+          "message": "Paracetamol 500mg is available over the counter. No prescription needed."
+        }
+      }
+    ]
   }
 ]
