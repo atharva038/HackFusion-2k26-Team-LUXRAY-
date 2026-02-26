@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     FileText, Loader2, Eye, Download, MessageSquarePlus, X,
-    Pill, Stethoscope, Building2, Hash, ImageOff
+    Pill, Stethoscope, Building2, Hash, ImageOff, Trash2, Home
 } from 'lucide-react';
 import Header from '../../components/layout/Header';
-import { fetchUserPrescriptions } from '../../services/api';
+import { fetchUserPrescriptions, deleteUserPrescription } from '../../services/api';
 import useAppStore from '../../store/useAppStore';
 
 const getPrescriptionStatusColor = (approved) =>
@@ -33,7 +33,7 @@ const ImageModal = ({ imageUrl, onClose }) => (
     </div>
 );
 
-const PrescriptionUploadEntry = ({ entry, index, onView, onDownload, onUseForOrder }) => {
+const PrescriptionUploadEntry = ({ entry, index, onView, onDownload, onUseForOrder, onDelete }) => {
     const meds = entry.extractedData || [];
     const firstMed = meds[0] || {};
 
@@ -142,6 +142,12 @@ const PrescriptionUploadEntry = ({ entry, index, onView, onDownload, onUseForOrd
                     <Download className="w-3.5 h-3.5" /> Download
                 </button>
                 <button
+                    onClick={() => onDelete(entry._id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+                <button
                     onClick={() => onUseForOrder(entry)}
                     className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white text-xs font-medium transition-colors cursor-pointer"
                 >
@@ -182,23 +188,55 @@ const MyPrescriptions = () => {
 
     const handleView = (imageUrl) => setViewImageUrl(imageUrl);
 
-    const handleDownload = (imageUrl, index) => {
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        link.download = `prescription-${index + 1}.jpg`;
-        link.target = '_blank';
-        link.click();
+    const handleDownload = async (imageUrl, index) => {
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `prescription-${index + 1}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Failed to download image:', err);
+        }
+    };
+
+    const handleDelete = async (entryId) => {
+        if (!window.confirm('Are you sure you want to delete this prescription?')) return;
+
+        try {
+            await deleteUserPrescription(entryId);
+            // Remove from local state
+            setData(prevData => prevData.map(rx => ({
+                ...rx,
+                prescriptions: (rx.prescriptions || []).filter(e => e._id !== entryId)
+            })));
+        } catch (err) {
+            console.error('Failed to delete prescription:', err);
+            alert('Failed to delete prescription');
+        }
     };
 
     const handleUseForOrder = (entry) => {
-        const medNames = (entry.extractedData || [])
+        const meds = entry.extractedData || [];
+        const medNames = meds
             .map(m => m.medi_name)
             .filter(Boolean)
             .join(', ');
         const msg = medNames
             ? `I have a prescription on file. I'd like to order: ${medNames}. Please help me place an order.`
             : `I have a prescription on file. Please help me place a new order using it.`;
+
+        // Pass both the message and the rich prescription data to the chat
         useAppStore.getState().setPendingChatMessage(msg);
+        useAppStore.getState().setPendingPrescription({
+            imageUrl: entry.imageUrl,
+            medications: meds
+        });
         navigate('/');
     };
 
@@ -208,10 +246,19 @@ const MyPrescriptions = () => {
             <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-text flex items-center gap-3">
-                            <FileText className="w-6 h-6 text-primary" />
-                            My Prescriptions
-                        </h1>
+                        <div className="flex items-center gap-3 mb-2">
+                            <button
+                                onClick={() => navigate('/')}
+                                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-text-muted transition-colors cursor-pointer"
+                                title="Back to Chat"
+                            >
+                                <Home className="w-5 h-5" />
+                            </button>
+                            <h1 className="text-2xl font-bold tracking-tight text-text flex items-center gap-3">
+                                <FileText className="w-6 h-6 text-primary" />
+                                My Prescriptions
+                            </h1>
+                        </div>
                         <p className="text-text-muted text-sm mt-1">
                             Your prescription history and uploaded documents.
                         </p>
@@ -256,6 +303,7 @@ const MyPrescriptions = () => {
                                 onView={handleView}
                                 onDownload={handleDownload}
                                 onUseForOrder={handleUseForOrder}
+                                onDelete={handleDelete}
                             />
                         ))}
                     </div>

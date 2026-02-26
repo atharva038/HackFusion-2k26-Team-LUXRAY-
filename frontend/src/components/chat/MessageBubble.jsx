@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, ShieldCheck, Search, Loader2 } from 'lucide-react';
 import OrderCard from './OrderCard';
 import PrescriptionCard from '../../features/prescription/PrescriptionCard';
+import InlinePrescriptionSelector from '../../features/prescription/InlinePrescriptionSelector';
 
 const TypewriterText = ({ text, delayStart = 800, typingSpeed = 20, onComplete }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -129,6 +130,13 @@ const MessageBubble = ({ message }) => {
                     {/* Subtle shimmer on AI messages */}
                     {isAi && (
                         <div className="absolute inset-0 -translate-x-full animate-[shimmer_3s_ease-in-out_1] bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none rounded-3xl overflow-hidden" />
+                    )}
+
+                    {/* Inline Prescription Selector */}
+                    {isAi && message.requiresPrescription && (
+                        <div className="mt-2 text-text">
+                            <InlinePrescriptionSelector />
+                        </div>
                     )}
                 </div>
 

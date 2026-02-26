@@ -24,6 +24,11 @@ const InputArea = () => {
     const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
     const fileUploadRef = useRef(null);
 
+    // ─── Image Attachment State ─────────────────────────────────
+    const [attachedFile, setAttachedFile] = useState(null);
+    const [attachedPreview, setAttachedPreview] = useState(null);
+    const [queuedExistingRx, setQueuedExistingRx] = useState(null);
+
     const isListening = aiStatus === AI_STATUS.LISTENING;
     const isProcessing = aiStatus === AI_STATUS.PROCESSING;
     const isSpeaking = aiStatus === AI_STATUS.SPEAKING;
@@ -193,7 +198,15 @@ const InputArea = () => {
                 setCurrentSessionId(result.sessionId);
             }
 
-            const aiText = result.text || result.response || result.finalOutput || result.message || 'I processed your request.';
+            let aiText = result.text || result.response || result.finalOutput || result.message || 'I processed your request.';
+            let requiresPrescription = false;
+
+            // Intercept PRESCRIPTION REQUIRED action
+            const REQUIRE_ACTION = '[ACTION: REQUIRE_PRESCRIPTION]';
+            if (aiText.includes(REQUIRE_ACTION)) {
+                aiText = aiText.replace(REQUIRE_ACTION, '').trim();
+                requiresPrescription = true;
+            }
 
             const tools = (result.toolCalls || result.steps || []).map(step => ({
                 icon: 'success',
@@ -207,7 +220,8 @@ const InputArea = () => {
                 text: aiText,
                 tools,
                 isStreaming: true,
-                isVoice: isVoiceInput // Pass flag to determine initial delay in UI
+                isVoice: isVoiceInput, // Pass flag to determine initial delay in UI
+                requiresPrescription
             };
 
             if (result.order || result.orderCard) {
@@ -241,14 +255,38 @@ const InputArea = () => {
     // Keep ref up to date so the mount effect can call the latest processSend
     processSendRef.current = processSend;
 
-    // On mount: if another page (e.g. MyOrders Reorder) pre-filled a pending message,
-    // automatically send it to the AI agent to start a conversational flow.
+    // On mount: bind chat actions to store and handle pending messages
     useEffect(() => {
-        const pending = useAppStore.getState().pendingChatMessage;
-        if (pending) {
+        // Expose critical functions to the global store so deep components can trigger them
+        useAppStore.getState().setChatActions({
+            processSend: processSendRef.current,
+            setShowPrescriptionModal,
+            handlePrescriptionResult: () => { } // Decommissioned function handled in UI state now
+        });
+
+        const pendingMsg = useAppStore.getState().pendingChatMessage;
+        const pendingRx = useAppStore.getState().pendingPrescription;
+
+        if (pendingMsg || pendingRx) {
             useAppStore.getState().clearPendingChatMessage();
-            const timer = setTimeout(() => processSendRef.current?.(pending), 400);
-            return () => clearTimeout(timer);
+            useAppStore.getState().clearPendingPrescription();
+
+            if (pendingRx) {
+                // Instead of sending instantly, queue it in the input preview box!
+                setAttachedPreview(pendingRx.imageUrl);
+                setQueuedExistingRx(pendingRx);
+
+                // Pre-fill the input text with the user's intent 
+                if (pendingMsg) {
+                    setText("I want to place a new order using this prescription.");
+                }
+            } else if (pendingMsg) {
+                // No image, just a text intent to auto-send
+                const timer = setTimeout(() => {
+                    processSendRef.current?.(pendingMsg);
+                }, 400);
+                return () => clearTimeout(timer);
+            }
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -262,8 +300,114 @@ const InputArea = () => {
         }
 
         const userText = text.trim();
+        const fileToUpload = attachedFile;
+        const existingRxToUse = queuedExistingRx;
+        const previewToUse = attachedPreview;
+
+        if (!userText && !fileToUpload && !existingRxToUse) return;
+
         setText('');
-        if (userText) {
+
+        if (existingRxToUse) {
+            setQueuedExistingRx(null);
+            setAttachedPreview(null);
+
+            addMessage({
+                id: Date.now(),
+                role: 'user',
+                text: userText || '📎 Attached an existing prescription',
+                imagePreview: previewToUse,
+            });
+
+            addMessage({
+                id: Date.now() + 1,
+                role: 'ai',
+                text: '📄 Attached existing prescription. Sending to the pharmacy agent…',
+                tools: [
+                    { icon: 'success', text: 'Database Retreival', status: 'success' },
+                    { icon: 'success', text: 'Active Prescription Attached', status: 'success' },
+                ],
+                prescriptionData: existingRxToUse,
+            });
+
+            const agentTriggerMessage = userText
+                ? `I have selected my existing prescription from file, and I also asked: "${userText}". Please validate my prescription and answer my question.`
+                : `I have selected my prescription from file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
+
+            await processSend(agentTriggerMessage);
+
+        } else if (fileToUpload) {
+            setAttachedFile(null);
+            setAttachedPreview(null);
+
+            // Render user message immediately with image
+            addMessage({
+                id: Date.now(),
+                role: 'user',
+                text: userText || '📎 Attached an image',
+                imagePreview: previewToUse,
+            });
+
+            setAiStatus(AI_STATUS.PROCESSING);
+            setTyping(true);
+
+            try {
+                const result = await uploadPrescription(fileToUpload);
+                setTyping(false);
+                setAiStatus(AI_STATUS.READY);
+
+                // If the upload failed OCR prescription detection
+                if (result.isPrescription === false) {
+                    addMessage({
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        text: `⚠️ ${result.message || 'This image does not appear to be a medical prescription.'}`,
+                        tools: [
+                            { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
+                            { icon: 'success', text: 'Mistral OCR', status: 'success' },
+                            { icon: 'search', text: 'Not a prescription', status: 'warning' },
+                        ],
+                    });
+
+                    // Still send the user's text to the AI if they typed something
+                    if (userText) {
+                        await processSend(userText);
+                    }
+                    return;
+                }
+
+                const meds = result.medications || [];
+
+                // Create AI acknowledgment message
+                addMessage({
+                    id: Date.now() + 1,
+                    role: 'ai',
+                    text: '📄 Prescription uploaded and saved. Sending to the pharmacy agent for validation…',
+                    tools: [
+                        { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
+                        { icon: 'success', text: 'Mistral OCR', status: 'success' },
+                        { icon: 'success', text: 'AI Data Extraction', status: 'success' },
+                    ],
+                    prescriptionData: {
+                        medications: meds,
+                        imageUrl: result.imageUrl,
+                        recordId: result.recordId,
+                    },
+                });
+
+                // Send the AI trigger, merging the user's custom query if they typed one
+                const agentTriggerMessage = userText
+                    ? `I have uploaded my prescription to my file, and I also asked: "${userText}". Please validate my prescription and answer my question.`
+                    : `I have just uploaded my prescription to my file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
+
+                await processSend(agentTriggerMessage);
+
+            } catch (err) {
+                setTyping(false);
+                setAiStatus(AI_STATUS.READY);
+                addMessage({ id: Date.now(), role: 'ai', text: `❌ Upload failed: ${err.message}`, tools: [] });
+            }
+        } else if (userText) {
             await processSend(userText);
         }
     };
@@ -292,79 +436,42 @@ const InputArea = () => {
         return "Type your message or tap the mic…";
     };
 
-    // ─── Prescription Upload Result Handler ──────────────────────
-    const handlePrescriptionResult = (result, previewUrl = null) => {
-        // Non-prescription detection
-        if (result.isPrescription === false) {
-            addMessage({
-                id: Date.now() + 1,
-                role: 'ai',
-                text: `⚠️ ${result.message || 'This image does not appear to be a medical prescription. Please upload a valid prescription image.'}`,
-                tools: [
-                    { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
-                    { icon: 'success', text: 'Mistral OCR', status: 'success' },
-                    { icon: 'search', text: 'Not a prescription', status: 'warning' },
-                ],
-            });
-            return;
+    // ─── Direct File Upload Handler (Queue) ────────────────────────
+    const handleDirectFileUpload = async (eventOrFile) => {
+        let file;
+        if (eventOrFile?.target?.files) {
+            file = eventOrFile.target.files[0];
+            eventOrFile.target.value = ''; // reset
+        } else if (eventOrFile instanceof File) {
+            file = eventOrFile;
         }
 
-        const meds = result.medications || [];
-        // Backend returns medi_name from the OCR schema
-        const medNames = meds.map(m => m.medi_name || m.name || m.medicine).filter(Boolean);
+        if (!file) return;
 
-        addMessage({
-            id: Date.now() + 1,
-            role: 'ai',
-            text: medNames.length > 0
-                ? `📄 Prescription scanned! Detected ${medNames.length} medicine${medNames.length > 1 ? 's' : ''}: ${medNames.join(', ')}. Sending to the pharmacy agent for validation…`
-                : '📄 Prescription uploaded and saved. Sending to the pharmacy agent for validation…',
-            tools: [
-                { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
-                { icon: 'success', text: 'Mistral OCR', status: 'success' },
-                { icon: 'success', text: 'AI Data Extraction', status: 'success' },
-            ],
-            prescriptionData: {
-                medications: meds,
-                imageUrl: result.imageUrl,
-                recordId: result.recordId,
-            },
-        });
+        // Create preview URL and queue it instead of uploading instantly
+        const previewUrl = URL.createObjectURL(file);
+        setAttachedFile(file);
+        setAttachedPreview(previewUrl);
 
-        // Auto-send a chat message so the agent can validate the prescription
-        // against the pending order context already in the conversation history.
-        const medList = medNames.length > 0 ? medNames.join(', ') : 'the prescribed medicines';
-        const agentMessage = `I have just uploaded my prescription. The OCR extracted the following medicines: ${medList}. Please check my prescription on file, validate it, and complete my pending order.`;
-        processSend(agentMessage);
+        // Auto-focus input box so user can immediately start typing
+        setTimeout(() => inputRef.current?.focus(), 100);
     };
 
-    // ─── Direct File Upload Handler ──────────────────────────────
-    const handleDirectFileUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        e.target.value = ''; // reset
+    // ─── Paste Handler for Images ────────────────────────────────
+    const handlePaste = (e) => {
+        if (isBusy || isListening) return;
+        const items = e.clipboardData?.items;
+        if (!items) return;
 
-        // Create preview URL
-        const previewUrl = URL.createObjectURL(file);
-
-        addMessage({
-            id: Date.now(),
-            role: 'user',
-            text: '📎 Uploaded a prescription image',
-            imagePreview: previewUrl,
-        });
-        setAiStatus(AI_STATUS.PROCESSING);
-        setTyping(true);
-
-        try {
-            const result = await uploadPrescription(file);
-            setTyping(false);
-            setAiStatus(AI_STATUS.READY);
-            handlePrescriptionResult(result, previewUrl);
-        } catch (err) {
-            setTyping(false);
-            setAiStatus(AI_STATUS.READY);
-            addMessage({ id: Date.now(), role: 'ai', text: `❌ Upload failed: ${err.message}`, tools: [] });
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    e.preventDefault();
+                    handleDirectFileUpload(blob);
+                    break;
+                }
+            }
         }
     };
 
@@ -389,6 +496,32 @@ const InputArea = () => {
             {isListening && (
                 <div className="absolute inset-x-4 -bottom-2 h-16 bg-primary/15 blur-2xl rounded-full z-0 transition-all duration-700" />
             )}
+
+            {/* Queued Image Preview Area */}
+            <AnimatePresence>
+                {attachedPreview && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="relative w-24 h-24 mb-3 ml-4 rounded-xl overflow-hidden border-2 border-primary/20 bg-black/5 dark:bg-white/5 shadow-sm group"
+                    >
+                        <img src={attachedPreview} alt="Attached Preview" className="w-full h-full object-cover" />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAttachedFile(null);
+                                setAttachedPreview(null);
+                                setQueuedExistingRx(null);
+                            }}
+                            className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                        >
+                            <span className="sr-only">Remove</span>
+                            &times;
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <form
                 id="chat-form"
@@ -465,6 +598,7 @@ const InputArea = () => {
                     type="text"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
+                    onPaste={handlePaste}
                     placeholder={getPlaceholder()}
                     disabled={isListening || isBusy}
                     className="flex-1 min-w-0 bg-transparent border-none focus:outline-none text-[15px] px-2 text-text placeholder:text-text-muted/50 disabled:opacity-60 transition-opacity duration-300"
@@ -499,13 +633,38 @@ const InputArea = () => {
                 isOpen={showPrescriptionModal}
                 onClose={() => setShowPrescriptionModal(false)}
                 onResult={(result, capturedPreviewUrl) => {
+                    // Queue the camera capture the same way we queue file uploads
+                    setAttachedPreview(capturedPreviewUrl || result.imageUrl);
+                    // Usually the camera returns a blob. For now, since it already uploaded internally
+                    // to cloudinary in PrescriptionUpload, we might need a workaround. 
+                    // To keep UX smooth, we will trigger the AI acknowledgment immediately for camera since it uploads directly inside the modal.
+
                     addMessage({
                         id: Date.now(),
                         role: 'user',
                         text: '📷 Captured a prescription image',
                         imagePreview: capturedPreviewUrl || result.imageUrl,
                     });
-                    handlePrescriptionResult(result, capturedPreviewUrl);
+
+                    const meds = result.medications || [];
+                    addMessage({
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        text: '📄 Prescription uploaded and saved. Sending to the pharmacy agent for validation…',
+                        tools: [
+                            { icon: 'success', text: 'Cloudinary Upload', status: 'success' },
+                            { icon: 'success', text: 'Mistral OCR', status: 'success' },
+                            { icon: 'success', text: 'AI Data Extraction', status: 'success' },
+                        ],
+                        prescriptionData: {
+                            medications: meds,
+                            imageUrl: result.imageUrl,
+                            recordId: result.recordId,
+                        },
+                    });
+
+                    const agentMessage = `I have just captured and uploaded my prescription to my file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
+                    processSend(agentMessage);
                 }}
             />
         </div>

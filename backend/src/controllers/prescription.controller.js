@@ -2,6 +2,7 @@ import { uploadToCloudinary } from '../services/cloudinary.service.js';
 import { runImageExtraction } from '../agent/child/notify/img_data_extractor.notify.child.js';
 import User from '../models/user.model.js'; // Ensure correct casing for your imports
 import Prescription from '../models/prescription.model.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const handlePrescriptionUpload = async (req, res) => {
     try {
@@ -88,5 +89,67 @@ export const handlePrescriptionUpload = async (req, res) => {
     } catch (error) {
         console.error("Internal Flow Error:", error);
         res.status(500).json({ error: error.message });
+    }
+};
+
+// Extractor function for getting Cloudinary public_id from secure_url
+const extractCloudinaryPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const lastPart = parts[parts.length - 1]; // e.g. "abcde12345.jpg"
+    return lastPart.split('.')[0];
+};
+
+export const deletePrescription = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const entryId = req.params.entryId;
+
+        if (!entryId) {
+            return res.status(400).json({ error: 'Missing prescription entry ID' });
+        }
+
+        // 1. Find the parent User Prescription document
+        const rxDoc = await Prescription.findOne({ user: userId });
+        if (!rxDoc) {
+            return res.status(404).json({ error: 'No prescription records found for this user.' });
+        }
+
+        // 2. Find the specific nested entry
+        const entry = rxDoc.prescriptions.id(entryId);
+        if (!entry) {
+            return res.status(404).json({ error: 'Prescription entry not found.' });
+        }
+
+        // 3. Delete from Cloudinary if an image URL exists
+        if (entry.imageUrl) {
+            try {
+                const publicId = extractCloudinaryPublicId(entry.imageUrl);
+                if (publicId) {
+                    await cloudinary.uploader.destroy(publicId);
+                    console.log(`[Cloudinary] Deleted public_id: ${publicId}`);
+                }
+            } catch (cloudErr) {
+                console.error('Cloudinary deletion failed:', cloudErr);
+                // We don't block the database deletion if Cloudinary fails, 
+                // but we log the error.
+            }
+        }
+
+        // 4. Remove the entry from the array
+        rxDoc.prescriptions.pull(entryId);
+        
+        // Disable the overall document approval if we just deleted the ONLY prescription or if we want it to default.
+        // Easiest is to save it as is. If the array is empty, we can just leave it.
+        await rxDoc.save();
+
+        return res.status(200).json({ message: 'Prescription deleted successfully.' });
+
+    } catch (error) {
+        console.error('Error deleting prescription:', error);
+        return res.status(500).json({
+            error: 'Failed to delete prescription',
+            details: error.message
+        });
     }
 };
