@@ -1,6 +1,10 @@
 import express from 'express';
 const router = express.Router();
 import * as adminController from '../controllers/admin.controller.js';
+import { protect, restrictTo } from '../middleware/auth.middleware.js';
+
+// All admin routes require a valid JWT and admin/pharmacist role
+router.use(protect, restrictTo('admin', 'pharmacist'));
 
 /** GET  /api/admin/stats — Dashboard summary statistics */
 router.get('/stats', adminController.getDashboardStats);

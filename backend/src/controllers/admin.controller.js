@@ -46,7 +46,20 @@ export const getInventory = async (req, res) => {
 
 export const updateInventory = async (req, res) => {
   try {
-    const updated = await Medicine.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Only allow specific fields to be updated — never let req.body pass through directly
+    const { price, description, lowStockThreshold, prescriptionRequired, unitType } = req.body;
+    const allowedUpdates = {};
+    if (price !== undefined)              allowedUpdates.price = price;
+    if (description !== undefined)        allowedUpdates.description = description;
+    if (lowStockThreshold !== undefined)  allowedUpdates.lowStockThreshold = lowStockThreshold;
+    if (prescriptionRequired !== undefined) allowedUpdates.prescriptionRequired = prescriptionRequired;
+    if (unitType !== undefined)           allowedUpdates.unitType = unitType;
+
+    const updated = await Medicine.findByIdAndUpdate(
+      req.params.id,
+      allowedUpdates,
+      { new: true, runValidators: true }
+    );
     if (!updated) return res.status(404).json({ error: 'Medicine not found' });
     res.json(updated);
   } catch (err) {

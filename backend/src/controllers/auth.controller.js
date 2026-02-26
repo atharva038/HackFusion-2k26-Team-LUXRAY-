@@ -2,7 +2,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import logger from '../utils/logger.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pharmacy_jwt_secret_dev';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set.');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 
 const signToken = (userId, role) =>
@@ -33,7 +34,7 @@ export const register = async (req, res) => {
       return res.status(400).json({ error: 'Name, email and password are required.' });
 
     // Prevent self-promoting to admin/pharmacist via the public registration
-    const safeRole = role === 'customer' ? 'customer' : 'customer';
+    const safeRole = 'customer';
 
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing)

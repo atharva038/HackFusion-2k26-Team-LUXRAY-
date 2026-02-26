@@ -21,9 +21,12 @@ export const ocrTool = tool({
             }
 
             // 2. Convert response to arrayBuffer and then to Base64
+            const contentType = response.headers.get('content-type') || 'image/jpeg';
+            // Normalize to a supported MIME type
+            const mimeType = contentType.split(';')[0].trim() || 'image/jpeg';
             const arrayBuffer = await response.arrayBuffer();
             const base64Data = Buffer.from(arrayBuffer).toString('base64');
-            const dataUri = `data:image/png;base64,${base64Data}`;
+            const dataUri = `data:${mimeType};base64,${base64Data}`;
 
             // 3. Send to Mistral OCR
             const ocrResponse = await mistral.ocr.process({

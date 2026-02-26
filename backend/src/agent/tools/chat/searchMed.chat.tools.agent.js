@@ -73,6 +73,7 @@ Respond strictly in JSON array.
         return { message: result.finalOutput };
       }
     } catch (error) {
+      console.error("TOOL ERROR:", error);
       return { error: error.message };
     }
   },

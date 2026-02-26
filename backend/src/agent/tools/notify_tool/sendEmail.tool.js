@@ -2,6 +2,15 @@ import { tool } from '@openai/agents'
 import { z } from 'zod'
 import nodemailer from 'nodemailer'
 
+// Create transporter once at module scope — not inside execute()
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
 export const sendEmailTool = tool({
     name: 'send_medication_email',
     description: 'Sends a medicine reminder email to a specific user.',
@@ -13,14 +22,6 @@ export const sendEmailTool = tool({
         instructions: z.string()
     }),
     execute: async ({ email, userName, medicineName, dosage, instructions }) => {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER, // your gmail
-                pass: process.env.EMAIL_PASS  // your app password
-            }
-        });
-
         const mailOptions = {
             from: `"AI Pharmacy Assistant" <${process.env.EMAIL_USER}>`,
             to: email,

@@ -5,14 +5,19 @@ const inventoryLogSchema = new mongoose.Schema(
     medicine: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Medicine',
+      required: true,
     },
 
     changeType: {
       type: String,
       enum: ['deduct', 'restock'],
+      required: true,
     },
 
-    quantity: Number,
+    quantity: {
+      type: Number,
+      required: true,
+    },
 
     order: {
       type: mongoose.Schema.Types.ObjectId,

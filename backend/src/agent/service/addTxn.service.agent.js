@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 
 export async function addTransaction({
   patientId,
+  medicineId,
   age,
   gender,
   purchaseDate,
-  productName,
   quantity,
   totalPrice,
   dosageFrequency,
@@ -16,6 +16,10 @@ export async function addTransaction({
   try {
     if (!mongoose.Types.ObjectId.isValid(patientId)) {
       return { error: "Invalid userId" };
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(medicineId)) {
+      return { error: "Invalid medicineId" };
     }
 
     let status = "pending";
@@ -35,7 +39,7 @@ export async function addTransaction({
 
       items: [
         {
-          medicine: productName, 
+          medicine: medicineId,
           dosage: dosageFrequency,
           quantity,
         },
