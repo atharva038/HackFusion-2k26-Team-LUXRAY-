@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
   medicine: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "Medicine",
     required: true,
   },
@@ -28,8 +28,8 @@ const orderSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["M", "F"],
-      default: "M",
+      enum: ["male", "female", "other"],
+      default: "male",
     },
     purchasingDate: {
       type: Date,

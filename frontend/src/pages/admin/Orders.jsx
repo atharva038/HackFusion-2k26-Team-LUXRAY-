@@ -117,6 +117,7 @@ const Orders = () => {
                                 <th className="px-6 py-4 font-semibold">Customer</th>
                                 <th className="px-6 py-4 font-semibold">Items</th>
                                 <th className="px-6 py-4 font-semibold">Status</th>
+                                <th className="px-6 py-4 font-semibold">Total Price</th>
                                 <th className="px-6 py-4 font-semibold">Date</th>
                                 <th className="px-6 py-4 font-semibold text-right">Actions</th>
                             </tr>
@@ -126,11 +127,14 @@ const Orders = () => {
                                 <tr key={order._id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
                                     <td className="px-6 py-4 font-mono text-text text-xs">{order._id.slice(-6).toUpperCase()}</td>
                                     <td className="px-6 py-4 text-text-muted">{order.user?.name || 'N/A'}</td>
-                                    <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">{order.items.map(i => i.medicine?.name || 'Item').join(', ')}</td>
+                                    <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">{order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}</td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                                             {order.status.replace('_', ' ')}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-text-muted text-[13px]">
+                                        {order.totalAmount ? `€${order.totalAmount.toFixed(2)}` : '€0.00'}
                                     </td>
                                     <td className="px-6 py-4 text-text-muted text-[13px]">{new Date(order.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right">

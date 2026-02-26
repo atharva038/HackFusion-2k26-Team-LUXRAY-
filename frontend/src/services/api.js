@@ -21,7 +21,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res.data,
   (err) => {
+    const status = err.response?.status;
     const message = err.response?.data?.error || err.message || 'Request failed';
+    // Surface rate limit errors with clear context
+    if (status === 429) {
+      return Promise.reject(new Error('Too many requests. Please wait a moment before trying again.'));
+    }
+    // Auto-redirect on session expiry (401) is handled per-feature, not globally,
+    // to avoid redirect loops on the login page.
     return Promise.reject(new Error(message));
   }
 );
@@ -70,8 +77,55 @@ export const updateRefillAlert = (id, status) =>
 export const fetchInventoryLogs = () => api.get('/admin/logs');
 
 // ─── Chat ─────────────────────────────────────────────────────
-export const sendChatMessage = (message) =>
-  api.post('/chat', { message });
+export const sendChatMessage = (message, sessionId) =>
+  api.post('/chat', { message, sessionId });
+
+export const fetchChatSessions = () => api.get('/chat/sessions');
+
+export const fetchChatHistory = (sessionId) => api.get(`/chat/history/${sessionId}`);
+
+export const deleteChatSession = (sessionId) => api.delete(`/chat/sessions/${sessionId}`);
+
+/**
+ * streamChatMessage — SSE-based streaming chat.
+ * Returns an EventSource that emits { chunk: string } events and a final { done: true } event.
+ *
+ * @param {string} sessionId
+ * @param {{ onChunk: (text: string) => void, onDone: (blocked: boolean, sessionId?: string) => void, onError: (msg: string) => void }} handlers
+ * @returns {EventSource} — call .close() to manually stop
+ */
+export const streamChatMessage = (message, sessionId, { onChunk, onDone, onError }) => {
+  const token = localStorage.getItem('pharmacy_token');
+  const urlParams = new URLSearchParams({ message, token: token || '' });
+  if (sessionId) urlParams.append('sessionId', sessionId);
+  
+  const url = `${BASE}/chat/stream?${urlParams.toString()}`;
+  const es = new EventSource(url);
+
+  es.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.error) {
+        onError?.(data.error);
+        es.close();
+      } else if (data.done) {
+        onDone?.(data.blocked || false, data.sessionId);
+        es.close();
+      } else if (data.chunk) {
+        onChunk?.(data.chunk);
+      }
+    } catch (e) {
+      // Ignore malformed events
+    }
+  };
+
+  es.onerror = () => {
+    onError?.('Connection error. Please try again.');
+    es.close();
+  };
+
+  return es;
+};
 
 // ─── TTS (OpenAI Voice) ──────────────────────────────────────
 

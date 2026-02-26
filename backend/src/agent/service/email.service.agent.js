@@ -9,15 +9,21 @@ const transporter = nodemailer.createTransport({
 });
 
 export const orderConfirmation = async (
+  patientEmail,
   patientId,
   purchaseDate,
   productName,
   quantity,
   totalPrice,
 ) => {
+  if (!patientEmail) {
+    console.error("orderConfirmation: patientEmail is required");
+    return { success: false, error: "No recipient email provided" };
+  }
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: "2023bcs035@sggs.ac.in", // TODO: replace with dynamic recipient
+    to: patientEmail,
     subject: "Order Confirmation - Pharmacy",
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">

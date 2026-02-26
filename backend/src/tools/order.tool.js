@@ -21,10 +21,10 @@ async function createOrder({ medicineName, dosage, quantity, patientName }) {
     return { success: false, message: `Insufficient stock. Only ${medicine.stock} ${medicine.unitType}(s) available.` };
   }
 
-  // Find or create user
-  let user = await User.findOne({ name: new RegExp(patientName, 'i') });
+  // Look up existing user only — never auto-create phantom accounts
+  const user = await User.findOne({ name: new RegExp(patientName, 'i') });
   if (!user) {
-    user = await User.create({ name: patientName, email: `${patientName.toLowerCase().replace(/\s/g, '.')}@patient.local`, role: 'customer' });
+    return { success: false, message: `Patient "${patientName}" not found. Please register first.` };
   }
 
   // Decrement stock

@@ -18,9 +18,6 @@ export const checkStock = tool({
 
   execute: async ({ medicineName = "", id = "", pzn = "" }) => {
     try {
-      console.log("hi i  am reaced");
-      const all = await Medicine.find();
-      console.log(all);
       // Clean inputs
       medicineName = medicineName.trim();
       id = id.trim();
@@ -45,7 +42,6 @@ export const checkStock = tool({
       }
 
       const medicine = await Medicine.findOne(query).lean();
-      console.log(medicine);
       if (!medicine) {
         return { error: "Medicine not found" };
       }
