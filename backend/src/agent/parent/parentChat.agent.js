@@ -1,11 +1,11 @@
-import { config } from "dotenv";
 import { Agent, run } from "@openai/agents";
 import { RECOMMENDED_PROMPT_PREFIX } from "@openai/agents-core/extensions";
 import receptionist from "../child/chat/receptionist.chat.child.agent.js";
 import orderAgent from "../child/chat/order.chat.child.agent.js";
+import mongoose from "mongoose";
 
-config();
-
+import dotenv from "dotenv";
+dotenv.config();
 const parentAgent = new Agent({
   name: "Parent_Agent",
 
@@ -47,17 +47,30 @@ Routes customer queries to the correct pharmacy agent:
   handoffs: [receptionist, orderAgent],
 });
 
+const connectDB = async () => {
+  try {
+    await mongoose.connect("mongodb://127.0.0.1:27017/hackfusion-2k26");
+    console.log("MongoDB Connected");
+  } catch (err) {
+    console.error("MongoDB connection error:", err.message);
+    process.exit(1);
+  }
+};
+
+await connectDB();
+
 export async function chat(q = "") {
   const result = await run(parentAgent, q);
   console.log(result.finalOutput);
 }
-// chat("Do you have Ramipril in stock?");
+// chat("Do you have NORSAN Omega-3 Total in stock?");
 // chat("Check availability of Paracetamol");
 // chat("Is Minoxidil available?");
 // chat("How many units of Aqualibra are left?");
 // chat("Is Mucosolvan currently available?");
-// chat("Suggest something for dry eyes and check stock and order");
+// chat("why we use nORSAN Omega-3 Total")
+chat("Suggest something for high blood presure ");
 // chat("order this Hyaluron-ratiopharm® Augentropfen with quantity 1 ")
-chat(
-  "Order medicine NORSAN Omega-3 Vegan, Patient ID P1001, Age 25, Gender Male, Quantity 1, Dosage 2 times daily, Prescription No",
-);
+// chat(
+//   "Order medicine NORSAN Omega-3 Vegan, Patient ID P1001, Age 25, Gender Male, Quantity 1, Dosage 2 times daily, Prescription No",
+// );

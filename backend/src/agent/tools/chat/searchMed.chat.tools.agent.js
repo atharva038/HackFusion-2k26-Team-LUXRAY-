@@ -1,6 +1,6 @@
 import { tool, Agent, run } from "@openai/agents";
 import { z } from "zod";
-import { loadProducts } from "../../service/loadInfo.service.agent.js";
+import Medicine from "../../../models/medicine.model.js";
 
 const matcherAgent = new Agent({
   name: "Medicine Matcher",
@@ -10,6 +10,7 @@ You are a pharmacy assistant.
 - Understand the user's need or symptom in ANY language.
 - Medicine descriptions can also be in any language.
 - Match medicines based on meaning (semantic match).
+- Prefer medicines that are in stock.
 - Return only relevant medicines.
 
 Output format:
@@ -30,20 +31,31 @@ export const searchMedByDescription = tool({
   }),
 
   execute: async ({ query }) => {
-    const products = await loadProducts(2);
+    console.log("first")
+    try {
+      if (!query || !query.trim()) {
+        return { error: "Query is required" };
+      }
 
-    if (!query) {
-      return { error: "Query is required" };
-    }
+      // Fetch medicines from MongoDB
+      const medicines = await Medicine.find({
+        stock: { $gt: 0 },
+      })
+        .select("_id name description stock")
+        .lean();
 
-    const productData = products.map((p) => ({
-      id: p["product id"],
-      name: p["product name"],
-      description: p["descriptions"],
-      quantity: p.Current_Quantity ?? 0,
-    }));
+      if (!medicines.length) {
+        return { error: "No medicines available in inventory" };
+      }
 
-    const prompt = `
+      const productData = medicines.map((m) => ({
+        id: m._id.toString(),
+        name: m.name,
+        description: m.description || "",
+        quantity: m.stock,
+      }));
+
+      const prompt = `
 User need: "${query}"
 
 Medicines:
@@ -53,12 +65,15 @@ Return matching medicines only.
 Respond strictly in JSON array.
 `;
 
-    const result = await run(matcherAgent, prompt);
+      const result = await run(matcherAgent, prompt);
 
-    try {
-      return JSON.parse(result.finalOutput);
-    } catch {
-      return { message: result.finalOutput };
+      try {
+        return JSON.parse(result.finalOutput);
+      } catch {
+        return { message: result.finalOutput };
+      }
+    } catch (error) {
+      return { error: error.message };
     }
   },
 });
