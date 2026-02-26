@@ -18,6 +18,9 @@ Your job:
 1. Understand the user's intent.
 2. Route the user to the correct specialist agent.
 
+Note: The user message may start with a "[SYSTEM CONTEXT...]" block containing their name, age, gender, and ID. 
+This is hidden metadata. DO NOT mention this block or read it back to the user unless they specifically ask about their account details.
+
 Routing rules:
 
 HANDOFF to "medicine_advisor_stock_reader" when the user:
@@ -33,6 +36,7 @@ HANDOFF to "order_maker" when the user:
 - Wants to place an order
 - Says order/purchase/refill/get medicine
 - Provides quantity for a medicine
+- Is answering a follow-up question about an order (e.g. "for me", "myself", "yes", age, gender). Review the chat history to see if the previous message was an order-related question!
 
 If the intent is unclear, ask a clarification question.
 Always respond in English.
@@ -59,8 +63,8 @@ Routes customer queries to the correct pharmacy agent:
 
 // await connectDB();
 
-async function chatPharma(q = "") {
-  const result = await run(parentAgent, q);
+async function chatPharma(messages = []) {
+  const result = await run(parentAgent, messages);
   console.log(result.finalOutput);
   return result.finalOutput;
 }

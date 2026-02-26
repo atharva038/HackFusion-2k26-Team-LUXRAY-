@@ -14,7 +14,7 @@ const InputArea = () => {
     const {
         addMessage, aiStatus, setAiStatus, setTyping,
         setLiveTranscript, setActiveSubtitle,
-        setCurrentAudioElement,
+        setCurrentAudioElement, currentSessionId, setCurrentSessionId
     } = useAppStore();
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
@@ -182,8 +182,12 @@ const InputArea = () => {
         setTyping(true);
 
         try {
-            const result = await sendChatMessage(userText);
+            const result = await sendChatMessage(userText, currentSessionId);
             setTyping(false);
+
+            if (result.sessionId && result.sessionId !== currentSessionId) {
+                setCurrentSessionId(result.sessionId);
+            }
 
             const aiText = result.text || result.response || result.finalOutput || result.message || 'I processed your request.';
 

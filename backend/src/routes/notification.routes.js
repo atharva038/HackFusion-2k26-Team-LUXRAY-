@@ -1,12 +1,13 @@
 import express from 'express';
 const router = express.Router();
-import { protect } from '../middleware/auth.middleware.js';
 import * as imageExtractor from '../controllers/prescription.controller.js'
 import * as testMailer from "../controllers/notification.controller.js"
 import { upload } from '../middleware/multer.middleware.js';
+import { protect, restrictTo } from '../middleware/auth.middleware.js';
 
 
 router.post('/upload', protect, upload.single('prescriptions'), imageExtractor.handlePrescriptionUpload);
-router.post('/mail', testMailer.testEmail); 
+// /mail is an admin-only test endpoint — requires auth and admin role
+router.post('/mail', protect, restrictTo('admin', 'pharmacist'), testMailer.testEmail);
 
 export default router;

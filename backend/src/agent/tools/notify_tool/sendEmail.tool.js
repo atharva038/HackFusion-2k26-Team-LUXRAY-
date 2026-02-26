@@ -2,6 +2,15 @@ import { tool } from '@openai/agents'
 import { z } from 'zod'
 import nodemailer from 'nodemailer'
 
+// Create transporter once at module scope — not inside execute()
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
 export const sendEmailTool = tool({
     name: 'send_medication_email',
     description: 'Sends a medicine reminder email to a specific user.',
@@ -13,27 +22,14 @@ export const sendEmailTool = tool({
         instructions: z.string()
     }),
     execute: async ({ email, userName, medicineName, dosage, instructions }) => {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: 'atharvsjoshi2005@gmail.com', // your gmail
-                pass: 'rjbzovtixfgpjjdx'  // your app password
-            }
-        });
-        try {
-            const mailOptions = {
-                from: `"AI Pharmacy Assistant" atharvsjoshi2005@gmail.com`,
-                to: email,
-                subject: `💊 Time for your medication: ${medicineName}`,
-                text: `Hi ${userName}, take ${medicineName}...`
-            };
+        const mailOptions = {
+            from: `"AI Pharmacy Assistant" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `💊 Time for your medication: ${medicineName}`,
+            text: `Hi ${userName},\n\nThis is a reminder to take your ${medicineName} (${dosage}).\nInstructions: ${instructions}\n\nStay healthy!`
+        };
 
-            const info = await transporter.sendMail(mailOptions);
-            console.log("✅ Email sent:", info.response);
-            return { status: "success", info: info.response };
-        } catch (err) {
-            console.error("❌ NODEMAILER ERROR:", err.message);
-            throw new Error(`Email failed: ${err.message}`); // Tell the agent it failed
-        }
+        await transporter.sendMail(mailOptions);
+        return { status: "success", sentTo: email };
     }
 })

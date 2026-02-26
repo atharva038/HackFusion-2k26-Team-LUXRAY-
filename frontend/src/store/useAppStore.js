@@ -40,6 +40,12 @@ const useAppStore = create((set) => ({
   setCurrentAudioElement: (el) => set({ currentAudioElement: el }),
 
   // Chat State
+  currentSessionId: null,
+  setCurrentSessionId: (id) => set({ currentSessionId: id }),
+  
+  chatSessions: [],
+  setChatSessions: (sessions) => set({ chatSessions: sessions }),
+
   messages: [
     {
       id: 1,
@@ -48,9 +54,21 @@ const useAppStore = create((set) => ({
       tools: [],
     }
   ],
+  setMessages: (msgs) => set({ messages: msgs, aiStatus: AI_STATUS.READY, isTyping: false }),
   isTyping: false,
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
   setTyping: (isTyping) => set({ isTyping }),
+  clearMessages: () => set({
+    currentSessionId: null,
+    aiStatus: AI_STATUS.READY,
+    isTyping: false,
+    messages: [{
+      id: 1,
+      role: 'ai',
+      text: 'Hello, I am your AI Pharmacy Assistant. How can I help you today? You can ask me to order medicines or setup a refill reminder.',
+      tools: [],
+    }]
+  }),
   
   // Example complex tool addition for the LAST AI message
   updateLastAiMessageTool: (toolUpdate) => set((state) => {

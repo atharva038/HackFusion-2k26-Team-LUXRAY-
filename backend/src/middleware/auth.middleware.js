@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pharmacy_jwt_secret_dev';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set.');
 
 /**
  * Verifies the JWT from the Authorization header and attaches req.user.
