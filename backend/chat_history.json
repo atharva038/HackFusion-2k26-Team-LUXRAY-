@@ -443,5 +443,20 @@
     "user": "hi",
     "ai": "Hello! How can I assist you today?",
     "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-26T06:00:21.464Z",
+    "user": "hi",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-26T06:01:01.140Z",
+    "user": "hi",
+    "toolCalls": []
+  },
+  {
+    "timestamp": "2026-02-26T06:13:07.629Z",
+    "user": "Do you have NORSAN Omega-3 Total in stock?",
+    "toolCalls": []
   }
 ]
