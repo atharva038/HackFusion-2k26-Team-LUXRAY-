@@ -33,7 +33,7 @@ export const ocrTool = tool({
                     imageUrl: dataUri,
                 },
             });
-
+            console.log("this is ocrtool extract: ", ocrResponse.pages.map(p => p.markdown).join('\n'));
             return ocrResponse.pages.map(p => p.markdown).join('\n');
         } catch (error) {
             console.error("OCR Tool Error:", error.message);

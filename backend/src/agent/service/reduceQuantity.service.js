@@ -1,51 +1,50 @@
-import xlsx from "xlsx";
-import path from "path";
-import { fileURLToPath } from "url";
+import mongoose from "mongoose";
+import Medicine from "../../models/medicine.model.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export async function reduceQuantity({
+  medicineId,
+  medicineName,
+  pzn,
+  quantity,
+}) {
+  try {
+    let query = {};
 
-const filePath = path.join(__dirname, "../../../dataset/products-export.xlsx");
+    if (medicineId) {
+      if (!mongoose.Types.ObjectId.isValid(medicineId)) {
+        return { error: "Invalid medicineId" };
+      }
+      query._id = medicineId;
+    } else if (pzn) {
+      query.pzn = pzn;
+    } else if (medicineName) {
+      query.name = { $regex: medicineName, $options: "i" };
+    } else {
+      return { error: "Provide medicineId, pzn, or medicineName" };
+    }
 
-export async function reduceQuantity({ productId, productName, quantity }) {
-  const workbook = xlsx.readFile(filePath);
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
+    // Reduce only if enough stock exists
+    const medicine = await Medicine.findOneAndUpdate(
+      { ...query, stock: { $gte: quantity } },
+      { $inc: { stock: -quantity } },
+      { new: true },
+    );
 
-  const data = xlsx.utils.sheet_to_json(sheet);
+    if (!medicine) {
+      return { error: "Medicine not found or insufficient stock" };
+    }
 
-  const product = data.find((item) => {
-    if (productId) return String(item["product id"]) === String(productId);
-    if (productName)
-      return item["product name"]
-        .toLowerCase()
-        .includes(productName.toLowerCase());
-    return false;
-  });
-
-  if (!product) {
-    return { error: "Product not found" };
-  }
-
-  const currentQty = Number(product["Current_Quantity"]);
-
-  if (currentQty < quantity) {
     return {
-      error: `Insufficient stock. Available: ${currentQty}`,
+      message: "Stock reduced successfully",
+      medicineId: medicine._id,
+      medicineName: medicine.name,
+      remainingStock: medicine.stock,
+      lowStockWarning:
+        medicine.stock <= medicine.lowStockThreshold
+          ? "Low stock warning"
+          : null,
     };
+  } catch (error) {
+    return { error: error.message };
   }
-
-  product["Current_Quantity"] = currentQty - quantity;
-
-  const newSheet = xlsx.utils.json_to_sheet(data);
-  workbook.Sheets[sheetName] = newSheet;
-
-  xlsx.writeFile(workbook, filePath);
-
-  return {
-    message: "Quantity updated successfully",
-    productId: product["product id"],
-    productName: product["product name"],
-    remainingQuantity: product["Current_Quantity"],
-  };
 }

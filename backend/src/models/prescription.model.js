@@ -45,4 +45,4 @@ const prescriptionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('Prescription', prescriptionSchema);
+export default mongoose.model('Prescription_v2', prescriptionSchema);

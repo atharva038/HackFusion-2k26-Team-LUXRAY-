@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { Agent, run, tool } from '@openai/agents'
 import { fetchDosesTool } from '../../tools/notify_tool/fetchMongo.notify.tool.agent.js'
-import { sendEmailTool } from '../../tools/notify_tool/sendEmail.tool.js    '
+import { sendEmailTool } from '../../tools/notify_tool/sendEmail.tool.js'
 
 //TODO: Mention the Hospital and Doctor name in the email body. --> for instruction
 

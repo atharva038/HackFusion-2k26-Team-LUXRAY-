@@ -26,6 +26,18 @@ export const handlePrescriptionUpload = async (req, res) => {
         // 2. Pass the secure_url to your Agent
         console.log("🤖 Agent processing image URL:", imageUrl);
         const agentData = await runImageExtraction(imageUrl);
+        console.log("this is image data extractor agent data: ", agentData);
+
+        // 2.5 Check if it's actually a prescription
+        if (!agentData.isPrescription) {
+            return res.status(200).json({
+                success: false,
+                isPrescription: false,
+                message: agentData.rejection_reason || "This image does not appear to be a medical prescription.",
+                imageUrl,
+                medications: []
+            });
+        }
 
         // 3. Store prescriptionData on MongoDB
         console.log("💾 Saving to MongoDB...");
@@ -41,7 +53,7 @@ export const handlePrescriptionUpload = async (req, res) => {
                             doctor_name: agentData.doctor_name || "Unknown Doctor",
                             hospital_name: agentData.hospital_name || "General Hospital",
                             user_name: userName,
-                            medi_name: med.name,
+                            medi_name: med.medi_name || "Unknown medicine",
                             dosage: med.dosage,
                             frequency: med.frequency,
                             total_quantity: med.total_quantity,
@@ -65,6 +77,7 @@ export const handlePrescriptionUpload = async (req, res) => {
         // 4. Final Response
         res.status(200).json({
             success: true,
+            isPrescription: true,
             message: "Prescription processed and saved successfully",
             imageUrl,
             recordId: savedRecord._id,

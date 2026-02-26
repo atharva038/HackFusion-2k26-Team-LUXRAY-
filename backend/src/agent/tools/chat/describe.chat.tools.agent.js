@@ -1,29 +1,44 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { loadProducts } from "../../service/loadInfo.service.agent.js";
+import Medicine from "../../../models/medicine.model.js";
 
 export const describeMed = tool({
   name: "describe_medicine",
   description:
     "Takes a medicine name and returns its description in any language",
+
   parameters: z.object({
     medicineName: z.string().describe("Medicine name to describe"),
   }),
+
   execute: async ({ medicineName }) => {
-    const products = loadProducts(2);
+    try {
+      const nameQuery = medicineName.trim();
 
-    const product = products.find((p) =>
-      p["product name"]?.toLowerCase().includes(medicineName.toLowerCase()),
-    );
+      if (!nameQuery) {
+        return { description: "Please provide a medicine name." };
+      }
 
-    if (!product) {
+      // Case-insensitive search
+      const medicine = await Medicine.findOne({
+        name: { $regex: nameQuery, $options: "i" },
+      }).lean();
+
+      if (!medicine) {
+        return {
+          description: "Medicine not found.",
+        };
+      }
+
       return {
-        description: "Medicine not found.",
+        description:
+          medicine.description || "No description available.",
+      };
+    } catch (error) {
+      return {
+        description: "Error fetching medicine description.",
+        error: error.message,
       };
     }
-
-    return {
-      description: product["descriptions"] || "No description available.",
-    };
   },
 });

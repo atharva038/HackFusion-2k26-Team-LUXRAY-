@@ -1,7 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ShieldCheck, Search, Loader2 } from 'lucide-react';
 import OrderCard from './OrderCard';
+import PrescriptionCard from '../../features/prescription/PrescriptionCard';
+
+const TypewriterText = ({ text, delayStart = 800, typingSpeed = 20, onComplete }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [started, setStarted] = useState(false);
+
+    useEffect(() => {
+        let timeout;
+        if (delayStart > 0) {
+            timeout = setTimeout(() => {
+                setStarted(true);
+            }, delayStart);
+        } else {
+            setStarted(true);
+        }
+        return () => clearTimeout(timeout);
+    }, [delayStart]);
+
+    useEffect(() => {
+        if (!started || !text) return;
+
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length - 1) {
+                setDisplayedText(text.substring(0, i + 1));
+                i++;
+            } else {
+                setDisplayedText(text);
+                clearInterval(interval);
+                if (onComplete) onComplete();
+            }
+        }, typingSpeed);
+
+        return () => clearInterval(interval);
+    }, [text, started, typingSpeed, onComplete]);
+
+    if (!started) {
+        return (
+            <div className="flex items-center gap-1.5 h-[22px] text-primary">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+        );
+    }
+
+    return <span>{displayedText}</span>;
+};
 
 const ToolExecutionBadge = ({ tool, index }) => {
     const icons = {
@@ -51,13 +99,32 @@ const MessageBubble = ({ message }) => {
 
                 {/* The Message Bubble */}
                 <div className={`
-                    relative px-5 py-4 text-[15px] leading-relaxed
+                    relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden
                     ${isAi
                         ? 'rounded-3xl rounded-tl-sm bg-card text-text border border-black/5 dark:border-white/5 shadow-sm'
                         : 'rounded-3xl rounded-tr-sm bg-primary text-white shadow-soft font-medium'
                     }
                 `}>
-                    {message.text}
+                    {/* Image Preview (uploaded prescription) */}
+                    {message.imagePreview && (
+                        <div className="mb-3 -mx-1 -mt-1">
+                            <img
+                                src={message.imagePreview}
+                                alt="Prescription"
+                                className="w-full max-h-48 object-cover rounded-xl border border-white/20"
+                            />
+                        </div>
+                    )}
+
+                    {isAi && message.isStreaming ? (
+                        <TypewriterText
+                            text={message.text}
+                            delayStart={message.isVoice ? 800 : 0}
+                            typingSpeed={message.isVoice ? 30 : 15}
+                        />
+                    ) : (
+                        message.text
+                    )}
 
                     {/* Subtle shimmer on AI messages */}
                     {isAi && (
@@ -70,6 +137,11 @@ const MessageBubble = ({ message }) => {
                     <div className="mt-2 text-text">
                         <OrderCard details={message.orderCard} />
                     </div>
+                )}
+
+                {/* Optional Prescription Card */}
+                {isAi && message.prescriptionData && (
+                    <PrescriptionCard data={message.prescriptionData} />
                 )}
             </div>
         </motion.div>

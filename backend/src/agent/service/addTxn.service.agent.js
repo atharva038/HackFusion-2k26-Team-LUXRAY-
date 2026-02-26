@@ -1,11 +1,5 @@
-import xlsx from "xlsx";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const path2 = "../../../dataset/Consumer Order History 1.xlsx";
+import Order from "../../models/order.model.js";
+import mongoose from "mongoose";
 
 export async function addTransaction({
   patientId,
@@ -17,34 +11,51 @@ export async function addTransaction({
   totalPrice,
   dosageFrequency,
   prescriptionRequired,
+  prescriptionProof = "",
 }) {
-  const filePath = path.join(__dirname, path2);
+  try {
+    if (!mongoose.Types.ObjectId.isValid(patientId)) {
+      return { error: "Invalid userId" };
+    }
 
-  const workbook = xlsx.readFile(filePath);
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
+    let status = "pending";
 
-  const data = xlsx.utils.sheet_to_json(sheet);
+    if (prescriptionRequired && !prescriptionProof) {
+      status = "awaiting_prescription";
+    }
 
-  const newTransaction = {
-    "Patient ID": patientId,
-    "Patient Age": age,
-    "Patient Gender": gender,
-    "Purchase Date": purchaseDate,
-    "Product Name": productName,
-    Quantity: quantity,
-    "Total Price (EUR)": totalPrice,
-    "Dosage Frequency": dosageFrequency,
-    "Prescription Required": prescriptionRequired,
-  };
+    const order = new Order({
+      user: patientId,
+      age,
+      gender,
+      purchasingDate: purchaseDate || new Date(),
 
-  data.push(newTransaction);
+      prescription: prescriptionRequired,
+      prescriptionProof: prescriptionProof || "",
 
-  const newSheet = xlsx.utils.json_to_sheet(data);
+      items: [
+        {
+          medicine: productName, 
+          dosage: dosageFrequency,
+          quantity,
+        },
+      ],
 
-  workbook.Sheets[sheetName] = newSheet;
+      totalItems: quantity,
+      totalAmount: totalPrice,
+      status,
+    });
 
-  xlsx.writeFile(workbook, filePath);
+    await order.save();
 
-  return { message: "Transaction added successfully", newTransaction };
+    return {
+      message: "Order saved successfully",
+      orderId: order._id,
+      prescriptionRequired,
+      prescriptionProofProvided: !!prescriptionProof,
+      status: order.status,
+    };
+  } catch (error) {
+    return { error: error.message };
+  }
 }
