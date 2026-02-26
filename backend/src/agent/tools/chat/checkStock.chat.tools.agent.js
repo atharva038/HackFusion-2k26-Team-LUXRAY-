@@ -1,53 +1,66 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { loadProducts } from "../../service/loadInfo.service.agent.js";
+import mongoose from "mongoose";
+import Medicine from "../../../models/medicine.model.js";
 
 export const checkStock = tool({
   name: "check_medicine_details",
   description:
-    "Get medicine details and stock using medicine name, product id or PZN",
+    "Get medicine details and stock using medicine name, MongoDB id, or PZN",
 
-  parameters: z.object({
-    medicineName: z
-      .string()
-      .describe("Medicine name (use empty string if not provided)"),
-    id: z
-      .string()
-      .describe("Product ID (use empty string if not provided)"),
-    pzn: z
-      .string()
-      .describe("PZN number (use empty string if not provided)")
-  }).strict(),
+  parameters: z
+    .object({
+      medicineName: z.string().optional().default(""),
+      id: z.string().optional().default(""),
+      pzn: z.string().optional().default(""),
+    })
+    .strict(),
 
-  execute: async ({ medicineName, id, pzn }) => {
-    if (!medicineName && !id && !pzn) {
-      return { error: "Provide medicineName or id or pzn" };
+  execute: async ({ medicineName = "", id = "", pzn = "" }) => {
+    try {
+      console.log("hi i  am reaced");
+      const all = await Medicine.find();
+      console.log(all);
+      // Clean inputs
+      medicineName = medicineName.trim();
+      id = id.trim();
+      pzn = pzn.trim();
+
+      if (!medicineName && !id && !pzn) {
+        return { error: "Provide medicineName or id or pzn" };
+      }
+
+      let query = {};
+
+      // Priority: id > pzn > name
+      if (id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return { error: "Invalid MongoDB id" };
+        }
+        query._id = new mongoose.Types.ObjectId(id);
+      } else if (pzn) {
+        query.pzn = pzn;
+      } else if (medicineName) {
+        query.name = { $regex: medicineName, $options: "i" };
+      }
+
+      const medicine = await Medicine.findOne(query).lean();
+      console.log(medicine);
+      if (!medicine) {
+        return { error: "Medicine not found" };
+      }
+
+      return {
+        id: medicine._id.toString(),
+        name: medicine.name,
+        pzn: medicine.pzn,
+        price: medicine.price,
+        quantity: medicine.stock,
+        status: medicine.stock > 0 ? "In Stock" : "Out of Stock",
+        prescriptionRequired: medicine.prescriptionRequired,
+      };
+    } catch (error) {
+      return { error: error.message };
     }
-
-    const products = await loadProducts(2);
-
-    const nameQuery = medicineName?.toLowerCase().trim();
-
-    const product = products.find((p) => {
-      if (id) return String(p["product id"]) === String(id);
-      if (pzn) return String(p.pzn) === String(pzn);
-      if (nameQuery)
-        return p["product name"]?.toLowerCase().includes(nameQuery);
-      return false;
-    });
-
-    if (!product) {
-      return { error: "Medicine not found" };
-    }
-
-    const quantity = product.Current_Quantity ?? 0;
-
-    return {
-      product_id: product["product id"],
-      product_name: product["product name"],
-      price: product["price rec"],
-      quantity,
-      status: quantity > 0 ? "In Stock" : "Out of Stock",
-    };
   },
 });

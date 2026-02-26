@@ -1,14 +1,13 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { loadProducts } from "../../service/loadInfo.service.agent.js";
+import Medicine from "../../../models/medicine.model.js";
 import { addTransaction } from "../../service/addTxn.service.agent.js";
 import { reduceQuantity } from "../../service/reduceQuantity.service.js";
-import { orderConfirmation } from "../../service/email.service.agent.js";
 
 export const order = tool({
   name: "order_medicine",
   description:
-    "Place a medicine order. It checks stock, reduces inventory, and records the transaction.",
+    "Place a medicine order using MongoDB. Checks stock, reduces inventory, and records the transaction.",
 
   parameters: z.object({
     patientId: z.string(),
@@ -29,62 +28,58 @@ export const order = tool({
     dosageFrequency,
     prescriptionRequired,
   }) => {
-    const products = await loadProducts(2);
+    try {
+      // Convert prescription string to boolean
+      const prescriptionFlag = prescriptionRequired.toLowerCase() === "yes";
 
-    const product = products.find((p) => {
-      if (productName)
-        return p["product name"]
-          .toLowerCase()
-          .includes(productName.toLowerCase());
-      return false;
-    });
+      // 1. Find medicine from MongoDB
+      const medicine = await Medicine.findOne({
+        name: { $regex: productName, $options: "i" },
+      });
 
-    if (!product) {
-      return "❌ Product not found.";
-    }
+      if (!medicine) {
+        return "❌ Medicine not found.";
+      }
 
-    const currentQty = Number(product["Current_Quantity"]);
-    const price = Number(product["price rec"]);
+      // 2. Check stock
+      if (medicine.stock < quantity) {
+        return `❌ Insufficient stock. Available: ${medicine.stock}`;
+      }
 
-    if (currentQty < quantity) {
-      return `❌ Insufficient stock. Available: ${currentQty}`;
-    }
+      // 3. Reduce stock
+      const updateResult = await reduceQuantity({
+        medicineId: medicine._id.toString(),
+        quantity,
+      });
 
-    const updateResult = await reduceQuantity({
-      productId: product["product id"],
-      quantity,
-    });
+      if (updateResult.error) {
+        return `❌ ${updateResult.error}`;
+      }
 
-    if (updateResult.error) {
-      return `❌ ${updateResult.error}`;
-    }
+      // 4. Calculate price
+      const totalPrice = medicine.price * quantity;
 
-    const totalPrice = price * quantity;
+      // 5. Save order
+      await addTransaction({
+        patientId,
+        age,
+        gender,
+        purchaseDate: new Date(),
+        productName: medicine.name,
+        quantity,
+        totalPrice,
+        dosageFrequency,
+        prescriptionRequired: prescriptionFlag,
+      });
 
-    addTransaction({
-      patientId,
-      age,
-      gender,
-      purchaseDate: new Date().toISOString().split("T")[0],
-      productName: product["product name"],
-      quantity,
-      totalPrice,
-      dosageFrequency,
-      prescriptionRequired,
-    });
-    // await orderConfirmation(
-    //   patientId,
-    //   new Date().toISOString().split("T")[0],
-    //   product["product name"],
-    //   quantity,
-    //   totalPrice,
-    // );
+      return `✅ Order placed successfully
 
-    return `✅ Order placed successfully
-
-Product: ${product["product name"]}
+Medicine: ${medicine.name}
 Quantity: ${quantity}
 Total Price: €${totalPrice}
-Remaining Stock: ${updateResult.remainingQuantity}`;
+Remaining Stock: ${updateResult.remainingStock}`;
+    } catch (error) {
+      return `❌ ${error.message}`;
+    }
   },
 });
