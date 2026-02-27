@@ -1,5 +1,6 @@
 import Order from '../models/order.model.js';
 import Prescription from '../models/prescription.model.js';
+import User from '../models/user.model.js';
 
 // GET /api/user/orders?page=1&limit=10
 export const getMyOrders = async (req, res) => {
@@ -45,5 +46,40 @@ export const getMyPrescriptions = async (req, res) => {
   } catch (err) {
     console.error('MyPrescriptions fetch error:', err);
     res.status(500).json({ error: 'Failed to fetch your prescriptions.' });
+  }
+};
+
+// GET /api/user/allergies
+export const getMyAllergies = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('allergies').lean();
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    res.json({ allergies: user.allergies || [] });
+  } catch (err) {
+    console.error('getMyAllergies error:', err);
+    res.status(500).json({ error: 'Failed to fetch allergies.' });
+  }
+};
+
+// PUT /api/user/allergies
+// Body: { allergies: [{ allergen, severity, reaction }] }
+export const updateMyAllergies = async (req, res) => {
+  try {
+    const { allergies } = req.body;
+    if (!Array.isArray(allergies)) {
+      return res.status(400).json({ error: '`allergies` must be an array.' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { allergies } },
+      { new: true, runValidators: true }
+    ).select('allergies');
+
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    res.json({ message: 'Allergies updated successfully.', allergies: user.allergies });
+  } catch (err) {
+    console.error('updateMyAllergies error:', err);
+    res.status(500).json({ error: 'Failed to update allergies.' });
   }
 };

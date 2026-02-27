@@ -13,4 +13,10 @@ router.get('/orders', userController.getMyOrders);
 /** GET /api/user/prescriptions — All prescriptions for the logged-in user */
 router.get('/prescriptions', userController.getMyPrescriptions);
 
+/** GET /api/user/allergies — Fetch the logged-in user's allergy list */
+router.get('/allergies', userController.getMyAllergies);
+
+/** PUT /api/user/allergies — Replace the logged-in user's allergy list */
+router.put('/allergies', userController.updateMyAllergies);
+
 export default router;
