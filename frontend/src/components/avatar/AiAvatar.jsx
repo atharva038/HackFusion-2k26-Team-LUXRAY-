@@ -5,10 +5,10 @@ import { useAudioAmplitude } from '../../hooks/useAudioAmplitude';
 
 // ─── Status chip config ────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-    [AI_STATUS.READY]:      { label: 'AI Ready',    dot: 'bg-green-400' },
-    [AI_STATUS.LISTENING]:  { label: 'Listening…',  dot: 'bg-blue-400 animate-pulse' },
+    [AI_STATUS.READY]: { label: 'AI Ready', dot: 'bg-green-400' },
+    [AI_STATUS.LISTENING]: { label: 'Listening…', dot: 'bg-blue-400 animate-pulse' },
     [AI_STATUS.PROCESSING]: { label: 'Processing…', dot: 'bg-purple-400 animate-bounce' },
-    [AI_STATUS.SPEAKING]:   { label: 'Speaking…',   dot: 'bg-teal-400 animate-pulse' },
+    [AI_STATUS.SPEAKING]: { label: 'Speaking…', dot: 'bg-teal-400 animate-pulse' },
 };
 
 // ─── SVG DEFS ─────────────────────────────────────────────────────────────────
@@ -17,26 +17,26 @@ const SvgDefs = () => (
 
         {/* ═══ SKIN ══════════════════════════════════════════════════════ */}
         <radialGradient id="av-skin" cx="42%" cy="26%" r="75%">
-            <stop offset="0%"   stopColor="#FDF5EE" />
-            <stop offset="28%"  stopColor="#F0D8C4" />
-            <stop offset="62%"  stopColor="#DDB898" />
+            <stop offset="0%" stopColor="#FDF5EE" />
+            <stop offset="28%" stopColor="#F0D8C4" />
+            <stop offset="62%" stopColor="#DDB898" />
             <stop offset="100%" stopColor="#C6987A" />
         </radialGradient>
 
         {/* 3-point lighting – left fill shadow */}
         <linearGradient id="av-shadow-l" x1="0" y1="0.5" x2="0.4" y2="0.5">
-            <stop offset="0%"   stopColor="#7A3818" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#7A3818" stopOpacity="0"    />
+            <stop offset="0%" stopColor="#7A3818" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#7A3818" stopOpacity="0" />
         </linearGradient>
         {/* 3-point lighting – right rim shadow */}
         <linearGradient id="av-shadow-r" x1="1" y1="0.5" x2="0.6" y2="0.5">
-            <stop offset="0%"   stopColor="#5A3020" stopOpacity="0.17" />
-            <stop offset="100%" stopColor="#5A3020" stopOpacity="0"    />
+            <stop offset="0%" stopColor="#5A3020" stopOpacity="0.17" />
+            <stop offset="100%" stopColor="#5A3020" stopOpacity="0" />
         </linearGradient>
         {/* Under-chin ambient occlusion */}
         <linearGradient id="av-shadow-b" x1="0.5" y1="1" x2="0.5" y2="0.72">
-            <stop offset="0%"   stopColor="#4A2808" stopOpacity="0.20" />
-            <stop offset="100%" stopColor="#4A2808" stopOpacity="0"    />
+            <stop offset="0%" stopColor="#4A2808" stopOpacity="0.20" />
+            <stop offset="100%" stopColor="#4A2808" stopOpacity="0" />
         </linearGradient>
 
         {/* ═══ SKIN TEXTURE ═══════════════════════════════════════════════
@@ -57,56 +57,56 @@ const SvgDefs = () => (
 
         {/* ═══ HAIR ═══════════════════════════════════════════════════════ */}
         <linearGradient id="av-hair" x1="0.12" y1="0" x2="0.44" y2="1">
-            <stop offset="0%"   stopColor="#0C0604" />
-            <stop offset="45%"  stopColor="#180C06" />
-            <stop offset="100%" stopColor="#261408" />
+            <stop offset="0%" stopColor="#2A1B14" />
+            <stop offset="45%" stopColor="#3B2519" />
+            <stop offset="100%" stopColor="#1C100B" />
         </linearGradient>
         <linearGradient id="av-hair-side" x1="0.1" y1="0" x2="0.9" y2="1">
-            <stop offset="0%"   stopColor="#160A04" />
-            <stop offset="100%" stopColor="#241206" />
+            <stop offset="0%" stopColor="#241610" />
+            <stop offset="100%" stopColor="#170D08" />
         </linearGradient>
 
         {/* ═══ CLOTHING ═══════════════════════════════════════════════════ */}
         <linearGradient id="av-cloth" x1="0.12" y1="0" x2="0.88" y2="1">
-            <stop offset="0%"   stopColor="#1D3A6C" />
-            <stop offset="100%" stopColor="#0C1E42" />
+            <stop offset="0%" stopColor="#3A638B" />
+            <stop offset="100%" stopColor="#1A3B5C" />
         </linearGradient>
         <linearGradient id="av-coat" x1="0" y1="0" x2="0.1" y2="1">
-            <stop offset="0%"   stopColor="#EBF1FA" />
-            <stop offset="100%" stopColor="#D4DEEE" />
+            <stop offset="0%" stopColor="#4A7CA6" />
+            <stop offset="100%" stopColor="#244D76" />
         </linearGradient>
 
         {/* ═══ NECK ═══════════════════════════════════════════════════════ */}
         <linearGradient id="av-neck" x1="0.22" y1="0" x2="0.78" y2="1">
-            <stop offset="0%"   stopColor="#EDD0B8" />
+            <stop offset="0%" stopColor="#EDD0B8" />
             <stop offset="100%" stopColor="#CCAA88" />
         </linearGradient>
 
         {/* ═══ LIPS — slightly fuller ══════════════════════════════════════ */}
         <linearGradient id="av-lip-upper" x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%"   stopColor="#D9A490" />
-            <stop offset="55%"  stopColor="#C88878" />
-            <stop offset="100%" stopColor="#B87060" />
+            <stop offset="0%" stopColor="#E3B5A0" />
+            <stop offset="55%" stopColor="#D69B87" />
+            <stop offset="100%" stopColor="#C48470" />
         </linearGradient>
         <linearGradient id="av-lip-lower" x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%"   stopColor="#D29488" />
-            <stop offset="42%"  stopColor="#C28272" />
-            <stop offset="100%" stopColor="#AC6858" />
+            <stop offset="0%" stopColor="#E0AC99" />
+            <stop offset="42%" stopColor="#CF9682" />
+            <stop offset="100%" stopColor="#BA7A65" />
         </linearGradient>
 
         {/* ═══ IRIS ═══════════════════════════════════════════════════════ */}
         <radialGradient id="av-iris" cx="36%" cy="32%" r="68%">
-            <stop offset="0%"   stopColor="#6298F0" />
-            <stop offset="22%"  stopColor="#2A58D4" />
-            <stop offset="58%"  stopColor="#1438A0" />
-            <stop offset="100%" stopColor="#092070" />
+            <stop offset="0%" stopColor="#7BAFE0" />
+            <stop offset="22%" stopColor="#3B76C4" />
+            <stop offset="58%" stopColor="#1C4B99" />
+            <stop offset="100%" stopColor="#0B2A66" />
         </radialGradient>
 
         {/* ═══ AURA ═══════════════════════════════════════════════════════ */}
         <radialGradient id="av-aura" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stopColor="#2563EB" stopOpacity="0.07" />
-            <stop offset="55%"  stopColor="#2563EB" stopOpacity="0.02" />
-            <stop offset="100%" stopColor="#2563EB" stopOpacity="0"    />
+            <stop offset="0%" stopColor="#2563EB" stopOpacity="0.07" />
+            <stop offset="55%" stopColor="#2563EB" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
         </radialGradient>
 
         {/* ═══ EYE CLIP PATHS — almond with slight cat-eye tilt ═══════════ */}
@@ -138,7 +138,7 @@ const SvgDefs = () => (
 );
 
 // ─── SINGLE EYE  (no tear duct) ───────────────────────────────────────────────
-const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId }) => (
+const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId, dartX, dartY }) => (
     <g transform={`scale(1, ${eyeBlinkScale})`}>
 
         {/* Eye white */}
@@ -156,33 +156,35 @@ const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId }) => (
             clipPath={`url(#${clipId})`}
         />
 
-        {/* Iris */}
-        <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
-            fill="url(#av-iris)" clipPath={`url(#${clipId})`} />
+        <g transform={`translate(${dartX}, ${dartY})`}>
+            {/* Iris */}
+            <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
+                fill="url(#av-iris)" clipPath={`url(#${clipId})`} />
 
-        {/* Iris radial texture spokes */}
-        {Array.from({ length: 6 }, (_, i) => {
-            const a = (i * 30) * Math.PI / 180;
-            return (
-                <line key={i}
-                    x1={Math.cos(a) * 5.5}   y1={Math.sin(a) * 5.5 - 1}
-                    x2={Math.cos(a) * 12}     y2={Math.sin(a) * 12 - 1}
-                    stroke="#071060" strokeWidth="0.55" opacity="0.22"
-                    clipPath={`url(#${clipId})`}
-                />
-            );
-        })}
+            {/* Iris radial texture spokes */}
+            {Array.from({ length: 6 }, (_, i) => {
+                const a = (i * 30) * Math.PI / 180;
+                return (
+                    <line key={i}
+                        x1={Math.cos(a) * 5.5} y1={Math.sin(a) * 5.5 - 1}
+                        x2={Math.cos(a) * 12} y2={Math.sin(a) * 12 - 1}
+                        stroke="#071060" strokeWidth="0.55" opacity="0.22"
+                        clipPath={`url(#${clipId})`}
+                    />
+                );
+            })}
 
-        {/* Limbal ring */}
-        <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
-            fill="none" stroke="#060C48" strokeWidth="1.7" opacity="0.60"
-            clipPath={`url(#${clipId})`} />
+            {/* Limbal ring */}
+            <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
+                fill="none" stroke="#060C48" strokeWidth="1.7" opacity="0.60"
+                clipPath={`url(#${clipId})`} />
 
-        {/* Pupil */}
-        <ellipse cx="0.5" cy="0" rx="6.4" ry="6.4"
-            fill="#03070C" clipPath={`url(#${clipId})`} />
-        <ellipse cx="-1.5" cy="-1" rx="2.2" ry="1.8"
-            fill="#081830" opacity="0.45" clipPath={`url(#${clipId})`} />
+            {/* Pupil */}
+            <ellipse cx="0.5" cy="0" rx="6.4" ry="6.4"
+                fill="#03070C" clipPath={`url(#${clipId})`} />
+            <ellipse cx="-1.5" cy="-1" rx="2.2" ry="1.8"
+                fill="#081830" opacity="0.45" clipPath={`url(#${clipId})`} />
+        </g>
 
         {/* State-reactive tint */}
         <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
@@ -217,8 +219,10 @@ const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId }) => (
 );
 
 // ─── AVATAR FACE SVG ──────────────────────────────────────────────────────────
-const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity }) => (
-    <svg
+const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity, headSwayX, headSwayY, headRotate, dartX, dartY }) => (
+    <motion.svg
+        animate={{ x: headSwayX, y: headSwayY, rotate: headRotate }}
+        transition={{ duration: 0.1, ease: "linear" }}
         viewBox="0 0 400 500"
         xmlns="http://www.w3.org/2000/svg"
         style={{ width: '100%', height: '100%', overflow: 'visible' }}
@@ -412,7 +416,7 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity }) => (
             fill="none" stroke="#C8A080" strokeWidth="2"
             opacity="0.12" strokeLinecap="round" />
         <g transform="translate(160, 190)">
-            <Eye eyeBlinkScale={eyeBlinkScale} eyeGlowOpacity={eyeGlowOpacity} clipId="av-clip-leye" />
+            <Eye eyeBlinkScale={eyeBlinkScale} eyeGlowOpacity={eyeGlowOpacity} clipId="av-clip-leye" dartX={dartX} dartY={dartY} />
         </g>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -428,7 +432,7 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity }) => (
             fill="none" stroke="#C8A080" strokeWidth="2"
             opacity="0.12" strokeLinecap="round" />
         <g transform="translate(240, 190)">
-            <Eye eyeBlinkScale={eyeBlinkScale} eyeGlowOpacity={eyeGlowOpacity} clipId="av-clip-reye" />
+            <Eye eyeBlinkScale={eyeBlinkScale} eyeGlowOpacity={eyeGlowOpacity} clipId="av-clip-reye" dartX={dartX} dartY={dartY} />
         </g>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -562,7 +566,7 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity }) => (
         {/* Chin ambient occlusion */}
         <ellipse cx="200" cy="369" rx="34" ry="9"
             fill="#C8A090" opacity="0.09" />
-    </svg>
+    </motion.svg>
 );
 
 // ─── MAIN AVATAR COMPONENT ────────────────────────────────────────────────────
@@ -574,10 +578,33 @@ const AiAvatar = () => {
         currentAudioElement,
     } = useAppStore();
 
-    const config       = STATUS_CONFIG[aiStatus];
-    const isSpeaking   = aiStatus === AI_STATUS.SPEAKING;
-    const isListening  = aiStatus === AI_STATUS.LISTENING;
+    const config = STATUS_CONFIG[aiStatus];
+    const isSpeaking = aiStatus === AI_STATUS.SPEAKING;
+    const isListening = aiStatus === AI_STATUS.LISTENING;
     const isProcessing = aiStatus === AI_STATUS.PROCESSING;
+
+    const [dartX, setDartX] = useState(0);
+    const [dartY, setDartY] = useState(0);
+    const dartRef = useRef(null);
+    useEffect(() => {
+        const scheduleDart = () => {
+            dartRef.current = setTimeout(() => {
+                setDartX((Math.random() - 0.5) * 3);
+                setDartY((Math.random() - 0.5) * 2);
+                scheduleDart();
+            }, 800 + Math.random() * 3000);
+        };
+        scheduleDart();
+        return () => clearTimeout(dartRef.current);
+    }, []);
+
+    const [timeVal, setTimeVal] = useState(0);
+    useEffect(() => {
+        let reqId;
+        const tick = () => { setTimeVal(Date.now() / 1000); reqId = requestAnimationFrame(tick); };
+        reqId = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(reqId);
+    }, []);
 
     // ── Amplitude → lip-sync ─────────────────────────────────────────────
     const rawAmplitude = useAudioAmplitude(currentAudioElement);
@@ -585,6 +612,10 @@ const AiAvatar = () => {
         ? Math.min((rawAmplitude - 0.06) / 0.94, 1)
         : 0;
     const mouthGap = isSpeaking ? amplitude * 18 : 0;
+
+    const headSwayX = Math.sin(timeVal * 0.5) * 1.5;
+    const headSwayY = isSpeaking ? (Math.sin(timeVal * 6) * 1.5 - amplitude * 4) : Math.sin(timeVal * 1.2) * 2;
+    const headRotate = Math.sin(timeVal * 0.4) * 0.8;
 
     // ── Eye blink — random 2.4–6 s ───────────────────────────────────────
     const [eyeBlinkScale, setEyeBlinkScale] = useState(1);
@@ -621,7 +652,7 @@ const AiAvatar = () => {
     }, [activeSubtitle, isSpeaking]);
 
     // ── Speaking halo ────────────────────────────────────────────────────
-    const speakingGlowPx    = isSpeaking ? 38 + amplitude * 38 : 0;
+    const speakingGlowPx = isSpeaking ? 38 + amplitude * 38 : 0;
     const speakingGlowAlpha = isSpeaking ? 0.12 + amplitude * 0.22 : 0;
 
     return (
@@ -635,11 +666,10 @@ const AiAvatar = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.9 }}
-                        className={`absolute inset-0 pointer-events-none transition-colors duration-1000 ${
-                            isListening  ? 'bg-primary/[0.04] dark:bg-primary/[0.08]'         :
-                            isProcessing ? 'bg-purple-500/[0.03] dark:bg-purple-500/[0.07]'   :
-                            isSpeaking   ? 'bg-teal-500/[0.025] dark:bg-teal-500/[0.055]'     : ''
-                        }`}
+                        className={`absolute inset-0 pointer-events-none transition-colors duration-1000 ${isListening ? 'bg-primary/[0.04] dark:bg-primary/[0.08]' :
+                                isProcessing ? 'bg-purple-500/[0.03] dark:bg-purple-500/[0.07]' :
+                                    isSpeaking ? 'bg-teal-500/[0.025] dark:bg-teal-500/[0.055]' : ''
+                            }`}
                     />
                 )}
             </AnimatePresence>
@@ -652,7 +682,7 @@ const AiAvatar = () => {
                             key={i}
                             className="absolute rounded-full border border-primary/20 animate-ripple"
                             style={{
-                                width:  `${220 + i * 24}px`,
+                                width: `${220 + i * 24}px`,
                                 height: `${220 + i * 24}px`,
                                 animationDelay: `${delay}s`,
                             }}
@@ -683,24 +713,23 @@ const AiAvatar = () => {
 
                 <motion.div
                     animate={{
-                        opacity: isListening  ? 0.58 :
-                                 isProcessing ? 0.30 :
-                                 isSpeaking   ? [0.38, 0.55, 0.38] : 0.14,
-                        scale:   isListening  ? 1.05 :
-                                 isProcessing ? 1.02 :
-                                 isSpeaking   ? [1, 1.03, 1] : 1,
+                        opacity: isListening ? 0.58 :
+                            isProcessing ? 0.30 :
+                                isSpeaking ? [0.38, 0.55, 0.38] : 0.14,
+                        scale: isListening ? 1.05 :
+                            isProcessing ? 1.02 :
+                                isSpeaking ? [1, 1.03, 1] : 1,
                     }}
                     transition={{
                         duration: isSpeaking || isListening ? 1.3 : 0.6,
-                        repeat:   isSpeaking || isListening ? Infinity : 0,
+                        repeat: isSpeaking || isListening ? Infinity : 0,
                         ease: 'easeInOut',
                     }}
-                    className={`absolute rounded-full border ${
-                        isListening  ? 'border-primary/35'    :
-                        isProcessing ? 'border-purple-400/22' :
-                        isSpeaking   ? 'border-primary/26'    :
-                                       'border-primary/10'
-                    }`}
+                    className={`absolute rounded-full border ${isListening ? 'border-primary/35' :
+                            isProcessing ? 'border-purple-400/22' :
+                                isSpeaking ? 'border-primary/26' :
+                                    'border-primary/10'
+                        }`}
                     style={{ width: '288px', height: '288px' }}
                 />
 
@@ -718,6 +747,11 @@ const AiAvatar = () => {
                         mouthGap={mouthGap}
                         eyeBlinkScale={eyeBlinkScale}
                         eyeGlowOpacity={eyeGlowOpacity}
+                        headSwayX={headSwayX}
+                        headSwayY={headSwayY}
+                        headRotate={headRotate}
+                        dartX={dartX}
+                        dartY={dartY}
                     />
                 </motion.div>
 

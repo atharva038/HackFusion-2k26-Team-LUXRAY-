@@ -77,8 +77,8 @@ export const updateRefillAlert = (id, status) =>
 export const fetchInventoryLogs = () => api.get('/admin/logs');
 
 // ─── Chat ─────────────────────────────────────────────────────
-export const sendChatMessage = (message, sessionId) =>
-  api.post('/chat', { message, sessionId });
+export const sendChatMessage = (message, sessionId, language = 'en') =>
+  api.post('/chat', { message, sessionId, language });
 
 export const fetchChatSessions = () => api.get('/chat/sessions');
 
@@ -94,11 +94,11 @@ export const deleteChatSession = (sessionId) => api.delete(`/chat/sessions/${ses
  * @param {{ onChunk: (text: string) => void, onDone: (blocked: boolean, sessionId?: string) => void, onError: (msg: string) => void }} handlers
  * @returns {EventSource} — call .close() to manually stop
  */
-export const streamChatMessage = (message, sessionId, { onChunk, onDone, onError }) => {
+export const streamChatMessage = (message, sessionId, { onChunk, onDone, onError }, language = 'en') => {
   const token = localStorage.getItem('pharmacy_token');
-  const urlParams = new URLSearchParams({ message, token: token || '' });
+  const urlParams = new URLSearchParams({ message, token: token || '', language });
   if (sessionId) urlParams.append('sessionId', sessionId);
-  
+
   const url = `${BASE}/chat/stream?${urlParams.toString()}`;
   const es = new EventSource(url);
 
@@ -133,7 +133,7 @@ export const streamChatMessage = (message, sessionId, { onChunk, onDone, onError
  * Fetch TTS audio as a blob (streaming endpoint — low latency).
  * Falls back to the legacy buffered endpoint if streaming fails.
  */
-export const fetchTTSAudio = async (text) => {
+export const fetchTTSAudio = async (text, language = 'en') => {
   const token = localStorage.getItem('pharmacy_token');
   const headers = {
     'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ export const fetchTTSAudio = async (text) => {
     const res = await fetch(`${BASE}/tts/stream`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, language }),
     });
 
     if (!res.ok) throw new Error(`TTS stream failed: ${res.status}`);
@@ -153,7 +153,7 @@ export const fetchTTSAudio = async (text) => {
   } catch (streamErr) {
     console.warn('[TTS] Stream failed, falling back to buffered:', streamErr.message);
     // Fallback to legacy buffered endpoint
-    const res = await axios.post(`${BASE}/tts`, { text }, {
+    const res = await axios.post(`${BASE}/tts`, { text, language }, {
       responseType: 'blob',
       headers,
     });
@@ -163,13 +163,14 @@ export const fetchTTSAudio = async (text) => {
 
 /**
  * Split text into sentence-level chunks for faster TTS playback.
+ * Supports English (.!?) and Hindi/Marathi (। ॥) sentence terminators.
  * Returns array of non-empty sentence strings.
  */
 export const splitIntoSentences = (text) => {
   if (!text || typeof text !== 'string') return [text || ''];
 
-  // Split on sentence-ending punctuation, keeping the punctuation
-  const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g);
+  // Split on sentence-ending punctuation — English (.!?) and Devanagari (। ॥)
+  const sentences = text.match(/[^.!?\u0964\u0965]+[.!?\u0964\u0965]+[\s]*/g);
 
   if (!sentences || sentences.length === 0) return [text.trim()];
 
@@ -182,9 +183,9 @@ export const splitIntoSentences = (text) => {
  * The first sentence starts fetching immediately; subsequent sentences are pre-fetched.
  * Caller can await them sequentially for back-to-back playback.
  */
-export const fetchTTSChunked = (sentences) => {
+export const fetchTTSChunked = (sentences, language = 'en') => {
   // Fire all fetches in parallel — returns array of Promises<Blob>
-  return sentences.map(sentence => fetchTTSAudio(sentence));
+  return sentences.map(sentence => fetchTTSAudio(sentence, language));
 };
 
 // ─── User: My Orders & My Prescriptions ──────────────────────

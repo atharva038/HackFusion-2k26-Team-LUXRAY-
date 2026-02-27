@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Send, Square, Loader2, Camera, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import useAppStore, { AI_STATUS } from '../../store/useAppStore';
+import useAppStore, { AI_STATUS, STT_CODES } from '../../store/useAppStore';
 import { sendChatMessage, fetchTTSAudio, splitIntoSentences, fetchTTSChunked } from '../../services/api';
 import PrescriptionUpload from '../../features/prescription/PrescriptionUpload';
 import { uploadPrescription } from '../../features/prescription/uploadService';
@@ -14,7 +14,8 @@ const InputArea = () => {
     const {
         addMessage, aiStatus, setAiStatus, setTyping,
         setLiveTranscript, setActiveSubtitle,
-        setCurrentAudioElement, currentSessionId, setCurrentSessionId
+        setCurrentAudioElement, currentSessionId, setCurrentSessionId,
+        selectedLanguage
     } = useAppStore();
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
@@ -53,7 +54,10 @@ const InputArea = () => {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
-        recognition.lang = 'en-US';
+        // Read language at call-time from store (not from stale closure)
+        const currentLang = useAppStore.getState().selectedLanguage;
+        recognition.lang = STT_CODES[currentLang] || 'en-US';
+        console.log(`[STT] Starting recognition with lang: ${recognition.lang}`);
 
         recognition.onstart = () => {
             setAiStatus(AI_STATUS.LISTENING);
@@ -151,7 +155,7 @@ const InputArea = () => {
             const sentences = splitIntoSentences(textToSpeak);
 
             // Fire ALL TTS requests in parallel immediately
-            const blobPromises = fetchTTSChunked(sentences);
+            const blobPromises = fetchTTSChunked(sentences, selectedLanguage);
 
             // Play back-to-back as each resolves (in order)
             for (let i = 0; i < sentences.length; i++) {
@@ -193,7 +197,7 @@ const InputArea = () => {
         setTyping(true);
 
         try {
-            const result = await sendChatMessage(userText, currentSessionId);
+            const result = await sendChatMessage(userText, currentSessionId, selectedLanguage);
             setTyping(false);
 
             if (result.sessionId && result.sessionId !== currentSessionId) {
@@ -432,9 +436,23 @@ const InputArea = () => {
     };
 
     const getPlaceholder = () => {
-        if (isListening) return "Listening to you…";
-        if (isProcessing) return "Processing your request…";
-        if (isSpeaking) return "AI is responding…";
+        if (isListening) {
+            if (selectedLanguage === 'hi') return 'सुन रहे हैं…';
+            if (selectedLanguage === 'mr') return 'ऐकत आहे…';
+            return "Listening to you…";
+        }
+        if (isProcessing) {
+            if (selectedLanguage === 'hi') return 'आपकी रिक्वेस्ट प्रोसेस हो रही है…';
+            if (selectedLanguage === 'mr') return 'तुमची विनंती प्रक्रिया होत आहे…';
+            return "Processing your request…";
+        }
+        if (isSpeaking) {
+            if (selectedLanguage === 'hi') return 'AI जवाब दे रही है…';
+            if (selectedLanguage === 'mr') return 'AI उत्तर देत आहे…';
+            return "AI is responding…";
+        }
+        if (selectedLanguage === 'hi') return 'अपना संदेश टाइप करें या माइक टैप करें…';
+        if (selectedLanguage === 'mr') return 'तुमचा संदेश टाइप करा किंवा माइक टॅप करा…';
         return "Type your message or tap the mic…";
     };
 

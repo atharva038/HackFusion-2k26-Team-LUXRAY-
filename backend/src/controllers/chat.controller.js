@@ -2,6 +2,7 @@ import logger from "../utils/logger.js";
 import { runChatAgent } from "../agent/service/chat.agent.service.js";
 import ChatSession from "../models/chatSession.model.js";
 import chatPharma from "../agent/parent/parentChat.agent.js";
+import { translateToEnglish, translateFromEnglish } from "../services/multilingual.service.js";
 
 /**
  * handleMessage — POST /api/chat
@@ -10,10 +11,10 @@ import chatPharma from "../agent/parent/parentChat.agent.js";
  */
 export const handleMessage = async (req, res) => {
   try {
-    const { message, sessionId: reqSessionId } = req.body; // Already validated & sanitised by Zod middleware
+    const { message, sessionId: reqSessionId, language = 'en' } = req.body; // Already validated & sanitised by Zod middleware
     const userId = req.user.id;
 
-    logger.info(`[Chat] User [${userId}] → "${message.substring(0, 80)}${message.length > 80 ? '...' : ''}"`);
+    logger.info(`[Chat] User [${userId}] (${language}) → "${message.substring(0, 80)}${message.length > 80 ? '...' : ''}"`);
 
     let session;
     let sessionId;
@@ -29,15 +30,25 @@ export const handleMessage = async (req, res) => {
     }
     const history = session?.messages || [];
 
+    // ── Multilingual Pre-Agent Translation ───────────────────────
+    const { translatedText: englishMessage, latencyMs: preTranslateMs } = await translateToEnglish(message, language);
+
     // Run through the agent service (handles injection guard + audit log)
     const { reply, blocked, durationMs } = await runChatAgent({
       userId,
       sessionId,
-      message,
+      message: englishMessage,
       history,
     });
 
-    // Persist both turns to MongoDB
+    // ── Multilingual Post-Agent Translation ──────────────────────
+    const { translatedText: translatedReply, latencyMs: postTranslateMs } = await translateFromEnglish(reply, language);
+
+    if (language !== 'en') {
+      logger.info(`[Multilingual Trace] lang=${language} preTranslate=${preTranslateMs}ms postTranslate=${postTranslateMs}ms`);
+    }
+
+    // Persist both turns to MongoDB (store original language text for display)
     await ChatSession.findByIdAndUpdate(
       sessionId,
       {
@@ -45,7 +56,7 @@ export const handleMessage = async (req, res) => {
           messages: {
             $each: [
               { role: 'user', content: message },
-              { role: 'ai',   content: reply  },
+              { role: 'ai', content: translatedReply },
             ],
           },
         },
@@ -54,7 +65,7 @@ export const handleMessage = async (req, res) => {
 
     logger.info(`[Chat] Agent replied in ${durationMs}ms for user [${userId}]${blocked ? ' [BLOCKED]' : ''}`);
 
-    res.json({ text: reply, blocked, sessionId });
+    res.json({ text: translatedReply, blocked, sessionId, language });
   } catch (err) {
     logger.error("[Chat] handleMessage error:", err);
     res.status(500).json({ error: "AI agent is temporarily unavailable. Please try again." });
@@ -75,6 +86,7 @@ export const handleStreamMessage = async (req, res) => {
   try {
     const message = req.query.message;
     const reqSessionId = req.query.sessionId;
+    const language = req.query.language || 'en';
 
     if (!message || message.trim().length === 0) {
       return res.status(400).json({ error: "Message is required" });
@@ -86,7 +98,7 @@ export const handleStreamMessage = async (req, res) => {
     const userId = req.user.id;
     let session;
     let sessionId;
-    
+
     if (reqSessionId) {
       session = await ChatSession.findOne({ _id: reqSessionId, user: userId }).select('_id messages').lean();
       if (!session) return res.status(404).json({ error: "Session not found." });
@@ -109,22 +121,28 @@ export const handleStreamMessage = async (req, res) => {
     // Send initial ping
     res.write('event: ping\ndata: {}\n\n');
 
+    // ── Multilingual Pre-Agent Translation ───────────────────────
+    const { translatedText: englishMessage } = await translateToEnglish(message.trim(), language);
+
     const { reply, blocked } = await runChatAgent({
       userId,
       sessionId,
-      message: message.trim(),
+      message: englishMessage,
       history,
     });
 
+    // ── Multilingual Post-Agent Translation ──────────────────────
+    const { translatedText: translatedReply } = await translateFromEnglish(reply, language);
+
     // Simulate word-by-word streaming (real streaming requires OpenAI stream API)
-    const words = reply.split(' ');
+    const words = translatedReply.split(' ');
     for (const word of words) {
       res.write(`data: ${JSON.stringify({ chunk: word + ' ' })}\n\n`);
       // Small delay to simulate streaming (remove if using real OpenAI stream)
       await new Promise(r => setTimeout(r, 20));
     }
 
-    // Persist to DB
+    // Persist to DB (store translated text for display)
     await ChatSession.findByIdAndUpdate(
       sessionId,
       {
@@ -132,7 +150,7 @@ export const handleStreamMessage = async (req, res) => {
           messages: {
             $each: [
               { role: 'user', content: message },
-              { role: 'ai',   content: reply  },
+              { role: 'ai', content: translatedReply },
             ],
           },
         },
@@ -140,7 +158,7 @@ export const handleStreamMessage = async (req, res) => {
     );
 
     // Signal completion
-    res.write(`data: ${JSON.stringify({ done: true, blocked, sessionId })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, blocked, sessionId, language })}\n\n`);
     res.end();
   } catch (err) {
     logger.error("[Chat] SSE stream error:", err);

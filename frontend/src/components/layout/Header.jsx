@@ -3,6 +3,7 @@ import { Moon, Sun, Monitor, Stethoscope, LogOut, User, ShoppingBag, FileText } 
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import useAuthStore, { STAFF_ROLES } from '../../store/useAuthStore';
+import LanguageSelector from '../chat/LanguageSelector';
 
 const AiStatusIndicator = () => {
     const aiStatus = useAppStore(state => state.aiStatus);
@@ -62,8 +63,8 @@ const Header = () => {
                         to="/my-orders"
                         title="My Orders"
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/my-orders'
-                                ? 'bg-primary/10 text-primary'
-                                : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
                             }`}
                     >
                         <ShoppingBag className="w-4 h-4" />
@@ -73,8 +74,8 @@ const Header = () => {
                         to="/my-prescriptions"
                         title="My Prescriptions"
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/my-prescriptions'
-                                ? 'bg-primary/10 text-primary'
-                                : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
                             }`}
                     >
                         <FileText className="w-4 h-4" />
@@ -90,6 +91,7 @@ const Header = () => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-3">
+                <LanguageSelector />
                 {user && (
                     <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-black/5 dark:border-white/5">
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
