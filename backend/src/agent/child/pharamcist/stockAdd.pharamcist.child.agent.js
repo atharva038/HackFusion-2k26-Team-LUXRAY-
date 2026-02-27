@@ -21,19 +21,7 @@ You are a pharmacy stock assistant.
 - First, understand the query before acting.`,
   tools: [addStockTool],
 });
-// const connectDB = async () => {
-//   try {
-//     await mongoose.connect(
-//       "mongodb+srv://atharvsjoshi2005_db_user:dX64qfEeRpzcHn5O@cluster0.sfxcubk.mongodb.net/hackfusion-2k26?appName=Cluster0",
-//     );
-//     console.log("MongoDB Connected");
-//   } catch (err) {
-//     console.error("MongoDB connection error:", err.message);
-//     process.exit(1);
-//   }
-// };
 
-// await connectDB();
 
 // async function chatPharmacist(messages = []) {
 //   const result = await run(stockAddAgent, messages);
