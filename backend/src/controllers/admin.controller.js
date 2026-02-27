@@ -6,6 +6,7 @@ import Prescription from '../models/prescription.model.js';
 import InventoryLog from '../models/inventoryLog.model.js';
 import logger from '../utils/logger.js';
 import { checkAndAlertLowStock } from '../scheduler/refill.scheduler.js';
+import { sendLowStockAlert } from '../agent/service/email.service.agent.js';
 
 // ─── Dashboard Stats ─────────────────────────────────────────
 export const getDashboardStats = async (req, res) => {
@@ -50,11 +51,11 @@ export const updateInventory = async (req, res) => {
     // Only allow specific fields to be updated — never let req.body pass through directly
     const { price, description, lowStockThreshold, prescriptionRequired, unitType } = req.body;
     const allowedUpdates = {};
-    if (price !== undefined)              allowedUpdates.price = price;
-    if (description !== undefined)        allowedUpdates.description = description;
-    if (lowStockThreshold !== undefined)  allowedUpdates.lowStockThreshold = lowStockThreshold;
+    if (price !== undefined) allowedUpdates.price = price;
+    if (description !== undefined) allowedUpdates.description = description;
+    if (lowStockThreshold !== undefined) allowedUpdates.lowStockThreshold = lowStockThreshold;
     if (prescriptionRequired !== undefined) allowedUpdates.prescriptionRequired = prescriptionRequired;
-    if (unitType !== undefined)           allowedUpdates.unitType = unitType;
+    if (unitType !== undefined) allowedUpdates.unitType = unitType;
 
     const updated = await Medicine.findByIdAndUpdate(
       req.params.id,
@@ -72,16 +73,30 @@ export const updateInventory = async (req, res) => {
 export const restockMedicine = async (req, res) => {
   try {
     const { quantity } = req.body;
-    if (!quantity || quantity <= 0) return res.status(400).json({ error: 'Valid quantity required' });
+    if (typeof quantity !== 'number' || quantity === 0) {
+      return res.status(400).json({ error: 'Valid quantity required' });
+    }
 
     const medicine = await Medicine.findById(req.params.id);
     if (!medicine) return res.status(404).json({ error: 'Medicine not found' });
 
+    const previousStock = medicine.stock;
     medicine.stock += quantity;
+    if (medicine.stock < 0) medicine.stock = 0;
     await medicine.save();
 
     // Log the restock
     await InventoryLog.create({ medicine: medicine._id, changeType: 'restock', quantity });
+
+    // Send immediate low stock alert if it crossed the threshold downward
+    if (previousStock > medicine.lowStockThreshold && medicine.stock <= medicine.lowStockThreshold) {
+      const pharmacists = await User.find({ role: { $in: ['admin', 'pharmacist'] } }).select('email').lean();
+      const emails = pharmacists.map(u => u.email).filter(Boolean);
+      if (emails.length > 0) {
+        await sendLowStockAlert(emails, [medicine]);
+        logger.info(`Immediate low stock alert sent for ${medicine.name}`);
+      }
+    }
 
     res.json(medicine);
   } catch (err) {

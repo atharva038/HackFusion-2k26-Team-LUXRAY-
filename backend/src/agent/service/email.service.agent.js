@@ -82,6 +82,8 @@ export const orderConfirmation = async (
   }
 };
 
+import { openai } from '../../config/openai.js';
+
 /**
  * Send a low-stock alert email to pharmacists/admins.
  * @param {string[]} recipientEmails - Array of email addresses to notify
@@ -97,45 +99,41 @@ export const sendLowStockAlert = async (recipientEmails, medicines) => {
     return { success: false, error: "No low-stock medicines provided" };
   }
 
-  const rows = medicines
-    .map(
-      (m) => `
-      <tr>
-        <td style="padding:8px;border:1px solid #ddd;">${m.name}</td>
-        <td style="padding:8px;border:1px solid #ddd;color:#e53e3e;font-weight:bold;">${m.stock}</td>
-        <td style="padding:8px;border:1px solid #ddd;">${m.lowStockThreshold}</td>
-        <td style="padding:8px;border:1px solid #ddd;">${m.unitType}</td>
-      </tr>`
-    )
-    .join("");
+  // 1. Give the context to the AI Agent
+  const dataContext = medicines
+    .map(m => `- ${m.name}: ${m.stock} ${m.unitType}(s) left (Threshold: ${m.lowStockThreshold})`)
+    .join('\n');
+
+  // 2. Instruct the AI Agent to design the urgent email HTML
+  let aiHtmlBody;
+  try {
+    const aiResponse = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an AI Inventory Agent for an autonomous pharmacy system. Your job is to draft an extremely polished, professional, and visually clear HTML email to warn human pharmacists about critically low stock. Include a beautiful, clear HTML table summarizing the depleted medicines. Do NOT wrap the HTML in markdown blocks like ```html. Output raw HTML only.'
+        },
+        {
+          role: 'user',
+          content: `Please generate the HTML email body. The following medicines are dangerously low:\n\n${dataContext}`
+        }
+      ]
+    });
+    aiHtmlBody = aiResponse.choices[0].message.content.trim();
+    // In case the AI still wraps it
+    if (aiHtmlBody.startsWith('```html')) aiHtmlBody = aiHtmlBody.replace(/^```html\s*/, '');
+    if (aiHtmlBody.endsWith('```')) aiHtmlBody = aiHtmlBody.replace(/\s*```$/, '');
+  } catch (error) {
+    console.error("Failed to generate AI email template, falling back to primitive text.", error);
+    aiHtmlBody = `<h2>Low Stock Alert</h2><pre>${dataContext}</pre><p>Please restock immediately.</p>`;
+  }
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: recipientEmails.join(", "),
-    subject: `⚠️ Low Stock Alert — ${medicines.length} medicine(s) need restocking`,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-        <h2 style="color:#e53e3e;">Low Stock Alert</h2>
-        <p>The following medicine(s) have reached or dropped below their minimum stock threshold and require restocking:</p>
-
-        <table style="border-collapse:collapse;width:100%;max-width:640px;">
-          <thead>
-            <tr style="background:#f7f7f7;">
-              <th style="padding:8px;border:1px solid #ddd;text-align:left;">Medicine</th>
-              <th style="padding:8px;border:1px solid #ddd;text-align:left;">Current Stock</th>
-              <th style="padding:8px;border:1px solid #ddd;text-align:left;">Threshold</th>
-              <th style="padding:8px;border:1px solid #ddd;text-align:left;">Unit Type</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-
-        <p style="margin-top:20px;">Please restock these items as soon as possible to avoid service disruptions.</p>
-        <p>Regards,<br/><strong>Pharmacy Inventory System</strong></p>
-        <hr style="margin-top:20px;"/>
-        <small>This is an automated alert. Do not reply to this email.</small>
-      </div>
-    `,
+    subject: `⚠️ Urgent Low Stock Alert — ${medicines.length} medicine(s) need restocking`,
+    html: aiHtmlBody,
   };
 
   try {
