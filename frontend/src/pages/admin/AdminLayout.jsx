@@ -14,6 +14,7 @@ import {
     Monitor,
     LogOut,
     User,
+    Bot,
 } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -68,6 +69,7 @@ const AdminLayout = () => {
                     <NavItem to="/admin/inventory" icon={Boxes} label="Inventory" />
                     <NavItem to="/admin/alerts" icon={BellRing} label="Refill Alerts" />
                     <NavItem to="/admin/logs" icon={History} label="Inventory Logs" />
+                    <NavItem to="/admin/agent" icon={Bot} label="AI Assistant" />
                 </nav>
 
                 {/* Footer: User Info + Controls */}
