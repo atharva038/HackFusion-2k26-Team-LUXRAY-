@@ -3,6 +3,12 @@ import { RECOMMENDED_PROMPT_PREFIX } from "@openai/agents-core/extensions";
 import receptionist from "../child/chat/receptionist.chat.child.agent.js";
 import orderAgent from "../child/chat/order.chat.child.agent.js";
 import mongoose from "mongoose";
+import {
+  InputGuardrailTripwireTriggered,
+  OutputGuardrailTripwireTriggered,
+} from "@openai/agents";
+import { pharmacyInputGuardrail } from "../guard/input.guard.agent.js";
+import { pharmacyOutputGuardrail } from "../guard/output.guard.agent.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -51,6 +57,8 @@ Routes customer queries to the correct pharmacy agent:
 `,
 
   handoffs: [receptionist, orderAgent],
+  inputGuardrails: [pharmacyInputGuardrail],
+  outputGuardrails: [pharmacyOutputGuardrail],
 });
 
 // const connectDB = async () => {
@@ -66,9 +74,20 @@ Routes customer queries to the correct pharmacy agent:
 // await connectDB();
 
 async function chatPharma(messages = []) {
-  const result = await run(parentAgent, messages);
-  console.log(result.finalOutput);
-  return result.finalOutput;
+  try {
+    const result = await run(parentAgent, messages);
+    console.log(result.finalOutput);
+    return result.finalOutput;
+  } catch (err) {
+    if (err instanceof InputGuardrailTripwireTriggered) {
+      return "Please ask only safe medicine or pharmacy related questions.";
+    }
+    if (err instanceof OutputGuardrailTripwireTriggered) {
+      return "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.";
+    }
+
+    throw err;
+  }
 }
 // chat("Do you have NORSAN Omega-3 Total in stock?");
 // chat("Check availability of Paracetamol");
