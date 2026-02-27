@@ -52,6 +52,8 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         "pending",
+        "awaiting_payment",
+        "paid",
         "approved",
         "rejected",
         "awaiting_prescription",
@@ -59,6 +61,16 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    razorpayOrderId: String,
+    razorpayPaymentId: String,
+    razorpaySignature: String,
+    invoiceId: String,
 
     totalItems: Number,
     totalAmount: Number,

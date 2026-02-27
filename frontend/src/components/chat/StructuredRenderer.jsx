@@ -2,6 +2,7 @@ import React from 'react';
 import DataTable from './DataTable';
 import DataCards from './DataCards';
 import OrderSummaryCard from './OrderSummaryCard';
+import InvoiceSummaryCard from './InvoiceSummaryCard';
 
 /**
  * useIsMobile — returns true when viewport width <= 768px.
@@ -33,7 +34,7 @@ const LIST_TYPES = new Set(['order_list', 'medicine_list', 'inventory_list', 're
  *
  * Renders nothing if structured is null/undefined.
  */
-const StructuredRenderer = ({ structured }) => {
+const StructuredRenderer = ({ structured, messageId }) => {
     const isMobile = useIsMobile();
 
     if (!structured) return null;
@@ -45,11 +46,28 @@ const StructuredRenderer = ({ structured }) => {
         return (
             <div className="mt-2">
                 <OrderSummaryCard
+                    messageId={messageId}
                     orderId={structured.orderId}
                     status={structured.status}
                     items={structured.items}
                     total={structured.total}
                     customer={structured.customer}
+                    razorpayOrderId={structured.razorpayOrderId}
+                    amount={structured.amount}
+                />
+            </div>
+        );
+    }
+
+    // ── Invoice summary ───────────────────────────────────────────────────
+    if (type === 'invoice_summary') {
+        return (
+            <div className="mt-2 text-text">
+                <InvoiceSummaryCard
+                    invoiceId={structured.invoiceId}
+                    orderId={structured.orderId}
+                    amountPaid={structured.amountPaid}
+                    items={structured.items}
                 />
             </div>
         );
