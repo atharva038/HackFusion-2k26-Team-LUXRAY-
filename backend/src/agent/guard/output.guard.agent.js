@@ -33,16 +33,18 @@ export const pharmacyOutputGuardrail = {
   name: "pharmacy_output_guardrail",
 
   execute: async ({ output, context }) => {
-    const result = await run(pharmacyOutputSafetyAgent, output.response, {
-      context,
-    });
+    const result = await run(
+      pharmacyOutputSafetyAgent,
+      output.response,
+      { context }
+    );
 
     const decision = result.finalOutput.trim();
     const isUnsafe = decision === "UNSAFE";
 
     if (isUnsafe) {
       throw new OutputGuardrailTripwireTriggered(
-        "Unsafe pharmacy response detected",
+        "Unsafe pharmacy response detected"
       );
     }
 
