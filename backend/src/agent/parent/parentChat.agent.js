@@ -65,6 +65,71 @@ Routes customer queries to the correct pharmacy agent:
 async function chatPharma(messages = []) {
   try {
     const result = await run(parentAgent, messages);
+
+    //MONITOR PHASE
+    // console.log("RAW TRACE ITEM 0:", JSON.stringify(result.state._generatedItems[0], null, 2));
+    result.state._generatedItems.forEach((item, index) => {
+      console.log(`\n--- DEBUGGING RAW ITEM [${index}] ---`);
+      console.log("Type:", item.type || item.constructor.name);
+      console.log("Full Object:", JSON.stringify(item, null, 2));
+    });
+    const monitorTraces = result.state._generatedItems.map((item) => {
+      const actor = item.agent?.name || item.targetAgent?.name || "System";
+      const itemType = item.type || item.constructor.name;
+
+      let actionName = "AI Reasoning";
+      let detailData = "Processing...";
+
+      // 1. PRIORITIZE TOOLS (This catches order_medicine)
+      if (item.rawItem?.name && !item.rawItem.name.includes('transfer_to')) {
+        const isResult = item.rawItem.type === 'function_call_result';
+        actionName = isResult ? `📦 Result: ${item.rawItem.name}` : `⚙️ Tool: ${item.rawItem.name}`;
+
+        // Extract clean text from the result or arguments
+        detailData = item.rawItem.output?.text || item.rawItem.output || item.rawItem.arguments || "Done.";
+      }
+
+      // 2. HANDOFFS (Parent -> Child)
+      else if (item.rawItem?.name?.startsWith('transfer_to_')) {
+        const target = item.rawItem.name.replace('transfer_to_', '');
+        actionName = "🤝 Handoff";
+        detailData = `Routing to ${target}`;
+      }
+
+      // 3. MESSAGES (Final Answer)
+      else if (itemType === 'message_output_item' || item.rawItem?.type === 'message') {
+        actionName = "💬 Response";
+        const content = item.rawItem?.content?.[0]?.text || item.content;
+        detailData = typeof content === 'object' ? JSON.stringify(content) : content;
+      }
+
+      // 4. CATCH-ALL (For anything else)
+      else if (itemType === 'handoff_output_item') {
+        actionName = "🔄 System";
+        detailData = "Switching agent context...";
+      }
+
+      return {
+        agent: actor,
+        action: actionName,
+        data: detailData
+      };
+    }).filter(t => t.action !== "AI Reasoning"); // 🚀 REMOVE THE "GLITCHY" EMPTY STEPS
+
+
+    console.log("\n📍 --- EXECUTION TRACE ---");
+    monitorTraces.forEach((t) => {
+      // Keep it short for the terminal
+      const shortData = typeof t.data === 'string'
+        ? (t.data.substring(0, 60) + (t.data.length > 60 ? "..." : ""))
+        : JSON.stringify(t.data);
+
+      console.log(`${t.agent} ➔ ${t.action}`);
+      console.log(`   Data: ${shortData}`);
+    });
+    console.log("--------------------------\n");
+
+
     console.log(result.finalOutput);
     return result.finalOutput;
   } catch (err) {

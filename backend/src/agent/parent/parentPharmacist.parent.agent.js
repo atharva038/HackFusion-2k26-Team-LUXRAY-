@@ -137,6 +137,7 @@ async function chatPharmacist(messages = []) {
   try {
     const result = await run(parentPharamcist, messages);
     console.log("[Pharmacist] finalOutput:", result.finalOutput);
+    console.log("RAW TRACE ITEM 0:", JSON.stringify(result.state._generatedItems[0], null, 2));
     return result.finalOutput;
   } catch (err) {
     if (err instanceof InputGuardrailTripwireTriggered) {

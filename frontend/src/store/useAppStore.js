@@ -128,6 +128,15 @@ const useAppStore = create((set) => ({
     }
     return { messages: newMessages };
   }),
+
+  // Live state mutation for message objects (e.g. removing the Pay Now button)
+  updateMessageStructuredData: (msgId, newStructuredData) => set((state) => {
+    return {
+      messages: state.messages.map(msg =>
+        msg.id === msgId ? { ...msg, structured: { ...msg.structured, ...newStructuredData } } : msg
+      )
+    };
+  }),
 }));
 
 export default useAppStore;
