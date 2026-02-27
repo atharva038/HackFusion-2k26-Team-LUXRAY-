@@ -1,5 +1,6 @@
 import { openai } from '../config/openai.js';
 import logger from '../utils/logger.js';
+import { getCachedTranslation, setCachedTranslation } from './cache.service.js';
 
 /**
  * Supported languages and their metadata.
@@ -44,6 +45,13 @@ export async function translateToEnglish(text, sourceLanguage) {
     const langLabel = SUPPORTED_LANGUAGES[sourceLanguage]?.label || sourceLanguage;
     const start = Date.now();
 
+    // ── Cache lookup ──────────────────────────────────────────────
+    const cached = await getCachedTranslation('toEn', sourceLanguage, text);
+    if (cached) {
+        logger.info(`[Multilingual] CACHE HIT ${langLabel}→English: "${text.substring(0, 40)}…"`);
+        return { translatedText: cached, originalText: text, latencyMs: Date.now() - start };
+    }
+
     try {
         const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
@@ -60,10 +68,12 @@ export async function translateToEnglish(text, sourceLanguage) {
 
         logger.info(`[Multilingual] ${langLabel} → English in ${latencyMs}ms: "${text.substring(0, 50)}…" → "${translatedText.substring(0, 50)}…"`);
 
+        // ── Cache store ───────────────────────────────────────────
+        setCachedTranslation('toEn', sourceLanguage, text, translatedText);
+
         return { translatedText, originalText: text, latencyMs };
     } catch (err) {
         logger.error(`[Multilingual] translateToEnglish failed:`, err.message);
-        // Fallback: send original text to agent (best-effort)
         return { translatedText: text, originalText: text, latencyMs: Date.now() - start };
     }
 }
@@ -84,6 +94,13 @@ export async function translateFromEnglish(text, targetLanguage) {
     const langLabel = SUPPORTED_LANGUAGES[targetLanguage]?.label || targetLanguage;
     const start = Date.now();
 
+    // ── Cache lookup ──────────────────────────────────────────────
+    const cached = await getCachedTranslation('fromEn', targetLanguage, text);
+    if (cached) {
+        logger.info(`[Multilingual] CACHE HIT English→${langLabel}: "${text.substring(0, 40)}…"`);
+        return { translatedText: cached, originalText: text, latencyMs: Date.now() - start };
+    }
+
     try {
         const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
@@ -100,10 +117,12 @@ export async function translateFromEnglish(text, targetLanguage) {
 
         logger.info(`[Multilingual] English → ${langLabel} in ${latencyMs}ms: "${text.substring(0, 50)}…" → "${translatedText.substring(0, 50)}…"`);
 
+        // ── Cache store ───────────────────────────────────────────
+        setCachedTranslation('fromEn', targetLanguage, text, translatedText);
+
         return { translatedText, originalText: text, latencyMs };
     } catch (err) {
         logger.error(`[Multilingual] translateFromEnglish failed:`, err.message);
-        // Fallback: return English response (better than nothing)
         return { translatedText: text, originalText: text, latencyMs: Date.now() - start };
     }
 }
