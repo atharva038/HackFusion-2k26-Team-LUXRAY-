@@ -63,8 +63,13 @@ const OrderSummaryCard = ({ messageId, orderId, status, items, total, customer, 
             isFetching = true;
 
             try {
-                const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const res = await fetch(`${url}/api/payment/status/${razorpayOrderId}`);
+                // VITE_API_URL may already end with /api (production) — strip it to avoid double /api
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+                const token = localStorage.getItem('pharmacy_token');
+                const res = await fetch(`${baseUrl}/api/payment/status/${razorpayOrderId}`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
                 if (res.ok) {
                     const data = await res.json();
 
@@ -79,7 +84,7 @@ const OrderSummaryCard = ({ messageId, orderId, status, items, total, customer, 
 
                         // 2. Fetch the latest chat messages to pull the invoice into the UI
                         if (currentSessionId && setMessages) {
-                            const chatRes = await fetch(`${url}/api/chat/history/${currentSessionId}`, {
+                            const chatRes = await fetch(`${baseUrl}/api/chat/history/${currentSessionId}`, {
                                 headers: {
                                     'Authorization': `Bearer ${localStorage.getItem('pharmacy_token')}`
                                 }
@@ -190,7 +195,10 @@ const OrderSummaryCard = ({ messageId, orderId, status, items, total, customer, 
                                         // IN DEVELOPMENT: Simulate the webhook because Razorpay cannot reach localhost
                                         if (import.meta.env.DEV) {
                                             try {
-                                                await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payment/webhook`, {
+                                                const wApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                                                const wBase = wApiUrl.replace(/\/api\/?$/, '');
+                                                await fetch(`${wBase}/api/payment/webhook`, {
+
                                                     method: 'POST',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({
