@@ -106,44 +106,6 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
                 </p>
 
                 <div className="flex items-center gap-2">
-                    {((rs.status === 'success' && rs.razorpayOrderId) || (order.status === 'awaiting_payment' && order.razorpayOrderId)) && (
-                        <button
-                            onClick={async () => {
-                                const res = await new Promise((resolve) => {
-                                    const script = document.createElement('script');
-                                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                                    script.onload = () => resolve(true);
-                                    script.onerror = () => resolve(false);
-                                    document.body.appendChild(script);
-                                });
-
-                                if (!res) {
-                                    alert('Failed to load Razorpay SDK');
-                                    return;
-                                }
-
-                                const options = {
-                                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'test',
-                                    amount: order.totalAmount ? Math.round(order.totalAmount * 100) : 0,
-                                    currency: 'INR',
-                                    name: 'Pharmacy Assistant',
-                                    description: `Order ${order._id}`,
-                                    order_id: rs.razorpayOrderId || order.razorpayOrderId,
-                                    handler: function (response) {
-                                        alert('Payment Successful! Your order will be confirmed shortly.');
-                                        window.location.reload();
-                                    },
-                                    theme: { color: '#3b82f6' },
-                                };
-                                const rzp = new window.Razorpay(options);
-                                rzp.open();
-                            }}
-                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-sm font-medium transition-colors cursor-pointer shadow-sm shadow-indigo-500/30"
-                        >
-                            Pay Bill
-                        </button>
-                    )}
-
                     {isPaid && (
                         <button
                             onClick={handleDownloadInvoice}
@@ -263,18 +225,83 @@ const MyOrders = () => {
                 replyText.toLowerCase().includes('cannot') ||
                 replyText.toLowerCase().includes('failed');
 
-            // Check if agent returned a Razorpay ID in the text
+            // Try to extract razorpay order id immediately
             const razorpayMatch = replyText.match(/Razorpay ID:\s*([A-Za-z0-9_]+)/i);
             const razorpayOrderId = razorpayMatch ? razorpayMatch[1] : null;
 
-            setReorderStates(prev => ({
-                ...prev,
-                [id]: {
-                    status:  failed ? 'error' : 'success',
-                    message: replyText,
-                    razorpayOrderId
-                },
-            }));
+            if (!failed && razorpayOrderId) {
+                // Instantly pop up Razorpay 
+                const res = await new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    script.onload = () => resolve(true);
+                    script.onerror = () => resolve(false);
+                    document.body.appendChild(script);
+                });
+
+                if (!res) {
+                    throw new Error('Failed to load Razorpay SDK');
+                }
+
+                const options = {
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'test',
+                    amount: order.totalAmount ? Math.round(order.totalAmount * 100) : 0,
+                    currency: 'INR',
+                    name: 'Pharmacy Assistant',
+                    description: `Reorder of ${order._id}`,
+                    order_id: razorpayOrderId,
+                    handler: async function (response) {
+                        try {
+                            if (import.meta.env.DEV) {
+                                await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payment/webhook`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        event: "payment.captured",
+                                        payload: {
+                                            payment: {
+                                                entity: {
+                                                    order_id: razorpayOrderId,
+                                                    id: response.razorpay_payment_id || "pay_mock123",
+                                                    amount: order.totalAmount ? Math.round(order.totalAmount * 100) : 0
+                                                }
+                                            }
+                                        }
+                                    })
+                                });
+                            }
+                        } catch (e) {
+                            console.error("Webhook sim failed", e);
+                        }
+                        
+                        setReorderStates(prev => ({
+                            ...prev,
+                            [id]: { status: 'success', message: 'Payment Successful! Reorder placed and paid.' }
+                        }));
+                        setTimeout(() => window.location.reload(), 1500);
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            setReorderStates(prev => ({
+                                ...prev,
+                                [id]: { status: 'error', message: 'Payment cancelled. Order placed but payment is pending. Please pay via chat.' }
+                            }));
+                        }
+                    },
+                    theme: { color: '#3b82f6' },
+                };
+                const rzp = new window.Razorpay(options);
+                rzp.open();
+            } else {
+                setReorderStates(prev => ({
+                    ...prev,
+                    [id]: {
+                        status:  failed ? 'error' : 'success',
+                        message: replyText,
+                        razorpayOrderId
+                    },
+                }));
+            }
         } catch (err) {
             setReorderStates(prev => ({
                 ...prev,

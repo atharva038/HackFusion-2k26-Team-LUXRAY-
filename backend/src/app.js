@@ -94,7 +94,7 @@ const prescriptionLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100, // Increased to prevent logout loops during development/frequent reloads
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many auth attempts. Please try again in 15 minutes.' },
