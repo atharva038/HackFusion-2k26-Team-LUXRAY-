@@ -92,7 +92,9 @@ const InputArea = () => {
 
             // Only send if there's actual text
             if (currentText && currentText.trim()) {
-                processSend(currentText.trim(), true); // Pass true because this came from voice
+                if (processSendRef.current) {
+                    processSendRef.current(currentText.trim(), true); // Pass true because this came from voice
+                }
             }
             // If no text was captured (silence), just go idle — don't send "didn't catch"
         };
@@ -259,7 +261,7 @@ const InputArea = () => {
     useEffect(() => {
         // Expose critical functions to the global store so deep components can trigger them
         useAppStore.getState().setChatActions({
-            processSend: processSendRef.current,
+            processSend: (...args) => processSendRef.current?.(...args),
             setShowPrescriptionModal,
             handlePrescriptionResult: () => { } // Decommissioned function handled in UI state now
         });
