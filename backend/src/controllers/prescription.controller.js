@@ -29,16 +29,71 @@ export const handlePrescriptionUpload = async (req, res) => {
         const agentData = await runImageExtraction(imageUrl);
         console.log("this is image data extractor agent data: ", agentData);
 
-        // 2.5 Check if it's actually a prescription
-        if (!agentData.isPrescription) {
+        const extractedContent = JSON.parse(agentData.state._currentStep.output);
+
+        
+        // console.log("RAW TRACE ITEM 0:", JSON.stringify(agentData.state._generatedItems[0], null, 2));
+        // console.log(agentData.state._generatedItems[0].name);
+        // console.log(agentData.state._generatedItems[0].arguments);
+
+        ///MONITOR PHASE 
+        const monitorTraces = agentData.state._generatedItems.map((item) => {
+            
+            const actor = item.agent?.name || "image_data_extraction";
+
+            
+            let actionName = "AI Reasoning";
+
+            
+            let detailData = item.content ||
+                item.output ||
+                item.rawItem?.output ||
+                item.rawItem?.arguments ||
+                "Processing...";
+
+            if (item.rawItem) {
+                
+                if (item.rawItem.type === 'function_call') {
+                    actionName = `Using Tool: ${item.rawItem.name}`;
+                }
+                
+                else if (item.rawItem.type === 'function_output') {
+                    actionName = `Tool Result: ${item.rawItem.name}`;
+                }
+                
+                else if (item.rawItem.type === 'message') {
+                    actionName = "Final Structuring";
+                }
+            }
+
+            return {
+                agent: actor,
+                action: actionName,
+                data: detailData
+            };
+        });
+        // console.log("the json data for monitor: ", agentData.state._currentStep.output);
+        console.log("monitor data: ", monitorTraces);
+
+        if (!extractedContent.isPrescription) {
             return res.status(200).json({
                 success: false,
                 isPrescription: false,
-                message: agentData.rejection_reason || "This image does not appear to be a medical prescription.",
-                imageUrl,
-                medications: []
+                message: extractedContent.rejection_reason || "Invalid image.",
+                traces: monitorTraces // Still send traces so user sees why it was rejected
             });
         }
+
+        
+        // if (!agentData.isPrescription) {
+        //     return res.status(200).json({
+        //         success: false,
+        //         isPrescription: false,
+        //         message: agentData.rejection_reason || "This image does not appear to be a medical prescription.",
+        //         imageUrl,
+        //         medications: []
+        //     });
+        // }
 
         // 3. Store prescriptionData on MongoDB
         console.log("💾 Saving to MongoDB...");
@@ -50,7 +105,7 @@ export const handlePrescriptionUpload = async (req, res) => {
                     prescriptions: {
                         imageUrl: imageUrl,
                         // doctor_name / hospital_name live inside each medicine entry per the OCR schema
-                        extractedData: agentData.medicines.map(med => ({
+                        extractedData: extractedContent.medicines.map(med => ({
                             doctor_name: med.doctor_name || "Unknown Doctor",
                             hospital_name: med.hospital_name || "General Hospital",
                             user_name: userName,
@@ -83,7 +138,7 @@ export const handlePrescriptionUpload = async (req, res) => {
             message: "Prescription processed and saved successfully",
             imageUrl,
             recordId: savedRecord._id,
-            medications: agentData.medicines
+            medications: extractedContent.medicines
         });
 
     } catch (error) {
@@ -138,7 +193,7 @@ export const deletePrescription = async (req, res) => {
 
         // 4. Remove the entry from the array
         rxDoc.prescriptions.pull(entryId);
-        
+
         // Disable the overall document approval if we just deleted the ONLY prescription or if we want it to default.
         // Easiest is to save it as is. If the array is empty, we can just leave it.
         await rxDoc.save();

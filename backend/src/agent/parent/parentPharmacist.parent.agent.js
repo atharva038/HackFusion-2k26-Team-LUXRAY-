@@ -99,6 +99,7 @@ Your job is routing and delegation — not execution.
 async function chatPharmacist(messages = []) {
   try {
     const result = await run(parentPharamcist, messages);
+    
     console.log(result.finalOutput);
     return result.finalOutput;
   } catch (err) {
