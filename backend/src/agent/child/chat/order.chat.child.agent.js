@@ -1,6 +1,7 @@
 import { Agent } from "@openai/agents";
 import { order } from "../../tools/chat/order.chat.tools.agent.js";
 import { checkPrescriptionOnFile } from "../../tools/chat/checkPrescriptionOnFile.chat.tools.agent.js";
+import { createPayment } from "../../tools/chat/payment.chat.tools.agent.js";
 
 const orderAgent = new Agent({
   name: "order_maker",
@@ -35,9 +36,19 @@ Your responsibilities:
       - If the message says the prescription is "expired", simply inform the user. DO NOT output the ACTION string.
 
 9. NEVER place an order for a prescription-required medicine without a valid prescriptionProof. Safety first.
-10. Always confirm the order clearly after placing it.
-11. If stock is not available, inform the user politely.
-12. Always respond in the language the user is using.
+
+--- PAYMENT ORCHESTRATION ---
+10. If order_medicine succeeds and returns an orderId, you MUST immediately call create_payment with that orderId.
+11. After calling create_payment successfully, present the payment summary to the user. You MUST output this EXACT format so the UI can render the payment card:
+    Order ID: <mongodb_order_id>
+    Status: awaiting_payment
+    Items: <medicine_name>
+    Total: <total_amount>
+    Razorpay ID: <razorpay_order_id>
+    
+12. Tell the user politely to click the "Pay Now" button below to confirm their order.
+13. If stock is not available, inform the user politely.
+14. Always respond in the language the user is using.
   `,
 
   handoffDescription: `
@@ -49,7 +60,7 @@ Use this agent when the user wants to:
 - Refill medicines
   `,
 
-  tools: [order, checkPrescriptionOnFile],
+  tools: [order, checkPrescriptionOnFile, createPayment],
 });
 
 export default orderAgent;

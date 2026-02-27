@@ -112,7 +112,7 @@ const MessageBubble = ({ message }) => {
                 {/* When structured data exists: suppress text bubble entirely  */}
                 {hasStructured ? (
                     <div className="text-text">
-                        <StructuredRenderer structured={message.structured} />
+                        <StructuredRenderer messageId={message.id} structured={message.structured} />
                     </div>
                 ) : (
                     /* ─── TEXT BUBBLE (streaming or plain) ─────────────────── */

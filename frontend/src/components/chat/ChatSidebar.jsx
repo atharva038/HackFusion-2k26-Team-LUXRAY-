@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MessageSquare, Plus, Trash2, Loader2 } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
 import { fetchChatSessions, fetchChatHistory, deleteChatSession } from '../../services/api';
+import { parseStructuredOutput } from '../../utils/parseStructuredOutput';
 
 const ChatSidebar = () => {
     const { chatSessions, setChatSessions, currentSessionId, setCurrentSessionId, setMessages, clearMessages } = useAppStore();
@@ -37,6 +38,7 @@ const ChatSidebar = () => {
                     role: msg.role,
                     text: msg.content,
                     tools: [],
+                    structured: msg.role === 'ai' ? parseStructuredOutput(msg.content) : null,
                 }));
                 if (formatted.length === 0) {
                     clearMessages();
@@ -94,8 +96,8 @@ const ChatSidebar = () => {
                         key={session._id}
                         onClick={() => handleSelectSession(session._id)}
                         className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 border border-transparent ${currentSessionId === session._id
-                                ? 'bg-primary/10 text-primary border-primary/20 shadow-sm'
-                                : 'hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-text'
+                            ? 'bg-primary/10 text-primary border-primary/20 shadow-sm'
+                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-text'
                             }`}
                     >
                         <div className="flex items-center gap-3 overflow-hidden">
@@ -107,8 +109,8 @@ const ChatSidebar = () => {
                         <button
                             onClick={(e) => handleDelete(e, session._id)}
                             className={`p-1.5 rounded-lg transition-all duration-200 ${currentSessionId === session._id
-                                    ? 'text-primary/70 hover:bg-primary/20 hover:text-red-500'
-                                    : 'text-text-muted/50 hover:bg-red-500/10 hover:text-red-500 opacity-0 group-hover:opacity-100'
+                                ? 'text-primary/70 hover:bg-primary/20 hover:text-red-500'
+                                : 'text-text-muted/50 hover:bg-red-500/10 hover:text-red-500 opacity-0 group-hover:opacity-100'
                                 }`}
                             title="Delete Chat"
                         >
