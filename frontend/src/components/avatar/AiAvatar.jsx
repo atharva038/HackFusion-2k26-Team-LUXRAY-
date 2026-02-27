@@ -15,28 +15,28 @@ const STATUS_CONFIG = {
 const SvgDefs = () => (
     <defs>
 
-        {/* ═══ SKIN ══════════════════════════════════════════════════════ */}
-        <radialGradient id="av-skin" cx="42%" cy="26%" r="75%">
-            <stop offset="0%" stopColor="#FDF5EE" />
-            <stop offset="28%" stopColor="#F0D8C4" />
-            <stop offset="62%" stopColor="#DDB898" />
-            <stop offset="100%" stopColor="#C6987A" />
+        {/* ═══ SKIN — warm peachy-tan matching image ════════════════════════ */}
+        <radialGradient id="av-skin" cx="44%" cy="28%" r="72%">
+            <stop offset="0%" stopColor="#F6DCC4" />
+            <stop offset="22%" stopColor="#EBC090" />
+            <stop offset="55%" stopColor="#D8A070" />
+            <stop offset="100%" stopColor="#C08050" />
         </radialGradient>
 
-        {/* 3-point lighting – left fill shadow */}
-        <linearGradient id="av-shadow-l" x1="0" y1="0.5" x2="0.4" y2="0.5">
-            <stop offset="0%" stopColor="#7A3818" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#7A3818" stopOpacity="0" />
+        {/* 3-point lighting – left fill shadow (stronger for definition) */}
+        <linearGradient id="av-shadow-l" x1="0" y1="0.5" x2="0.45" y2="0.5">
+            <stop offset="0%" stopColor="#7A3C18" stopOpacity="0.30" />
+            <stop offset="100%" stopColor="#7A3C18" stopOpacity="0" />
         </linearGradient>
         {/* 3-point lighting – right rim shadow */}
-        <linearGradient id="av-shadow-r" x1="1" y1="0.5" x2="0.6" y2="0.5">
-            <stop offset="0%" stopColor="#5A3020" stopOpacity="0.17" />
-            <stop offset="100%" stopColor="#5A3020" stopOpacity="0" />
+        <linearGradient id="av-shadow-r" x1="1" y1="0.5" x2="0.55" y2="0.5">
+            <stop offset="0%" stopColor="#603018" stopOpacity="0.24" />
+            <stop offset="100%" stopColor="#603018" stopOpacity="0" />
         </linearGradient>
         {/* Under-chin ambient occlusion */}
-        <linearGradient id="av-shadow-b" x1="0.5" y1="1" x2="0.5" y2="0.72">
-            <stop offset="0%" stopColor="#4A2808" stopOpacity="0.20" />
-            <stop offset="100%" stopColor="#4A2808" stopOpacity="0" />
+        <linearGradient id="av-shadow-b" x1="0.5" y1="1" x2="0.5" y2="0.70">
+            <stop offset="0%" stopColor="#5A2C08" stopOpacity="0.26" />
+            <stop offset="100%" stopColor="#5A2C08" stopOpacity="0" />
         </linearGradient>
 
         {/* ═══ SKIN TEXTURE ═══════════════════════════════════════════════
@@ -47,59 +47,62 @@ const SvgDefs = () => (
             <feTurbulence type="fractalNoise" baseFrequency="0.72 0.68"
                 numOctaves="4" seed="8" result="noise" />
             <feColorMatrix type="matrix"
-                values="0 0 0 0 0.92
-                        0 0 0 0 0.78
-                        0 0 0 0 0.65
-                        0 0 0 0.048 0"
+                values="0 0 0 0 0.95
+                        0 0 0 0 0.72
+                        0 0 0 0 0.50
+                        0 0 0 0.018 0"
                 in="noise" result="tintedNoise" />
             <feComposite in="tintedNoise" in2="SourceGraphic" operator="in" />
         </filter>
 
-        {/* ═══ HAIR ═══════════════════════════════════════════════════════ */}
-        <linearGradient id="av-hair" x1="0.12" y1="0" x2="0.44" y2="1">
-            <stop offset="0%" stopColor="#2A1B14" />
-            <stop offset="45%" stopColor="#3B2519" />
-            <stop offset="100%" stopColor="#1C100B" />
+        {/* ═══ HAIR — dark warm brown matching image ═══════════════════════ */}
+        <linearGradient id="av-hair" x1="0.14" y1="0" x2="0.46" y2="1">
+            <stop offset="0%" stopColor="#2C1A10" />
+            <stop offset="35%" stopColor="#3E2818" />
+            <stop offset="70%" stopColor="#281408" />
+            <stop offset="100%" stopColor="#1A0C06" />
         </linearGradient>
         <linearGradient id="av-hair-side" x1="0.1" y1="0" x2="0.9" y2="1">
-            <stop offset="0%" stopColor="#241610" />
-            <stop offset="100%" stopColor="#170D08" />
+            <stop offset="0%" stopColor="#281608" />
+            <stop offset="55%" stopColor="#1E0E06" />
+            <stop offset="100%" stopColor="#140A04" />
         </linearGradient>
 
-        {/* ═══ CLOTHING ═══════════════════════════════════════════════════ */}
-        <linearGradient id="av-cloth" x1="0.12" y1="0" x2="0.88" y2="1">
-            <stop offset="0%" stopColor="#3A638B" />
-            <stop offset="100%" stopColor="#1A3B5C" />
+        {/* ═══ CLOTHING — light periwinkle-blue scrubs matching image ═════ */}
+        <linearGradient id="av-cloth" x1="0.15" y1="0" x2="0.85" y2="1">
+            <stop offset="0%" stopColor="#90C8DC" />
+            <stop offset="50%" stopColor="#76B8D0" />
+            <stop offset="100%" stopColor="#5EA4BE" />
         </linearGradient>
-        <linearGradient id="av-coat" x1="0" y1="0" x2="0.1" y2="1">
-            <stop offset="0%" stopColor="#4A7CA6" />
-            <stop offset="100%" stopColor="#244D76" />
+        <linearGradient id="av-coat" x1="0" y1="0" x2="0.15" y2="1">
+            <stop offset="0%" stopColor="#A4D2E4" />
+            <stop offset="100%" stopColor="#80C0D8" />
         </linearGradient>
 
         {/* ═══ NECK ═══════════════════════════════════════════════════════ */}
         <linearGradient id="av-neck" x1="0.22" y1="0" x2="0.78" y2="1">
-            <stop offset="0%" stopColor="#EDD0B8" />
-            <stop offset="100%" stopColor="#CCAA88" />
+            <stop offset="0%" stopColor="#E8C890" />
+            <stop offset="100%" stopColor="#C8A060" />
         </linearGradient>
 
-        {/* ═══ LIPS — slightly fuller ══════════════════════════════════════ */}
+        {/* ═══ LIPS — peachy-nude matching image ══════════════════════════ */}
         <linearGradient id="av-lip-upper" x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%" stopColor="#E3B5A0" />
-            <stop offset="55%" stopColor="#D69B87" />
-            <stop offset="100%" stopColor="#C48470" />
+            <stop offset="0%" stopColor="#C48868" />
+            <stop offset="55%" stopColor="#B87050" />
+            <stop offset="100%" stopColor="#A85A40" />
         </linearGradient>
         <linearGradient id="av-lip-lower" x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%" stopColor="#E0AC99" />
-            <stop offset="42%" stopColor="#CF9682" />
-            <stop offset="100%" stopColor="#BA7A65" />
+            <stop offset="0%" stopColor="#C08070" />
+            <stop offset="42%" stopColor="#B06858" />
+            <stop offset="100%" stopColor="#9E5848" />
         </linearGradient>
 
-        {/* ═══ IRIS ═══════════════════════════════════════════════════════ */}
-        <radialGradient id="av-iris" cx="36%" cy="32%" r="68%">
-            <stop offset="0%" stopColor="#7BAFE0" />
-            <stop offset="22%" stopColor="#3B76C4" />
-            <stop offset="58%" stopColor="#1C4B99" />
-            <stop offset="100%" stopColor="#0B2A66" />
+        {/* ═══ IRIS — steel grey-blue matching image ═══════════════════════ */}
+        <radialGradient id="av-iris" cx="34%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#9AC0D4" />
+            <stop offset="18%" stopColor="#6890B0" />
+            <stop offset="52%" stopColor="#3C6488" />
+            <stop offset="100%" stopColor="#1C3C60" />
         </radialGradient>
 
         {/* ═══ AURA ═══════════════════════════════════════════════════════ */}
@@ -118,8 +121,8 @@ const SvgDefs = () => (
         </clipPath>
 
         {/* ═══ FILTERS ════════════════════════════════════════════════════ */}
-        <filter id="av-eye-glow" x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+        <filter id="av-eye-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
             <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
@@ -141,18 +144,18 @@ const SvgDefs = () => (
 const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId, dartX, dartY }) => (
     <g transform={`scale(1, ${eyeBlinkScale})`}>
 
-        {/* Eye white */}
+        {/* Eye white — clean bright white matching illustration */}
         <path
             d="M -29,3 C -22,-13 -2,-17 28,-3 C 16,10 -12,12 -29,3 Z"
-            fill="#F6F0EA"
+            fill="#F2EEE8"
             clipPath={`url(#${clipId})`}
         />
 
-        {/* Upper-lid shadow on the white */}
+        {/* Upper-lid shadow cast onto white */}
         <path
-            d="M -29,3 C -22,-13 -2,-17 28,-3 C 14,-5 -4,-7 -29,-2 Z"
-            fill="#C89878"
-            opacity="0.10"
+            d="M -29,3 C -22,-13 -2,-17 28,-3 C 14,-6 -4,-8 -29,-2 Z"
+            fill="#B08868"
+            opacity="0.16"
             clipPath={`url(#${clipId})`}
         />
 
@@ -161,29 +164,29 @@ const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId, dartX, dartY }) => (
             <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
                 fill="url(#av-iris)" clipPath={`url(#${clipId})`} />
 
-            {/* Iris radial texture spokes */}
-            {Array.from({ length: 6 }, (_, i) => {
-                const a = (i * 30) * Math.PI / 180;
+            {/* Iris radial texture spokes — steel blue */}
+            {Array.from({ length: 8 }, (_, i) => {
+                const a = (i * 22.5) * Math.PI / 180;
                 return (
                     <line key={i}
                         x1={Math.cos(a) * 5.5} y1={Math.sin(a) * 5.5 - 1}
                         x2={Math.cos(a) * 12} y2={Math.sin(a) * 12 - 1}
-                        stroke="#071060" strokeWidth="0.55" opacity="0.22"
+                        stroke="#1C3C58" strokeWidth="0.5" opacity="0.28"
                         clipPath={`url(#${clipId})`}
                     />
                 );
             })}
 
-            {/* Limbal ring */}
+            {/* Limbal ring — dark rim of iris */}
             <ellipse cx="0" cy="-1" rx="12.5" ry="12.5"
-                fill="none" stroke="#060C48" strokeWidth="1.7" opacity="0.60"
+                fill="none" stroke="#0A1C30" strokeWidth="2" opacity="0.70"
                 clipPath={`url(#${clipId})`} />
 
-            {/* Pupil */}
-            <ellipse cx="0.5" cy="0" rx="6.4" ry="6.4"
-                fill="#03070C" clipPath={`url(#${clipId})`} />
-            <ellipse cx="-1.5" cy="-1" rx="2.2" ry="1.8"
-                fill="#081830" opacity="0.45" clipPath={`url(#${clipId})`} />
+            {/* Pupil — deep black */}
+            <ellipse cx="0.3" cy="-0.5" rx="6" ry="6"
+                fill="#02050A" clipPath={`url(#${clipId})`} />
+            <ellipse cx="-1.5" cy="-1.5" rx="2" ry="1.6"
+                fill="#060E1C" opacity="0.50" clipPath={`url(#${clipId})`} />
         </g>
 
         {/* State-reactive tint */}
@@ -198,20 +201,23 @@ const Eye = ({ eyeBlinkScale, eyeGlowOpacity, clipId, dartX, dartY }) => (
         <ellipse cx="5.5" cy="3.5" rx="2" ry="1.6"
             fill="white" opacity="0.42" clipPath={`url(#${clipId})`} />
 
-        {/* Upper eyelid skin */}
+        {/* Upper eyelid skin — warmer, matches skin tone */}
         <path d="M -29,3 C -22,-13 -2,-17 28,-3"
-            fill="#DDB898" opacity="0.42" clipPath={`url(#${clipId})`} />
+            fill="#D8A878" opacity="0.35" clipPath={`url(#${clipId})`} />
 
-        {/* Upper lash line */}
-        <path d="M -29,2 C -20,-14 -2,-17 28,-4"
-            stroke="#0E0804" strokeWidth="3.4" fill="none" strokeLinecap="round" />
-        {/* Outer corner lash flick */}
-        <path d="M 22,-6 C 26,-10 31,-9 33,-5"
-            stroke="#0E0804" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+        {/* Upper lash line — bold, well-defined */}
+        <path d="M -29,2 C -20,-14 -2,-18 28,-4"
+            stroke="#080402" strokeWidth="4" fill="none" strokeLinecap="round" />
+        {/* Outer corner lash flick — cat-eye tilt like image */}
+        <path d="M 20,-7 C 25,-12 32,-11 34,-6"
+            stroke="#080402" strokeWidth="2" fill="none" strokeLinecap="round" />
+        {/* Inner lash taper */}
+        <path d="M -29,2 C -26,-2 -24,-4 -22,-5"
+            stroke="#0C0604" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.70" />
 
-        {/* Lower lash line */}
+        {/* Lower lash line — subtle */}
         <path d="M -29,3 C -12,12 14,10 28,-3"
-            fill="none" stroke="#C0A080" strokeWidth="0.9" opacity="0.32" />
+            fill="none" stroke="#A08060" strokeWidth="1.1" opacity="0.28" />
 
         {/* No tear duct / inner corner element — clean eye corner */}
 
@@ -237,49 +243,52 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity, headSwayX, headSw
             CLOTHING
         ════════════════════════════════════════════════════════════════ */}
         <path
-            d="M 0 500 Q 20 416 78 382 L 132 360 L 200 376 L 268 360 L 322 382 Q 380 416 400 500 Z"
+            d="M 0 500 Q 20 416 80 384 L 134 362 L 200 378 L 266 362 L 320 384 Q 380 416 400 500 Z"
             fill="url(#av-cloth)"
         />
         <path
-            d="M 126 362 Q 162 388 200 380 Q 238 388 274 362 L 260 349 Q 236 374 200 368 Q 164 374 140 349 Z"
+            d="M 130 362 Q 164 390 200 382 Q 236 390 270 362 L 256 350 Q 232 375 200 369 Q 168 375 144 350 Z"
             fill="url(#av-coat)"
         />
-        <path d="M 138 352 Q 168 376 200 368"
-            fill="none" stroke="#C0CCDF" strokeWidth="1.1" opacity="0.55" />
-        <path d="M 262 352 Q 232 376 200 368"
-            fill="none" stroke="#C0CCDF" strokeWidth="1.1" opacity="0.55" />
-        <line x1="200" y1="380" x2="200" y2="402"
-            stroke="#B2C4E0" strokeWidth="1.2" opacity="0.45" />
+        <path d="M 142 353 Q 170 377 200 369"
+            fill="none" stroke="#C8D8E8" strokeWidth="1.2" opacity="0.60" />
+        <path d="M 258 353 Q 230 377 200 369"
+            fill="none" stroke="#C8D8E8" strokeWidth="1.2" opacity="0.60" />
+        <line x1="200" y1="382" x2="200" y2="404"
+            stroke="#B8CCE0" strokeWidth="1.2" opacity="0.45" />
+        {/* Collarbone hint — visible in reference image */}
+        <path d="M 134 368 Q 168 374 200 370 Q 232 374 266 368"
+            fill="none" stroke="#D8A870" strokeWidth="1.8" opacity="0.22" strokeLinecap="round" />
 
         {/* ═══════════════════════════════════════════════════════════════
             NECK
         ════════════════════════════════════════════════════════════════ */}
         <path
-            d="M 183 348 Q 181 366 184 382 L 216 382 Q 219 366 217 348 Z"
+            d="M 184 348 Q 182 366 185 382 L 215 382 Q 218 366 216 348 Z"
             fill="url(#av-neck)"
         />
-        <path d="M 185 350 Q 186 368 185 381"
+        <path d="M 186 350 Q 187 368 186 381"
             fill="none" stroke="#C0A888" strokeWidth="1.4" opacity="0.24" />
-        <path d="M 215 350 Q 214 368 215 381"
+        <path d="M 214 350 Q 213 368 214 381"
             fill="none" stroke="#C0A888" strokeWidth="1.4" opacity="0.24" />
-        <ellipse cx="200" cy="383" rx="20" ry="3.5"
+        <ellipse cx="200" cy="383" rx="18" ry="3.2"
             fill="#B89878" opacity="0.16" />
 
         {/* ═══════════════════════════════════════════════════════════════
-            HEAD SHAPE  — ROUND face
-            Wider at cheekbones (x 70→330 = 260 px)
-            Shorter oval chin → soft round jaw
-            Width/visible-height ratio ≈ 0.90  (round!)
+            HEAD SHAPE  — OVAL face
+            Narrower at cheekbones (x 78→322 = 244 px)
+            Slightly more elongated chin → defined oval jaw
+            Width/visible-height ratio ≈ 0.76  (oval!)
         ════════════════════════════════════════════════════════════════ */}
         <path
             d="
-                M 200,56
-                C 296,50  330,138  330,202
-                C 330,278  306,334  248,358
-                C 230,369  215,375  200,377
-                C 185,375  170,369  152,358
-                C  94,334   70,278   70,202
-                C  70,138  104,50   200,56 Z
+                M 200,54
+                C 292,48  324,134  324,200
+                C 324,276  300,332  244,357
+                C 226,369  212,377  200,379
+                C 188,377  174,369  156,357
+                C 100,332   76,276   76,200
+                C  76,134  108,48   200,54 Z
             "
             fill="url(#av-skin)"
             filter="url(#av-face-shadow)"
@@ -288,13 +297,13 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity, headSwayX, headSw
         {/* Skin micro-texture overlay — same path, fractalNoise filter */}
         <path
             d="
-                M 200,56
-                C 296,50  330,138  330,202
-                C 330,278  306,334  248,358
-                C 230,369  215,375  200,377
-                C 185,375  170,369  152,358
-                C  94,334   70,278   70,202
-                C  70,138  104,50   200,56 Z
+                M 200,54
+                C 292,48  324,134  324,200
+                C 324,276  300,332  244,357
+                C 226,369  212,377  200,379
+                C 188,377  174,369  156,357
+                C 100,332   76,276   76,200
+                C  76,134  108,48   200,54 Z
             "
             fill="white"
             opacity="1"
@@ -303,105 +312,185 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity, headSwayX, headSw
 
         {/* ─── 3-point lighting shadows ──────────────────────────────── */}
         <path
-            d="M 200,56 C 104,50 70,138 70,202 C 70,278 94,334 152,358
-               C 170,369 185,375 200,377 L 200,56 Z"
+            d="M 200,54 C 108,48 76,134 76,200 C 76,276 100,332 156,357
+               C 174,369 188,377 200,379 L 200,54 Z"
             fill="url(#av-shadow-l)"
         />
         <path
-            d="M 200,56 C 296,50 330,138 330,202 C 330,278 306,334 248,358
-               C 230,369 215,375 200,377 L 200,56 Z"
+            d="M 200,54 C 292,48 324,134 324,200 C 324,276 300,332 244,357
+               C 226,369 212,377 200,379 L 200,54 Z"
             fill="url(#av-shadow-r)"
         />
         <path
-            d="M 154,360 C 176,376 224,376 246,360
-               Q 222,380 200,380 Q 178,380 154,360 Z"
+            d="M 158,359 C 178,376 222,376 242,359
+               Q 220,381 200,381 Q 180,381 158,359 Z"
             fill="url(#av-shadow-b)"
         />
 
         {/* ═══════════════════════════════════════════════════════════════
-            EARS  — adjusted to match wider face (x≈70/330)
+            EARS  — adjusted to match oval face (x≈76/324)
         ════════════════════════════════════════════════════════════════ */}
-        <path d="M 70,202 Q 62,222 66,240 Q 72,252 79,245
-                 Q 82,232 77,218 Q 74,209 70,202 Z"
-            fill="#DCBA9E" />
-        <path d="M 330,202 Q 338,222 334,240 Q 328,252 321,245
-                 Q 318,232 323,218 Q 326,209 330,202 Z"
-            fill="#DCBA9E" />
-        <path d="M 68,210 Q 65,226 68,242"
+        <path d="M 76,200 Q 68,220 72,238 Q 78,250 85,243
+                 Q 88,230 83,216 Q 80,207 76,200 Z"
+            fill="#D8A870" />
+        <path d="M 324,200 Q 332,220 328,238 Q 322,250 315,243
+                 Q 312,230 317,216 Q 320,207 324,200 Z"
+            fill="#D8A870" />
+        <path d="M 74,208 Q 71,224 74,240"
             fill="none" stroke="#C0A082" strokeWidth="1.1" opacity="0.28" />
-        <path d="M 332,210 Q 335,226 332,242"
+        <path d="M 326,208 Q 329,224 326,240"
             fill="none" stroke="#C0A082" strokeWidth="1.1" opacity="0.28" />
 
         {/* ═══════════════════════════════════════════════════════════════
-            HAIR  — widened to match round head
+            HAIR  — wide flowing dark brown, framing the face like image
         ════════════════════════════════════════════════════════════════ */}
+
+        {/* ── LEFT wide side strand (extends ~55px beyond face edge) ── */}
         <path
             d="
-                M 70,202
-                Q 60,120   90,76
-                Q 126,26   200,18
-                Q 274,26   310,76
-                Q 340,120  330,202
-                Q 318,148  288,116
-                Q 252,80   200,78
-                Q 148,80   112,116
-                Q  82,148   70,202 Z
+                M 76,196
+                Q 48,238  26,308
+                Q 16,350  18,405
+                Q 36,372  54,334
+                Q 66,302  72,268
+                Q 75,234  76,212 Z
+            "
+            fill="#1E1008"
+        />
+        {/* Left inner strand — lighter warm-brown to show hair depth */}
+        <path
+            d="
+                M 76,200
+                Q 54,244  38,310
+                Q 30,348  34,390
+                Q 50,360  62,324
+                Q 70,296  74,264
+                Q 76,238  76,216 Z
+            "
+            fill="#2C1A0E"
+            opacity="0.80"
+        />
+        {/* Left hair flow texture streaks */}
+        <path d="M 70,224 Q 44,272 30,322"
+            stroke="#3E2414" strokeWidth="2.2" fill="none" opacity="0.26" />
+        <path d="M 62,248 Q 36,292 24,340"
+            stroke="#3E2414" strokeWidth="1.6" fill="none" opacity="0.18" />
+        {/* Left subtle highlight streak (light catches straight hair) */}
+        <path d="M 74,228 Q 58,270 50,314"
+            stroke="#4A3020" strokeWidth="3.5" fill="none" opacity="0.22" strokeLinecap="round"/>
+
+        {/* ── RIGHT wide side strand ── */}
+        <path
+            d="
+                M 324,196
+                Q 352,238  374,308
+                Q 384,350  382,405
+                Q 364,372  346,334
+                Q 334,302  328,268
+                Q 325,234  324,212 Z
+            "
+            fill="#1E1008"
+        />
+        {/* Right inner strand */}
+        <path
+            d="
+                M 324,200
+                Q 346,244  362,310
+                Q 370,348  366,390
+                Q 350,360  338,324
+                Q 330,296  326,264
+                Q 324,238  324,216 Z
+            "
+            fill="#2C1A0E"
+            opacity="0.80"
+        />
+        {/* Right hair flow texture streaks */}
+        <path d="M 330,224 Q 356,272 370,322"
+            stroke="#3E2414" strokeWidth="2.2" fill="none" opacity="0.26" />
+        <path d="M 338,248 Q 364,292 376,340"
+            stroke="#3E2414" strokeWidth="1.6" fill="none" opacity="0.18" />
+        {/* Right subtle highlight streak */}
+        <path d="M 326,228 Q 342,270 350,314"
+            stroke="#4A3020" strokeWidth="3.5" fill="none" opacity="0.22" strokeLinecap="round"/>
+
+        {/* ── Crown hair (top of head) ── */}
+        <path
+            d="
+                M 76,200
+                Q 64,118   94,74
+                Q 128,24   200,16
+                Q 272,24   306,74
+                Q 336,118  324,200
+                Q 312,148  284,116
+                Q 248,78   200,76
+                Q 152,78   116,116
+                Q  88,148   76,200 Z
             "
             fill="url(#av-hair)"
         />
-        {/* Left temple flow */}
+        {/* Crown shine — catches key light */}
+        <path d="M 150,76 Q 182,48 218,52"
+            stroke="#3C2412" strokeWidth="7" fill="none"
+            strokeLinecap="round" opacity="0.32" />
+        <path d="M 170,60 Q 198,42 226,48"
+            stroke="#4A2C16" strokeWidth="3.5" fill="none"
+            strokeLinecap="round" opacity="0.22" />
+        {/* Hair part line (slightly left of center) */}
+        <path d="M 200,18 Q 203,48 202,78"
+            stroke="#4A3020" strokeWidth="2.5" fill="none"
+            strokeLinecap="round" opacity="0.20" />
+        {/* Hairline softener */}
         <path
-            d="M 68,204 Q 58,266 62,318 Q 72,284 76,254 Q 74,228 70,204 Z"
-            fill="url(#av-hair-side)"
-        />
-        {/* Right temple flow */}
-        <path
-            d="M 332,204 Q 342,266 338,318 Q 328,284 324,254 Q 326,228 330,204 Z"
-            fill="url(#av-hair-side)"
-        />
-        {/* Crown shine streaks */}
-        <path d="M 152,70 Q 182,46 222,52"
-            stroke="#3A2010" strokeWidth="6" fill="none"
-            strokeLinecap="round" opacity="0.28" />
-        <path d="M 170,58 Q 198,42 228,48"
-            stroke="#4A2C18" strokeWidth="3.2" fill="none"
-            strokeLinecap="round" opacity="0.18" />
-        {/* Hairline edge softener */}
-        <path
-            d="M 112,116 Q 124,104 140,96 Q 160,88 182,84
-               Q 200,82 218,84 Q 240,88 260,96
-               Q 276,104 288,116"
-            fill="none"
-            stroke="url(#av-hair)"
-            strokeWidth="5.5"
-            opacity="0.55"
+            d="M 116,116 Q 130,104 146,96 Q 164,88 184,84
+               Q 200,82 216,84 Q 236,88 254,96
+               Q 270,104 284,116"
+            fill="none" stroke="url(#av-hair)"
+            strokeWidth="6" opacity="0.60"
         />
 
         {/* ═══════════════════════════════════════════════════════════════
-            EYE SOCKET DEPTH
+            EYE SOCKET DEPTH — stronger definition like image
         ════════════════════════════════════════════════════════════════ */}
-        <ellipse cx="160" cy="192" rx="40" ry="24"
-            fill="#7A4020" opacity="0.065" filter="url(#av-soft)" />
-        <ellipse cx="240" cy="192" rx="40" ry="24"
-            fill="#7A4020" opacity="0.065" filter="url(#av-soft)" />
+        <ellipse cx="160" cy="194" rx="38" ry="22"
+            fill="#7A4020" opacity="0.10" filter="url(#av-soft)" />
+        <ellipse cx="240" cy="194" rx="38" ry="22"
+            fill="#7A4020" opacity="0.10" filter="url(#av-soft)" />
+        {/* Upper eyelid crease shadow */}
+        <path d="M 134 180 Q 160 174 186 180"
+            fill="none" stroke="#8A5030" strokeWidth="3" opacity="0.12" filter="url(#av-soft)" />
+        <path d="M 214 180 Q 240 174 266 180"
+            fill="none" stroke="#8A5030" strokeWidth="3" opacity="0.12" filter="url(#av-soft)" />
 
         {/* ═══════════════════════════════════════════════════════════════
-            EYEBROWS
+            EYEBROWS — filled arched shapes matching image
         ════════════════════════════════════════════════════════════════ */}
-        <path d="M 128 168 Q 147 154 165 153 Q 178 152 188 158"
-            stroke="#120A04" strokeWidth="3.4" fill="none" strokeLinecap="round" />
-        <path d="M 130 170 Q 148 157 165 156 Q 178 155 186 161"
-            stroke="#2A1608" strokeWidth="1.8" fill="none"
-            strokeLinecap="round" opacity="0.45" />
-        <path d="M 212 158 Q 222 152 236 153 Q 254 154 272 168"
-            stroke="#120A04" strokeWidth="3.4" fill="none" strokeLinecap="round" />
-        <path d="M 214 160 Q 222 155 236 156 Q 252 156 270 170"
-            stroke="#2A1608" strokeWidth="1.8" fill="none"
-            strokeLinecap="round" opacity="0.45" />
-        <path d="M 132 170 Q 160 162 188 168"
-            fill="none" stroke="#906040" strokeWidth="3" opacity="0.09" />
-        <path d="M 212 168 Q 240 162 268 170"
-            fill="none" stroke="#906040" strokeWidth="3" opacity="0.09" />
+        {/* Left eyebrow — filled arch */}
+        <path
+            d="M 127,172 Q 140,156 158,150 Q 173,146 190,155
+               L 188,161 Q 173,153 158,157 Q 141,163 129,178 Z"
+            fill="#18100A" opacity="0.90"
+        />
+        {/* Left brow soft edge top */}
+        <path d="M 127,172 Q 143,155 162,149 Q 176,145 190,155"
+            stroke="#241408" strokeWidth="1.4" fill="none"
+            strokeLinecap="round" opacity="0.38" />
+
+        {/* Right eyebrow — filled arch */}
+        <path
+            d="M 210,155 Q 227,146 244,150 Q 262,156 273,172
+               L 271,178 Q 259,163 242,157 Q 225,153 210,161 Z"
+            fill="#18100A" opacity="0.90"
+        />
+        {/* Right brow soft edge top */}
+        <path d="M 210,155 Q 224,145 242,149 Q 259,155 273,172"
+            stroke="#241408" strokeWidth="1.4" fill="none"
+            strokeLinecap="round" opacity="0.38" />
+
+        {/* Brow under-shadow for 3D depth */}
+        <path d="M 130,175 Q 158,167 188,173"
+            fill="none" stroke="#A06840" strokeWidth="4" opacity="0.10" />
+        <path d="M 212,173 Q 242,167 270,175"
+            fill="none" stroke="#A06840" strokeWidth="4" opacity="0.10" />
 
         {/* ═══════════════════════════════════════════════════════════════
             LEFT EYE  — centre (160, 190)
@@ -436,27 +525,34 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity, headSwayX, headSw
         </g>
 
         {/* ═══════════════════════════════════════════════════════════════
-            NOSE
+            NOSE — straight refined bridge with defined tip/nostrils
         ════════════════════════════════════════════════════════════════ */}
-        <path d="M 200 222 Q 198 246 198 260"
-            fill="none" stroke="#FFEEDD" strokeWidth="3.5"
-            strokeLinecap="round" opacity="0.45" />
-        <path d="M 196 224 Q 190 246 192 264"
-            fill="none" stroke="#C8A890" strokeWidth="1.1"
-            strokeLinecap="round" opacity="0.32" />
-        <path d="M 204 224 Q 210 246 208 264"
-            fill="none" stroke="#C8A890" strokeWidth="1.1"
-            strokeLinecap="round" opacity="0.32" />
-        <ellipse cx="200" cy="265" rx="5.5" ry="4.2"
-            fill="white" opacity="0.14" />
-        <path d="M 190 265 C 185 270 186 274 192 272"
-            fill="none" stroke="#B89878" strokeWidth="1.5"
-            strokeLinecap="round" opacity="0.42" />
-        <path d="M 210 265 C 215 270 214 274 208 272"
-            fill="none" stroke="#B89878" strokeWidth="1.5"
-            strokeLinecap="round" opacity="0.42" />
-        <ellipse cx="192" cy="270" rx="3.8" ry="2.2" fill="#B09078" opacity="0.22" />
-        <ellipse cx="208" cy="270" rx="3.8" ry="2.2" fill="#B09078" opacity="0.22" />
+        {/* Bridge highlight — straight */}
+        <path d="M 200 220 Q 199 248 199 262"
+            fill="none" stroke="#F8E8D8" strokeWidth="4"
+            strokeLinecap="round" opacity="0.50" />
+        {/* Left nose shadow — defines the bridge */}
+        <path d="M 195 222 Q 188 248 190 266"
+            fill="none" stroke="#C09068" strokeWidth="1.8"
+            strokeLinecap="round" opacity="0.50" />
+        {/* Right nose shadow */}
+        <path d="M 205 222 Q 212 248 210 266"
+            fill="none" stroke="#C09068" strokeWidth="1.8"
+            strokeLinecap="round" opacity="0.50" />
+        {/* Nose tip soft highlight */}
+        <ellipse cx="200" cy="266" rx="6" ry="4.5"
+            fill="white" opacity="0.18" />
+        {/* Left nostril — more defined curve */}
+        <path d="M 188 264 C 182 270 183 277 190 274 Q 193 273 195 268"
+            fill="none" stroke="#A87858" strokeWidth="2"
+            strokeLinecap="round" opacity="0.55" />
+        {/* Right nostril */}
+        <path d="M 212 264 C 218 270 217 277 210 274 Q 207 273 205 268"
+            fill="none" stroke="#A87858" strokeWidth="2"
+            strokeLinecap="round" opacity="0.55" />
+        {/* Nostril shadow depth */}
+        <ellipse cx="190" cy="271" rx="4" ry="2.5" fill="#906040" opacity="0.28" />
+        <ellipse cx="210" cy="271" rx="4" ry="2.5" fill="#906040" opacity="0.28" />
 
         {/* Philtrum */}
         <path d="M 196 280 L 196 290"
@@ -539,38 +635,44 @@ const AvatarFace = ({ mouthGap, eyeBlinkScale, eyeGlowOpacity, headSwayX, headSw
             SKIN HIGHLIGHTS
         ════════════════════════════════════════════════════════════════ */}
 
-        {/* Forehead key light */}
-        <ellipse cx="200" cy="128" rx="65" ry="36"
-            fill="white" opacity="0.052" filter="url(#av-soft)" />
+        {/* Forehead key light — center bright zone */}
+        <ellipse cx="200" cy="120" rx="60" ry="38"
+            fill="white" opacity="0.075" filter="url(#av-soft)" />
 
         {/* Nose bridge glow */}
-        <ellipse cx="200" cy="238" rx="8" ry="24"
-            fill="white" opacity="0.055" filter="url(#av-soft)" />
+        <ellipse cx="200" cy="240" rx="7" ry="26"
+            fill="white" opacity="0.065" filter="url(#av-soft)" />
 
-        {/* Cheekbone highlights — pulled wider for round face */}
-        <ellipse cx="118" cy="232" rx="30" ry="13"
-            fill="white" opacity="0.075" filter="url(#av-soft)" />
-        <ellipse cx="282" cy="232" rx="30" ry="13"
-            fill="white" opacity="0.075" filter="url(#av-soft)" />
+        {/* Cheekbone highlights — high, prominent like image */}
+        <ellipse cx="118" cy="228" rx="32" ry="14"
+            fill="white" opacity="0.095" filter="url(#av-soft)" />
+        <ellipse cx="282" cy="228" rx="32" ry="14"
+            fill="white" opacity="0.095" filter="url(#av-soft)" />
 
-        {/* Subtle warm blush */}
-        <ellipse cx="118" cy="250" rx="24" ry="12"
-            fill="#E89888" opacity="0.055" filter="url(#av-soft)" />
-        <ellipse cx="282" cy="250" rx="24" ry="12"
-            fill="#E89888" opacity="0.055" filter="url(#av-soft)" />
+        {/* Cheekbone under-shadow — gives 3D prominent cheek look */}
+        <ellipse cx="108" cy="258" rx="28" ry="12"
+            fill="#8A5028" opacity="0.10" filter="url(#av-soft)" />
+        <ellipse cx="292" cy="258" rx="28" ry="12"
+            fill="#8A5028" opacity="0.10" filter="url(#av-soft)" />
+
+        {/* Natural blush — warm peachy pink matching image */}
+        <ellipse cx="116" cy="244" rx="30" ry="15"
+            fill="#E09060" opacity="0.082" filter="url(#av-soft)" />
+        <ellipse cx="284" cy="244" rx="30" ry="15"
+            fill="#E09060" opacity="0.082" filter="url(#av-soft)" />
 
         {/* Under-lip shadow */}
-        <ellipse cx="200" cy="316" rx="20" ry="6"
-            fill="#B08870" opacity="0.11" />
+        <ellipse cx="200" cy="316" rx="18" ry="5"
+            fill="#906040" opacity="0.14" />
 
         {/* Chin ambient occlusion */}
-        <ellipse cx="200" cy="369" rx="34" ry="9"
-            fill="#C8A090" opacity="0.09" />
+        <ellipse cx="200" cy="371" rx="28" ry="8"
+            fill="#B09060" opacity="0.12" />
     </motion.svg>
 );
 
 // ─── MAIN AVATAR COMPONENT ────────────────────────────────────────────────────
-const AiAvatar = () => {
+const AiAvatar = ({ videoRef = null, didStreamReady = false }) => {
     const {
         aiStatus,
         liveTranscript,
@@ -643,11 +745,13 @@ const AiAvatar = () => {
     const subtitleTimerRef = useRef(null);
     useEffect(() => {
         clearTimeout(subtitleTimerRef.current);
-        if (activeSubtitle && isSpeaking) {
-            setDisplayedSubtitle(activeSubtitle);
-        } else {
-            setDisplayedSubtitle('');
-        }
+        subtitleTimerRef.current = setTimeout(() => {
+            if (activeSubtitle && isSpeaking) {
+                setDisplayedSubtitle(activeSubtitle);
+            } else {
+                setDisplayedSubtitle('');
+            }
+        }, 0);
         return () => clearTimeout(subtitleTimerRef.current);
     }, [activeSubtitle, isSpeaking]);
 
@@ -752,6 +856,20 @@ const AiAvatar = () => {
                         headRotate={headRotate}
                         dartX={dartX}
                         dartY={dartY}
+                    />
+
+                    {/* D-ID live video overlay — shown when WebRTC stream is ready */}
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        className="absolute rounded-full object-cover pointer-events-none"
+                        style={{
+                            width: '230px',
+                            height: '230px',
+                            opacity: didStreamReady ? 1 : 0,
+                            transition: 'opacity 0.6s ease-in-out',
+                        }}
                     />
                 </motion.div>
 
