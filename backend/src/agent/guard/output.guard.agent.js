@@ -49,7 +49,7 @@ export const pharmacyOutputGuardrail = {
 
     if (isUnsafe) {
       throw new OutputGuardrailTripwireTriggered(
-        "Unsafe pharmacy response detected",
+        "Unsafe pharmacy response detected"
       );
     }
 

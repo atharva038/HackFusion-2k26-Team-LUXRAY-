@@ -198,6 +198,12 @@ export const fetchUserPrescriptions = () =>
 export const deleteUserPrescription = (entryId) =>
   api.delete(`/prescription/${entryId}`);
 
+export const fetchUserAllergies = () =>
+  api.get('/user/allergies');
+
+export const updateUserAllergies = (allergies) =>
+  api.put('/user/allergies', { allergies });
+
 // ─── Pharmacist AI Agent ──────────────────────────────────────
 /**
  * sendPharmacistAgentMessage — sync POST to /api/admin/agent/chat.
