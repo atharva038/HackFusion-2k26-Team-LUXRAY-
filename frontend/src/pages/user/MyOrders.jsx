@@ -2,18 +2,21 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ShoppingBag, Loader2, RefreshCw, Package,
-    ChevronLeft, ChevronRight, Calendar, Hash,
-    AlertCircle, Home, CheckCircle2, XCircle, RotateCcw
+    ChevronLeft, ChevronRight, Calendar, Hash, AlertCircle, Home,
+    FileText, Download, CheckCircle2, XCircle, RotateCcw
 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { fetchUserOrders, sendChatMessage } from '../../services/api';
 import useAppStore from '../../store/useAppStore';
+import { downloadInvoicePdf } from '../../utils/generateInvoice';
 
 const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
+        case 'paid':
         case 'approved':   return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
         case 'dispatched': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
         case 'rejected':   return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
+        case 'awaiting_payment': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
         case 'awaiting_prescription': return 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20';
         case 'pending':
         default:           return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
@@ -42,6 +45,19 @@ const buildReorderQuery = (order) => {
 // ─── Order Card ────────────────────────────────────────────────────────────
 const OrderCard = ({ order, reorderState, onReorder }) => {
     const rs = reorderState || {};
+    const isPaid = order.paymentStatus === 'paid' || order.status === 'paid' || order.status === 'approved' || order.status === 'dispatched';
+
+    const handleDownloadInvoice = () => {
+        const medicineNames = order.items
+            .map(i => i.medicine?.name || 'Medicine')
+            .join(', ');
+        downloadInvoicePdf({
+            invoiceId: order.invoiceId || `INV-${order._id.slice(-6).toUpperCase()}`,
+            orderId: order._id,
+            amountPaid: order.totalAmount?.toFixed(2) || '0.00',
+            items: medicineNames,
+        });
+    };
 
     return (
         <div className="bg-card border border-black/5 dark:border-white/5 rounded-2xl shadow-soft p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
@@ -57,9 +73,15 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
                             day: 'numeric', month: 'short', year: 'numeric'
                         })}
                     </p>
+                    {isPaid && order.invoiceId && (
+                        <p className="text-xs text-text-muted flex items-center gap-1 mt-1">
+                            <FileText className="w-3 h-3" />
+                            {order.invoiceId}
+                        </p>
+                    )}
                 </div>
                 <span className={`shrink-0 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border capitalize whitespace-nowrap ${getStatusColor(order.status)}`}>
-                    {order.status ? order.status.replace('_', ' ') : 'Pending'}
+                    {order.status ? order.status.replace(/_/g, ' ') : 'Pending'}
                 </span>
             </div>
 
@@ -77,46 +99,59 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
                 ))}
             </div>
 
-            {/* Footer: Amount + Reorder */}
-            <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+            {/* Footer: Amount + Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5 gap-2">
                 <p className="text-sm font-semibold text-text">
                     {order.totalAmount != null ? `₹${order.totalAmount.toFixed(2)}` : '—'}
                 </p>
 
-                {/* Reorder button — states: idle | loading | success | error */}
-                {rs.status === 'success' ? (
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Ordered!
-                    </span>
-                ) : rs.status === 'error' ? (
-                    <button
-                        onClick={() => onReorder(order)}
-                        title={rs.message}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white text-sm font-medium transition-colors cursor-pointer"
-                    >
-                        <XCircle className="w-3.5 h-3.5" />
-                        Retry
-                    </button>
-                ) : rs.status === 'loading' ? (
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Placing…
-                    </span>
-                ) : (
-                    <button
-                        onClick={() => onReorder(order)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white text-sm font-medium transition-colors cursor-pointer"
-                    >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Reorder
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {isPaid && (
+                        <button
+                            onClick={handleDownloadInvoice}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500 hover:text-white text-sm font-medium transition-colors cursor-pointer"
+                            title="Download Invoice PDF"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Invoice
+                        </button>
+                    )}
+
+                    {/* Reorder button — states: idle | loading | success | error */}
+                    {rs.status === 'success' ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Ordered!
+                        </span>
+                    ) : rs.status === 'error' ? (
+                        <button
+                            onClick={() => onReorder(order)}
+                            title={rs.message}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white text-sm font-medium transition-colors cursor-pointer"
+                        >
+                            <XCircle className="w-3.5 h-3.5" />
+                            Retry
+                        </button>
+                    ) : rs.status === 'loading' ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Placing…
+                        </span>
+                    ) : (
+                        <button
+                            onClick={() => onReorder(order)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white text-sm font-medium transition-colors cursor-pointer"
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Reorder
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Success agent reply */}
             {rs.status === 'success' && rs.message && (
-                <div className="flex items-start gap-2 text-xs text-green-700 dark:text-green-400 bg-green-500/5 border border-green-500/10 rounded-lg px-3 py-2">
+                <div className="flex items-start gap-2 text-xs text-green-700 dark:text-green-400 bg-green-500/5 border border-green-500/10 rounded-lg px-3 py-2 mt-2">
                     <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span className="line-clamp-4">{rs.message}</span>
                 </div>
@@ -124,7 +159,7 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
 
             {/* Error message */}
             {rs.status === 'error' && rs.message && (
-                <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2">
+                <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mt-2">
                     <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span>{rs.message}</span>
                 </div>
@@ -132,7 +167,7 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
 
             {/* Rejection reason banner */}
             {order.status === 'rejected' && order.rejectionReason && (
-                <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2">
+                <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mt-2">
                     <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span>{order.rejectionReason}</span>
                 </div>

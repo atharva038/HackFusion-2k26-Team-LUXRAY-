@@ -2,6 +2,8 @@ import crypto from "crypto";
 import Order from "../models/order.model.js";
 import ChatSession from "../models/chatSession.model.js";
 import { appendSessionMessages } from "../services/cache.service.js";
+import { sendPaymentInvoice } from "../services/whatsapp.service.js";
+import { sendInvoiceWithPdf } from "../agent/service/email.service.agent.js";
 
 export const handleRazorpayWebhook = async (req, res) => {
     try {
@@ -32,7 +34,9 @@ export const handleRazorpayWebhook = async (req, res) => {
             const paymentId = paymentEntity.id;
 
             // Find the order that has this razorpay order ID
-            const order = await Order.findOne({ razorpayOrderId: orderId }).populate('items.medicine');
+            const order = await Order.findOne({ razorpayOrderId: orderId })
+                .populate('items.medicine')
+                .populate('user', 'phone name email');
 
             if (order && order.paymentStatus !== "paid") {
                 // Generate simple invoice ID
@@ -46,6 +50,43 @@ export const handleRazorpayWebhook = async (req, res) => {
                 await order.save();
 
                 console.log(`[Webhook] Payment successful for order ${order._id}, Invoice: ${invoiceId}`);
+
+                // ─── Send WhatsApp invoice with PDF ─────────────────────────
+                const userPhone = order.user?.phone;
+                const medicineNames = order.items && order.items.length > 0
+                    ? order.items.map(item => item.medicine?.name || 'Medicine').join(', ')
+                    : 'your items';
+
+                if (userPhone) {
+                    sendPaymentInvoice(userPhone, {
+                        invoiceId,
+                        orderId: order._id.toString(),
+                        customerName: order.user?.name || 'Customer',
+                        customerEmail: order.user?.email || '',
+                        medicines: medicineNames,
+                        totalItems: order.totalItems || 1,
+                        totalAmount: order.totalAmount || (paymentEntity.amount / 100),
+                    }).catch(err => console.error('[WhatsApp] Invoice fire-and-forget error:', err));
+                } else {
+                    console.log('[WhatsApp] No phone number on user — skipping invoice message.');
+                }
+
+
+                // ─── Send email invoice with PDF attachment ────────────────────
+                const userEmail = order.user?.email;
+                if (userEmail) {
+                    sendInvoiceWithPdf(userEmail, {
+                        invoiceId,
+                        orderId: order._id.toString(),
+                        customerName: order.user?.name || 'Customer',
+                        customerEmail: userEmail,
+                        medicines: medicineNames,
+                        totalItems: order.totalItems || 1,
+                        totalAmount: order.totalAmount || (paymentEntity.amount / 100),
+                    }).catch(err => console.error('[Email] Invoice fire-and-forget error:', err));
+                } else {
+                    console.log('[Email] No email on user — skipping invoice email.');
+                }
 
                 // Send a confirmation & invoice message to the user's latest chat session
                 try {
