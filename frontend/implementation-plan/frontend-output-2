@@ -1,0 +1,194 @@
+
+**Prompt:**
+
+Fix the chat rendering system so that when the backend returns structured response types (such as medicine_list, order_summary, inventory_list, analytics_summary, etc.), the frontend renders only the structured component and does NOT display the raw text message alongside it.
+
+The system must intelligently decide what to render based on response type.
+
+---
+
+# 🧠 Rendering Rules
+
+Implement strict rendering priority logic:
+
+1. If `type` is a structured type:
+
+   * Render structured UI component only
+   * Ignore `message` field
+   * Do NOT show plain text bubble
+
+2. If `type` is "markdown":
+
+   * Render markdown only
+   * Do not wrap it in plain bubble
+
+3. If no structured type exists:
+
+   * Render plain text message
+
+There must never be duplicate visual output.
+
+---
+
+# 🎯 Structured Types That Override Text
+
+Override plain text rendering for:
+
+* medicine_list
+* order_summary
+* prescription_extract
+* inventory_list
+* refill_alerts
+* analytics_summary
+* payment_summary
+* invoice_summary
+
+For these types:
+Only render their corresponding UI components.
+
+---
+
+# 🖥 Desktop Rendering Behavior
+
+For structured types:
+
+* Use responsive tables
+* Styled headers
+* Alternate row shading
+* Proper spacing
+* Clean typography
+* Status badges (colored)
+
+No text duplication above or below table.
+
+---
+
+# 📱 Mobile Rendering Behavior
+
+For structured types:
+
+* Render as stacked cards
+* Label-value pairs
+* Bold labels
+* Clean spacing
+* No table scroll overflow
+
+---
+
+# 🎨 Styled Text Support (Bold / Underline / Emphasis)
+
+Add support for styled text rendering in chat messages.
+
+If response type is "markdown":
+
+Support:
+
+* **bold**
+* *italic*
+* **underline**
+* bullet points
+* numbered lists
+* headings
+* inline code
+* links
+
+Use safe markdown renderer with sanitization.
+
+Do NOT allow raw HTML injection.
+
+---
+
+# 🧠 Advanced Formatting Rules
+
+Structured components should support:
+
+* Bold headers
+* Underlined section titles
+* Highlight badges
+* Colored status indicators
+* Icon prefixes (optional)
+* Section dividers
+
+Example:
+
+Order Summary
+
+**Order ID:** 12345
+**Status:** Approved
+
+Items:
+
+Table rendered below.
+
+No duplication of text explanation.
+
+---
+
+# 🔄 Rendering Engine Logic
+
+Implement unified renderer system:
+
+If response.type exists:
+→ Use ComponentRenderer[type]
+
+Else if markdown exists:
+→ Render MarkdownComponent
+
+Else:
+→ Render TextBubble
+
+Rendering must be deterministic.
+
+---
+
+# 🧱 Separation of Responsibilities
+
+Backend:
+
+* Sends structured JSON
+* Does NOT attempt UI formatting
+* Avoids markdown tables for structured data
+
+Frontend:
+
+* Fully controls layout
+* Fully controls styling
+* Fully controls device responsiveness
+
+---
+
+# 🏆 Expected Result
+
+Instead of:
+
+AI:
+"Here are medicines:"
+Table appears
+Text appears again
+
+You get:
+
+Clean structured table only.
+
+Or:
+
+Styled markdown explanation with bold headings.
+
+No raw clutter.
+
+---
+
+# 🎯 Final Goal
+
+Chat should feel:
+
+* Professional
+* Structured
+* Clean
+* Intelligent
+* Not redundant
+* Not noisy
+
+The system must behave like a production SaaS, not a debugging console.
+
+---

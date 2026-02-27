@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ShieldCheck, Search, Loader2 } from 'lucide-react';
 import OrderCard from './OrderCard';
+import StructuredRenderer from './StructuredRenderer';
+import MarkdownText from './MarkdownText';
 import PrescriptionCard from '../../features/prescription/PrescriptionCard';
 import InlinePrescriptionSelector from '../../features/prescription/InlinePrescriptionSelector';
 
@@ -49,7 +51,7 @@ const TypewriterText = ({ text, delayStart = 800, typingSpeed = 20, onComplete }
         );
     }
 
-    return <span>{displayedText}</span>;
+    return <MarkdownText text={displayedText} />;
 };
 
 const ToolExecutionBadge = ({ tool, index }) => {
@@ -80,6 +82,14 @@ const ToolExecutionBadge = ({ tool, index }) => {
 const MessageBubble = ({ message }) => {
     const isAi = message.role === 'ai';
 
+    // ── Priority 1: Structured output
+    // When detected, render ONLY the structured component — no text bubble.
+    const hasStructured = isAi && !!message.structured;
+
+    // ── Priority 2: Streaming (typewriter in bubble)
+    // Only happens during live stream; structured won't exist yet.
+    const isStreaming = isAi && message.isStreaming;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.97 }}
@@ -87,7 +97,7 @@ const MessageBubble = ({ message }) => {
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className={`flex w-full ${isAi ? 'justify-start' : 'justify-end'}`}
         >
-            <div className="flex flex-col gap-2 max-w-[85%] md:max-w-[75%]">
+            <div className={`flex flex-col gap-2 max-w-[85%] md:max-w-[78%] ${isAi ? 'items-start' : 'items-end'}`}>
 
                 {/* Tool Executions (Only for AI) */}
                 {isAi && message.tools && message.tools.length > 0 && (
@@ -98,47 +108,60 @@ const MessageBubble = ({ message }) => {
                     </div>
                 )}
 
-                {/* The Message Bubble */}
-                <div className={`
-                    relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden
-                    ${isAi
-                        ? 'rounded-3xl rounded-tl-sm bg-card text-text border border-black/5 dark:border-white/5 shadow-sm'
-                        : 'rounded-3xl rounded-tr-sm bg-primary text-white shadow-soft font-medium'
-                    }
-                `}>
-                    {/* Image Preview (uploaded prescription) */}
-                    {message.imagePreview && (
-                        <div className="mb-3 -mx-1 -mt-1">
-                            <img
-                                src={message.imagePreview}
-                                alt="Prescription"
-                                className="w-full max-h-48 object-cover rounded-xl border border-white/20"
+                {/* ─── STRUCTURED OUTPUT PRIORITY ───────────────────────────── */}
+                {/* When structured data exists: suppress text bubble entirely  */}
+                {hasStructured ? (
+                    <div className="text-text">
+                        <StructuredRenderer structured={message.structured} />
+                    </div>
+                ) : (
+                    /* ─── TEXT BUBBLE (streaming or plain) ─────────────────── */
+                    <div className={`
+                        relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden w-fit
+                        ${isAi
+                            ? 'rounded-3xl rounded-tl-sm bg-card text-text border border-black/5 dark:border-white/5 shadow-sm'
+                            : 'rounded-3xl rounded-tr-sm bg-primary text-white shadow-soft font-medium'
+                        }
+                    `}>
+                        {/* Image Preview (uploaded prescription) */}
+                        {message.imagePreview && (
+                            <div className="mb-3 -mx-1 -mt-1">
+                                <img
+                                    src={message.imagePreview}
+                                    alt="Prescription"
+                                    className="w-full max-h-48 object-cover rounded-xl border border-white/20"
+                                />
+                            </div>
+                        )}
+
+                        {isStreaming ? (
+                            /* Streaming: typewriter effect */
+                            <TypewriterText
+                                text={message.text}
+                                delayStart={message.isVoice ? 800 : 0}
+                                typingSpeed={message.isVoice ? 30 : 15}
                             />
-                        </div>
-                    )}
+                        ) : isAi ? (
+                            /* AI completed message: markdown rendering */
+                            <MarkdownText text={message.text} />
+                        ) : (
+                            /* User message: plain text */
+                            message.text
+                        )}
 
-                    {isAi && message.isStreaming ? (
-                        <TypewriterText
-                            text={message.text}
-                            delayStart={message.isVoice ? 800 : 0}
-                            typingSpeed={message.isVoice ? 30 : 15}
-                        />
-                    ) : (
-                        message.text
-                    )}
+                        {/* Subtle shimmer on AI messages */}
+                        {isAi && (
+                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_3s_ease-in-out_1] bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none rounded-3xl overflow-hidden" />
+                        )}
 
-                    {/* Subtle shimmer on AI messages */}
-                    {isAi && (
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_3s_ease-in-out_1] bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none rounded-3xl overflow-hidden" />
-                    )}
-
-                    {/* Inline Prescription Selector */}
-                    {isAi && message.requiresPrescription && (
-                        <div className="mt-2 text-text">
-                            <InlinePrescriptionSelector />
-                        </div>
-                    )}
-                </div>
+                        {/* Inline Prescription Selector */}
+                        {isAi && message.requiresPrescription && (
+                            <div className="mt-2 text-text">
+                                <InlinePrescriptionSelector />
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Optional Order Confirmation Extension */}
                 {isAi && message.orderCard && (

@@ -5,12 +5,12 @@ import AiAvatar from '../../components/avatar/AiAvatar';
 import ChatArea from '../../components/chat/ChatArea';
 import ChatSidebar from '../../components/chat/ChatSidebar';
 
-const ChatPage = () => {
+const ChatPage = ({ onOpenAllergies }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
         <div className="flex flex-col h-screen w-full overflow-hidden bg-bg text-text transition-colors duration-500">
-            <Header />
+            <Header onOpenAllergies={onOpenAllergies} />
 
             <main className="flex-1 flex w-full max-w-[1600px] mx-auto overflow-hidden relative bg-bg">
 

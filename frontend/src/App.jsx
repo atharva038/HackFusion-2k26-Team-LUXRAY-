@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useAppStore from './store/useAppStore';
 import useAuthStore from './store/useAuthStore';
+import AllergySetupModal from './components/ui/AllergySetupModal';
+import { fetchUserAllergies } from './services/api';
 
 // Pages
 import ChatPage from './pages/chat/ChatPage';
@@ -12,6 +14,7 @@ import PrescriptionReview from './pages/admin/PrescriptionReview';
 import Inventory from './pages/admin/Inventory';
 import Alerts from './pages/admin/Alerts';
 import Logs from './pages/admin/Logs';
+import PharmacistAgent from './pages/admin/PharmacistAgent';
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -27,6 +30,23 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 function App() {
   const { theme } = useAppStore();
   const { hydrate } = useAuthStore();
+  const { user } = useAuthStore();
+
+  const [allergyModalOpen, setAllergyModalOpen] = useState(false);
+  const [isFirstTimeAllergy, setIsFirstTimeAllergy] = useState(false);
+
+  // Auto-open allergy modal for customers who haven't set allergies yet
+  useEffect(() => {
+    if (!user || user.role !== 'customer') return;
+    fetchUserAllergies()
+      .then(res => {
+        if (!res.allergies || res.allergies.length === 0) {
+          setIsFirstTimeAllergy(true);
+          setAllergyModalOpen(true);
+        }
+      })
+      .catch(() => {}); // silently ignore
+  }, [user?.id]);
 
   useEffect(() => {
     const applyTheme = () => {
@@ -62,6 +82,13 @@ function App() {
 
   return (
     <Router>
+      {/* Allergy Setup Modal (global, accessible from Header) */}
+      <AllergySetupModal
+        isOpen={allergyModalOpen}
+        onClose={() => { setAllergyModalOpen(false); setIsFirstTimeAllergy(false); }}
+        isFirstTime={isFirstTimeAllergy}
+      />
+
       <Routes>
         {/* Auth Routes (public) */}
         <Route path="/login" element={<LoginPage />} />
@@ -70,7 +97,7 @@ function App() {
         {/* Customer Chat Route (protected) */}
         <Route path="/" element={
           <ProtectedRoute allowedRoles={['customer', 'admin', 'pharmacist']}>
-            <ChatPage />
+            <ChatPage onOpenAllergies={() => { setIsFirstTimeAllergy(false); setAllergyModalOpen(true); }} />
           </ProtectedRoute>
         } />
 
@@ -100,6 +127,7 @@ function App() {
           <Route path="inventory" element={<Inventory />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="logs" element={<Logs />} />
+          <Route path="agent" element={<PharmacistAgent />} />
           <Route path="settings" element={<div className="p-4 text-text">Settings Content</div>} />
         </Route>
 

@@ -1,4 +1,4 @@
-import { Agent } from "@openai/agents";
+import { Agent, run } from "@openai/agents";
 import { RECOMMENDED_PROMPT_PREFIX } from "@openai/agents-core/extensions";
 
 import { orderStatusChangeAgent } from "../child/pharamcist/order.pharmacist.child.agent.js";
@@ -8,8 +8,8 @@ import {
   InputGuardrailTripwireTriggered,
   OutputGuardrailTripwireTriggered,
 } from "@openai/agents";
-import { pharmacyInputGuardrail } from "../guard/input.guard.agent.js";
-import { pharmacyOutputGuardrail } from "../guard/output.guard.agent.js";
+import { pharmacistInputGuardrail } from "../guard/input.guard.pharmacist.agent.js";
+import { pharmacistOutputGuardrail } from "../guard/output.guard.pharmacist.agent.js";
 
 export const parentPharamcist = new Agent({
   name: "parent_pharmacist",
@@ -19,7 +19,7 @@ ${RECOMMENDED_PROMPT_PREFIX}
 
 You are the HEAD pharmacist AI.
 
-Your role is to understand the user's intent and delegate the task 
+Your role is to understand the user's intent and delegate the task
 to the correct specialist child agent using HANDOFF.
 
 -----------------------------------------
@@ -92,8 +92,8 @@ Your job is routing and delegation — not execution.
 `,
 
   handoffs: [stockAddAgent, inventorySuggestionAgent, orderStatusChangeAgent],
-  inputGuardrails: [pharmacyInputGuardrail],
-  outputGuardrails: [pharmacyOutputGuardrail],
+  inputGuardrails: [pharmacistInputGuardrail],
+  outputGuardrails: [pharmacistOutputGuardrail],
 });
 
 async function chatPharmacist(messages = []) {
@@ -104,10 +104,10 @@ async function chatPharmacist(messages = []) {
     return result.finalOutput;
   } catch (err) {
     if (err instanceof InputGuardrailTripwireTriggered) {
-      return "Please ask only safe medicine or pharmacy related questions.";
+      return "Please ask only pharmacy operations related questions.";
     }
     if (err instanceof OutputGuardrailTripwireTriggered) {
-      return "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.";
+      return "I can only provide safe pharmacy operational guidance.";
     }
 
     throw err;

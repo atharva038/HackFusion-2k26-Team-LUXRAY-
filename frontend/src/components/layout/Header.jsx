@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun, Monitor, Stethoscope, LogOut, User, ShoppingBag, FileText } from 'lucide-react';
+import { Moon, Sun, Monitor, Stethoscope, LogOut, User, ShoppingBag, FileText, ShieldAlert } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import useAuthStore, { STAFF_ROLES } from '../../store/useAuthStore';
@@ -31,7 +31,7 @@ const AiStatusIndicator = () => {
     );
 };
 
-const Header = () => {
+const Header = ({ onOpenAllergies }) => {
     const { theme, toggleTheme } = useAppStore();
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
@@ -81,6 +81,15 @@ const Header = () => {
                         <FileText className="w-4 h-4" />
                         <span className="hidden sm:inline">My Prescriptions</span>
                     </Link>
+                    {/* Allergies button */}
+                    <button
+                        onClick={onOpenAllergies}
+                        title="My Allergies"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors text-text-muted hover:text-primary hover:bg-primary/5"
+                    >
+                        <ShieldAlert className="w-4 h-4" />
+                        <span className="hidden sm:inline">Allergies</span>
+                    </button>
                 </div>
             )}
 

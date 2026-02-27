@@ -21,6 +21,14 @@ const chatSessionSchema = new mongoose.Schema(
       default: 'New Chat',
     },
     messages: [messageSchema],
+    // Distinguishes customer chat sessions from pharmacist agent sessions.
+    // Existing documents without this field behave as 'customer' (default).
+    agentType: {
+      type: String,
+      enum: ['customer', 'pharmacist'],
+      default: 'customer',
+      index: true,
+    },
   },
   { timestamps: true }
 );

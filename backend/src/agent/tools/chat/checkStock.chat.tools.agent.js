@@ -6,39 +6,50 @@ import Medicine from "../../../models/medicine.model.js";
 export const checkStock = tool({
   name: "check_medicine_details",
   description:
-    "Get medicine details and stock using medicine name, MongoDB id, or PZN",
+    "Get medicine details and stock using medicine name, MongoDB id, or PZN. " +
+    "Provide exactly one identifier; set the others to null.",
 
-  parameters: z
-    .object({
-      medicineName: z.string().optional().default(""),
-      id: z.string().optional().default(""),
-      pzn: z.string().optional().default(""),
-    })
-    .strict(),
+  parameters: z.object({
+    medicineName: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("Medicine name to search by. Pass null if using id or pzn."),
+    id: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("MongoDB ObjectId of the medicine. Pass null if using name or pzn."),
+    pzn: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("PZN code of the medicine. Pass null if using name or id."),
+  }),
 
-  execute: async ({ medicineName = "", id = "", pzn = "" }) => {
+  execute: async ({ medicineName, id, pzn }) => {
     try {
-      // Clean inputs
-      medicineName = medicineName.trim();
-      id = id.trim();
-      pzn = pzn.trim();
+      // Normalise: treat null/undefined as empty string for trim safety
+      const name = (medicineName || "").trim();
+      const medId = (id || "").trim();
+      const medPzn = (pzn || "").trim();
 
-      if (!medicineName && !id && !pzn) {
-        return { error: "Provide medicineName or id or pzn" };
+      if (!name && !medId && !medPzn) {
+        return { error: "Provide at least one of: medicineName, id, or pzn." };
       }
 
       let query = {};
 
       // Priority: id > pzn > name
-      if (id) {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+      if (medId) {
+        if (!mongoose.Types.ObjectId.isValid(medId)) {
           return { error: "Invalid MongoDB id" };
         }
-        query._id = new mongoose.Types.ObjectId(id);
-      } else if (pzn) {
-        query.pzn = pzn;
-      } else if (medicineName) {
-        query.name = { $regex: medicineName, $options: "i" };
+        query._id = new mongoose.Types.ObjectId(medId);
+      } else if (medPzn) {
+        query.pzn = medPzn;
+      } else {
+        query.name = { $regex: name, $options: "i" };
       }
 
       const medicine = await Medicine.findOne(query).lean();

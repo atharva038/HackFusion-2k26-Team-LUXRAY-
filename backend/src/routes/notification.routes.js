@@ -1,16 +1,21 @@
 import express from 'express';
 const router = express.Router();
-import * as imageExtractor from '../controllers/prescription.controller.js'
-import * as testMailer from "../controllers/notification.controller.js"
+import * as imageExtractor from '../controllers/prescription.controller.js';
+import * as notifyCtrl from "../controllers/notification.controller.js";
 import { upload } from '../middleware/multer.middleware.js';
 import { protect, restrictTo } from '../middleware/auth.middleware.js';
-import { testAgentSystem } from '../controllers/notification.controller.js';
-
 
 router.post('/upload', protect, upload.single('prescriptions'), imageExtractor.handlePrescriptionUpload);
 router.delete('/:entryId', protect, imageExtractor.deletePrescription);
-// /mail is an admin-only test endpoint — requires auth and admin role
-router.post('/mail', protect, restrictTo('admin', 'pharmacist'), testMailer.testEmail);
-router.post('/testMail', testAgentSystem);
+
+// ── Notification test endpoints (admin/pharmacist only) ─────────────────────
+// POST /api/prescription/mail       → AI dose reminder (specify testTime)
+router.post('/mail', protect, restrictTo('admin', 'pharmacist'), notifyCtrl.testEmail);
+
+// POST /api/prescription/testMail   → AI refill check (task: 'dose' | 'refill')
+router.post('/testMail', protect, restrictTo('admin', 'pharmacist'), notifyCtrl.testAgentSystem);
+
+// POST /api/prescription/triggerLowStock → Direct DB low-stock alert to pharmacists/admins
+router.post('/triggerLowStock', protect, restrictTo('admin', 'pharmacist'), notifyCtrl.triggerLowStockAlert);
 
 export default router;
