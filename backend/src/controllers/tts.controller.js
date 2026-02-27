@@ -1,6 +1,7 @@
 import { openai } from '../config/openai.js';
+import { getTTSVoice } from '../services/multilingual.service.js';
 
-const MAX_TEXT_LENGTH = 700;
+const MAX_TEXT_LENGTH = 1000;
 
 /**
  * POST /api/tts
@@ -9,7 +10,7 @@ const MAX_TEXT_LENGTH = 700;
  */
 export const generateSpeech = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, language = 'en' } = req.body;
 
     if (!text || typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({ error: 'Text is required.' });
@@ -19,11 +20,12 @@ export const generateSpeech = async (req, res) => {
       return res.status(400).json({ error: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters.` });
     }
 
-    console.log(`[TTS] Generating speech for ${text.length} chars...`);
+    const voice = getTTSVoice(language);
+    console.log(`[TTS] Generating speech for ${text.length} chars (lang=${language}, voice=${voice})...`);
 
     const mp3Response = await openai.audio.speech.create({
       model: 'tts-1',
-      voice: 'nova',
+      voice,
       input: text.trim(),
     });
 
@@ -50,7 +52,7 @@ export const generateSpeech = async (req, res) => {
  */
 export const generateSpeechStream = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, language = 'en' } = req.body;
 
     if (!text || typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({ error: 'Text is required.' });
@@ -60,11 +62,12 @@ export const generateSpeechStream = async (req, res) => {
       return res.status(400).json({ error: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters.` });
     }
 
-    console.log(`[TTS-Stream] Generating speech for ${text.length} chars...`);
+    const voice = getTTSVoice(language);
+    console.log(`[TTS-Stream] Generating speech for ${text.length} chars (lang=${language}, voice=${voice})...`);
 
     const response = await openai.audio.speech.create({
       model: 'tts-1',
-      voice: 'nova',
+      voice,
       input: text.trim(),
       response_format: 'mp3',
     });
