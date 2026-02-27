@@ -20,6 +20,9 @@ import userRoutes from './routes/user.routes.js';
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 
+// ─── Security & Proxy Configuration ────────────────────
+app.set('trust proxy', 1); // Trust first proxy (e.g. DigitalOcean, Vercel, Nginx)
+
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
   origin: function (origin, callback) {
