@@ -106,7 +106,7 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
                 </p>
 
                 <div className="flex items-center gap-2">
-                    {rs.status === 'success' && rs.razorpayOrderId && (
+                    {((rs.status === 'success' && rs.razorpayOrderId) || (order.status === 'awaiting_payment' && order.razorpayOrderId)) && (
                         <button
                             onClick={async () => {
                                 const res = await new Promise((resolve) => {
@@ -128,7 +128,7 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
                                     currency: 'INR',
                                     name: 'Pharmacy Assistant',
                                     description: `Order ${order._id}`,
-                                    order_id: rs.razorpayOrderId,
+                                    order_id: rs.razorpayOrderId || order.razorpayOrderId,
                                     handler: function (response) {
                                         alert('Payment Successful! Your order will be confirmed shortly.');
                                         window.location.reload();
