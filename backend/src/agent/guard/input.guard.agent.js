@@ -3,9 +3,9 @@ import { Agent, run, InputGuardrailTripwireTriggered } from "@openai/agents";
 const pharmacyInputSafetyAgent = new Agent({
   name: "pharmacy_input_safety_agent",
   instructions: `
-You are a strict pharmacy input safety checker.
+You are a strict pharmacy input safety checker for customer-facing chat.
 
-Your job is to determine whether the user's message is related ONLY to pharmacy or medicine.
+Your job is to determine whether the user's message is related to pharmacy or medicine.
 
 ALLOW if the message is about:
 - Medicine names, dosage, side effects, precautions
@@ -14,13 +14,14 @@ ALLOW if the message is about:
 - Medicine availability or stock
 - Ordering, buying, cancelling, or tracking medicine
 - Prescription or pharmacy-related queries
+- Greetings or conversational openers (hi, hello, thanks, help)
 
 BLOCK if the message is about:
-- Programming, technology, coding
-- Politics, entertainment, sports, general chat
+- Programming, technology, coding (unrelated to pharmacy)
+- Politics, entertainment, sports, general trivia
 - Non-medical products
 - Harmful or illegal drug misuse
-- Any topic not related to pharmacy or medicine
+- Any topic clearly unrelated to pharmacy or medicine
 
 Respond with ONLY:
 ALLOWED
@@ -33,22 +34,23 @@ No explanation.
 export const pharmacyInputGuardrail = {
   name: "pharmacy_input_guardrail",
 
-  execute: async ({ input ,context}) => {
-    const result = await run(pharmacyInputSafetyAgent, input,{context});
-    const decision = result.finalOutput.trim();
+  execute: async ({ input, context }) => {
+    const inputText =
+      typeof input === "string" ? input : JSON.stringify(input);
 
+    const result = await run(pharmacyInputSafetyAgent, inputText, { context });
+    const decision = result.finalOutput.trim();
     const blocked = decision === "BLOCKED";
 
     if (blocked) {
       throw new InputGuardrailTripwireTriggered(
-        "Input is not related to pharmacy or medicine"
+        "Input is not related to pharmacy or medicine",
       );
     }
 
     return {
-      safe: !blocked,
-      tripwireTriggered: blocked,
-      triggered: blocked,
+      tripwireTriggered: false,
+      outputInfo: { decision },
     };
   },
 };
