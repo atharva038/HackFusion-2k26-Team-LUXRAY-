@@ -67,7 +67,6 @@ Routes customer queries to the correct pharmacy agent:
 
 async function chatPharma(messages = []) {
   const result = await run(parentAgent, messages);
-  console.log(result.finalOutput);
   return result.finalOutput;
 }
 // chat("Do you have NORSAN Omega-3 Total in stock?");
@@ -82,4 +81,5 @@ async function chatPharma(messages = []) {
 // "Order medicine NORSAN Omega-3 total, userId 65f1c2a9e4b0c123456789ab, age 25, gender M, quantity 1, dosage 2 times daily, prescription no"
 // );
 
+export { parentAgent };
 export default chatPharma;
