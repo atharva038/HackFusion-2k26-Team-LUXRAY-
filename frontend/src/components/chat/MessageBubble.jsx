@@ -51,7 +51,7 @@ const TypewriterText = ({ text, delayStart = 800, typingSpeed = 20, onComplete }
         );
     }
 
-    return <span>{displayedText}</span>;
+    return <MarkdownText text={displayedText} />;
 };
 
 const ToolExecutionBadge = ({ tool, index }) => {
@@ -97,7 +97,7 @@ const MessageBubble = ({ message }) => {
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className={`flex w-full ${isAi ? 'justify-start' : 'justify-end'}`}
         >
-            <div className="flex flex-col gap-2 max-w-[85%] md:max-w-[78%] w-full">
+            <div className={`flex flex-col gap-2 max-w-[85%] md:max-w-[78%] ${isAi ? 'items-start' : 'items-end'}`}>
 
                 {/* Tool Executions (Only for AI) */}
                 {isAi && message.tools && message.tools.length > 0 && (
@@ -117,7 +117,7 @@ const MessageBubble = ({ message }) => {
                 ) : (
                     /* ─── TEXT BUBBLE (streaming or plain) ─────────────────── */
                     <div className={`
-                        relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden
+                        relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden w-fit
                         ${isAi
                             ? 'rounded-3xl rounded-tl-sm bg-card text-text border border-black/5 dark:border-white/5 shadow-sm'
                             : 'rounded-3xl rounded-tr-sm bg-primary text-white shadow-soft font-medium'

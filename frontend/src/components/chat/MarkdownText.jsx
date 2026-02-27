@@ -1,163 +1,85 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
 
 /**
- * MarkdownText — lightweight safe markdown renderer for chat bubbles.
+ * MarkdownText — robust markdown renderer using ReactMarkdown.
  *
- * Supports:
- *   **bold**, *italic*, `inline code`, # headings,
- *   - bullet lists, 1. numbered lists, > blockquotes, ---
- *
- * No external dependencies. No HTML injection risk.
+ * Supports GFM (tables, strikethrough, autolink), raw HTML (like <u> for underline),
+ * and maps elements to standard Tailwind styles matching the app's dark/light aesthetic.
  */
-
-const escapeHtml = (str) =>
-    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-const inlineFormat = (text) => {
-    // Process inline markdown: bold, italic, inline code
-    const parts = [];
-    // Split on **, *, ` — in priority order
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
-    let last = 0;
-    let match;
-
-    while ((match = regex.exec(text)) !== null) {
-        if (match.index > last) {
-            parts.push(<span key={last}>{text.slice(last, match.index)}</span>);
-        }
-
-        if (match[2]) {
-            // **bold**
-            parts.push(<strong key={match.index} className="font-semibold">{match[2]}</strong>);
-        } else if (match[3]) {
-            // *italic*
-            parts.push(<em key={match.index} className="italic">{match[3]}</em>);
-        } else if (match[4]) {
-            // `code`
-            parts.push(
-                <code key={match.index} className="font-mono text-[.9em] bg-black/8 dark:bg-white/8 px-1.5 py-0.5 rounded-md">
-                    {match[4]}
-                </code>
-            );
-        }
-
-        last = match.index + match[0].length;
-    }
-
-    if (last < text.length) {
-        parts.push(<span key={last}>{text.slice(last)}</span>);
-    }
-
-    return parts.length > 0 ? parts : text;
-};
-
 const MarkdownText = ({ text }) => {
     if (!text) return null;
 
-    const rawLines = text.split('\n');
-    const elements = [];
-    let i = 0;
-    let key = 0;
+    // AI sometimes bunches numbered lists on one line like "details: 1. Item 2. Item".
+    // We forcefully insert a newline before numbers that look like list items
+    // (space followed by a number, a dot, and a space) if they don't already follow a newline.
+    const preprocessedText = text.replace(/([^\n]) (\d+\.\s)/g, '$1\n\n$2');
 
-    while (i < rawLines.length) {
-        const line = rawLines[i];
-
-        // ── Horizontal rule ──────────────────────────────────────────────
-        if (/^---+$/.test(line.trim())) {
-            elements.push(<hr key={key++} className="my-3 border-black/10 dark:border-white/10" />);
-            i++;
-            continue;
-        }
-
-        // ── Headings ─────────────────────────────────────────────────────
-        const h3 = line.match(/^###\s+(.+)/);
-        const h2 = line.match(/^##\s+(.+)/);
-        const h1 = line.match(/^#\s+(.+)/);
-        if (h1) {
-            elements.push(<p key={key++} className="font-bold text-[15px] text-text mt-3 mb-1">{inlineFormat(h1[1])}</p>);
-            i++; continue;
-        }
-        if (h2) {
-            elements.push(<p key={key++} className="font-semibold text-[14px] text-text mt-2 mb-0.5">{inlineFormat(h2[1])}</p>);
-            i++; continue;
-        }
-        if (h3) {
-            elements.push(<p key={key++} className="font-semibold text-[13px] text-text-muted mt-2 mb-0.5 uppercase tracking-wide">{inlineFormat(h3[1])}</p>);
-            i++; continue;
-        }
-
-        // ── Blockquote ───────────────────────────────────────────────────
-        const bq = line.match(/^>\s*(.*)/);
-        if (bq) {
-            elements.push(
-                <div key={key++} className="border-l-2 border-primary/40 pl-3 my-1 text-text-muted italic text-[13.5px]">
-                    {inlineFormat(bq[1])}
-                </div>
-            );
-            i++; continue;
-        }
-
-        // ── Bullet list ──────────────────────────────────────────────────
-        if (/^[-*•]\s/.test(line)) {
-            const items = [];
-            while (i < rawLines.length && /^[-*•]\s/.test(rawLines[i])) {
-                items.push(rawLines[i].replace(/^[-*•]\s+/, ''));
-                i++;
-            }
-            elements.push(
-                <ul key={key++} className="my-1.5 space-y-0.5 list-none">
-                    {items.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-[14px]">
-                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
-                            <span>{inlineFormat(item)}</span>
-                        </li>
-                    ))}
-                </ul>
-            );
-            continue;
-        }
-
-        // ── Numbered list ────────────────────────────────────────────────
-        if (/^\d+\.\s/.test(line)) {
-            const items = [];
-            let num = 1;
-            while (i < rawLines.length && /^\d+\.\s/.test(rawLines[i])) {
-                items.push({ n: num++, text: rawLines[i].replace(/^\d+\.\s+/, '') });
-                i++;
-            }
-            elements.push(
-                <ol key={key++} className="my-1.5 space-y-0.5 list-none">
-                    {items.map((item) => (
-                        <li key={item.n} className="flex items-start gap-2.5 text-[14px]">
-                            <span className="shrink-0 text-[11px] font-bold text-primary/70 mt-0.5 min-w-[16px] text-right">{item.n}.</span>
-                            <span>{inlineFormat(item.text)}</span>
-                        </li>
-                    ))}
-                </ol>
-            );
-            continue;
-        }
-
-        // ── Empty line → spacing ─────────────────────────────────────────
-        if (line.trim() === '') {
-            // Only add space if next line isn't also blank
-            if (i + 1 < rawLines.length && rawLines[i + 1].trim() !== '') {
-                elements.push(<div key={key++} className="h-1.5" />);
-            }
-            i++;
-            continue;
-        }
-
-        // ── Regular paragraph ────────────────────────────────────────────
-        elements.push(
-            <p key={key++} className="text-[14.5px] leading-relaxed">
-                {inlineFormat(line)}
-            </p>
-        );
-        i++;
-    }
-
-    return <div className="space-y-0.5">{elements}</div>;
+    return (
+        <div className="space-y-4">
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                    h1: ({ ...props }) => <h1 className="font-bold text-xl text-text mt-5 mb-2" {...props} />,
+                    h2: ({ ...props }) => <h2 className="font-semibold text-lg text-text mt-4 mb-1.5" {...props} />,
+                    h3: ({ ...props }) => <h3 className="font-semibold text-[15px] text-text-muted mt-3 mb-1 uppercase tracking-wide" {...props} />,
+                    p: ({ ...props }) => <p className="text-[14.5px] leading-relaxed" {...props} />,
+                    ul: ({ ...props }) => <ul className="my-2.5 ml-5 space-y-1 list-disc marker:text-primary/60" {...props} />,
+                    ol: ({ ...props }) => <ol className="my-2.5 ml-5 space-y-1 list-decimal marker:text-primary/80 marker:font-semibold" {...props} />,
+                    li: ({ ...props }) => <li className="pl-1 text-[14px] leading-relaxed" {...props} />,
+                    strong: ({ ...props }) => <strong className="font-semibold text-text" {...props} />,
+                    em: ({ ...props }) => <em className="italic" {...props} />,
+                    code: ({ inline, className, children, ...props }) => {
+                        const match = /language-(\w+)/.exec(className || '');
+                        return inline ? (
+                            <code className="font-mono text-[.9em] bg-black/8 dark:bg-white/8 px-1.5 py-0.5 rounded-md text-primary" {...props}>
+                                {children}
+                            </code>
+                        ) : (
+                            <div className="my-3 overflow-hidden rounded-xl border border-black/10 dark:border-white/10 bg-[#1e1e1e]">
+                                {match && (
+                                    <div className="flex px-3 py-1.5 bg-[#2d2d2d] text-white/70 text-xs font-mono border-b border-white/10 uppercase">
+                                        {match[1]}
+                                    </div>
+                                )}
+                                <div className="overflow-x-auto p-4">
+                                    <pre className="text-[13px] leading-snug font-mono text-white/90">
+                                        <code className={className} {...props}>
+                                            {children}
+                                        </code>
+                                    </pre>
+                                </div>
+                            </div>
+                        );
+                    },
+                    blockquote: ({ ...props }) => (
+                        <blockquote className="border-l-2 border-primary/50 pl-3.5 my-2.5 text-text-muted italic text-[14px] bg-primary/5 py-1.5 rounded-r-lg" {...props} />
+                    ),
+                    hr: ({ ...props }) => <hr className="my-5 border-black/10 dark:border-white/10" {...props} />,
+                    table: ({ ...props }) => (
+                        <div className="overflow-x-auto my-4 rounded-xl border border-black/10 dark:border-white/10 shadow-sm bg-black/[0.02] dark:bg-white/[0.02]">
+                            <table className="w-full text-left text-[14px] border-collapse" {...props} />
+                        </div>
+                    ),
+                    thead: ({ ...props }) => <thead className="bg-black/5 dark:bg-white/5 text-text font-semibold border-b border-black/10 dark:border-white/10" {...props} />,
+                    tbody: ({ ...props }) => <tbody className="divide-y divide-black/5 dark:divide-white/5" {...props} />,
+                    tr: ({ ...props }) => <tr className="hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors" {...props} />,
+                    th: ({ ...props }) => <th className="px-4 py-2.5 whitespace-nowrap" {...props} />,
+                    td: ({ ...props }) => <td className="px-4 py-2.5 text-text-muted leading-relaxed" {...props} />,
+                    // Custom handling for <u> and <ins> tags if they appear in HTML
+                    u: ({ ...props }) => <u className="underline decoration-primary/60 underline-offset-2 font-medium" {...props} />,
+                    ins: ({ ...props }) => <ins className="underline decoration-primary/60 underline-offset-2 font-medium no-underline" {...props} />,
+                    a: ({ ...props }) => <a className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors" target="_blank" rel="noopener noreferrer" {...props} />
+                }}
+            >
+                {preprocessedText}
+            </ReactMarkdown>
+        </div>
+    );
 };
 
 export default MarkdownText;
