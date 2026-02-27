@@ -106,6 +106,44 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
                 </p>
 
                 <div className="flex items-center gap-2">
+                    {rs.status === 'success' && rs.razorpayOrderId && (
+                        <button
+                            onClick={async () => {
+                                const res = await new Promise((resolve) => {
+                                    const script = document.createElement('script');
+                                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                                    script.onload = () => resolve(true);
+                                    script.onerror = () => resolve(false);
+                                    document.body.appendChild(script);
+                                });
+
+                                if (!res) {
+                                    alert('Failed to load Razorpay SDK');
+                                    return;
+                                }
+
+                                const options = {
+                                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'test',
+                                    amount: order.totalAmount ? Math.round(order.totalAmount * 100) : 0,
+                                    currency: 'INR',
+                                    name: 'Pharmacy Assistant',
+                                    description: `Order ${order._id}`,
+                                    order_id: rs.razorpayOrderId,
+                                    handler: function (response) {
+                                        alert('Payment Successful! Your order will be confirmed shortly.');
+                                        window.location.reload();
+                                    },
+                                    theme: { color: '#3b82f6' },
+                                };
+                                const rzp = new window.Razorpay(options);
+                                rzp.open();
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-sm font-medium transition-colors cursor-pointer shadow-sm shadow-indigo-500/30"
+                        >
+                            Pay Bill
+                        </button>
+                    )}
+
                     {isPaid && (
                         <button
                             onClick={handleDownloadInvoice}
@@ -184,7 +222,7 @@ const MyOrders = () => {
     const [error,      setError]      = useState(null);
     const [page,       setPage]       = useState(1);
 
-    // { [orderId]: { status: 'idle'|'loading'|'success'|'error', message: string } }
+    // { [orderId]: { status: 'idle'|'loading'|'success'|'error', message: string, razorpayOrderId?: string } }
     const [reorderStates, setReorderStates] = useState({});
 
     const navigate   = useNavigate();
@@ -225,11 +263,16 @@ const MyOrders = () => {
                 replyText.toLowerCase().includes('cannot') ||
                 replyText.toLowerCase().includes('failed');
 
+            // Check if agent returned a Razorpay ID in the text
+            const razorpayMatch = replyText.match(/Razorpay ID:\s*([A-Za-z0-9_]+)/i);
+            const razorpayOrderId = razorpayMatch ? razorpayMatch[1] : null;
+
             setReorderStates(prev => ({
                 ...prev,
                 [id]: {
                     status:  failed ? 'error' : 'success',
                     message: replyText,
+                    razorpayOrderId
                 },
             }));
         } catch (err) {
