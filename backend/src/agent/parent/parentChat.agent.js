@@ -61,17 +61,6 @@ Routes customer queries to the correct pharmacy agent:
   outputGuardrails: [pharmacyOutputGuardrail],
 });
 
-// const connectDB = async () => {
-//   try {
-//     await mongoose.connect("mongodb://127.0.0.1:27017/hackfusion-2k26");
-//     console.log("MongoDB Connected");
-//   } catch (err) {
-//     console.error("MongoDB connection error:", err.message);
-//     process.exit(1);
-//   }
-// };
-
-// await connectDB();
 
 async function chatPharma(messages = []) {
   try {
@@ -101,4 +90,5 @@ async function chatPharma(messages = []) {
 // "Order medicine NORSAN Omega-3 total, userId 65f1c2a9e4b0c123456789ab, age 25, gender M, quantity 1, dosage 2 times daily, prescription no"
 // );
 
+export { parentAgent };
 export default chatPharma;

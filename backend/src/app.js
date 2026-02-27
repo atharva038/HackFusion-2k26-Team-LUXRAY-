@@ -4,6 +4,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { connectDB } from './config/db.js';
+import { closeRedis } from './config/redis.js';
+import { createRedisRateLimiter } from './middleware/redisRateLimiter.js';
 import { initScheduler } from './scheduler/refill.scheduler.js';
 import { initNotificationScheduler } from './scheduler/notification.schedule.js';
 
@@ -17,6 +19,9 @@ import userRoutes from './routes/user.routes.js';
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
+
+// ─── Security & Proxy Configuration ────────────────────
+app.set('trust proxy', 1); // Trust first proxy (e.g. DigitalOcean, Vercel, Nginx)
 
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
@@ -58,26 +63,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Rate Limiters ───────────────────────────────
-// Chat: AI calls are expensive — limit per IP
-const chatLimiter = rateLimit({
-  windowMs: 60 * 1000,        // 1 minute
+// ─── Rate Limiters ───────────────────────────────────
+// Redis-backed per-user limiters (fall back gracefully if Redis is down)
+const chatLimiter = createRedisRateLimiter({
+  prefix: 'chat',
   max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests. Please wait a moment before chatting again.' },
-});
-
-// TTS: audio generation is billed per character
-const ttsLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many TTS requests. Please slow down.' },
 });
 
-// Prescription upload: OCR + Mistral call per upload
+const ttsLimiter = createRedisRateLimiter({
+  prefix: 'tts',
+  max: 30,
+  windowMs: 60 * 1000,
+});
+
+// Keep express-rate-limit for non-auth routes (IP-based)
 const prescriptionLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
@@ -86,9 +86,8 @@ const prescriptionLimiter = rateLimit({
   message: { error: 'Too many uploads. Please wait before uploading again.' },
 });
 
-// Auth: prevent brute-force on login
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
@@ -130,13 +129,14 @@ async function start() {
   const shutdown = (signal) => {
     console.log(`\n[Shutdown] Received ${signal}. Closing server gracefully...`);
     server.close(async () => {
-      console.log('[Shutdown] HTTP server closed. Disconnecting MongoDB...');
+      console.log('[Shutdown] HTTP server closed. Disconnecting MongoDB & Redis...');
       try {
+        await closeRedis();
         const mongoose = await import('mongoose');
         await mongoose.default.connection.close();
-        console.log('[Shutdown] MongoDB disconnected. Exiting.');
+        console.log('[Shutdown] All connections closed. Exiting.');
       } catch (e) {
-        console.error('[Shutdown] DB close error:', e.message);
+        console.error('[Shutdown] Close error:', e.message);
       }
       process.exit(0);
     });
@@ -149,7 +149,7 @@ async function start() {
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT',  () => shutdown('SIGINT'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 start();

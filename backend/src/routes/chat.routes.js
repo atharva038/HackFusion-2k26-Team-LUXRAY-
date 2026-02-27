@@ -12,11 +12,12 @@ import { validate, chatSchema } from '../middleware/validate.middleware.js';
 router.post('/', protect, validate(chatSchema), chatController.handleMessage);
 
 /**
- * GET /api/chat/stream
- * SSE streaming endpoint — auth token must be passed as ?token= query param
- * since EventSource doesn't support custom headers.
+ * POST /api/chat/stream
+ * SSE streaming endpoint — real token-by-token streaming via fetch + ReadableStream.
+ * Auth via Authorization header (standard Bearer token).
+ * Body: { message, sessionId?, language? } — same schema as POST /api/chat.
  */
-router.get('/stream', protect, chatController.handleStreamMessage);
+router.post('/stream', protect, validate(chatSchema), chatController.handleStreamMessage);
 
 /**
  * GET /api/chat/sessions

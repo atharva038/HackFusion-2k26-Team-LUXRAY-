@@ -10,7 +10,7 @@ if (!JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set.');
 export const protect = (req, res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer')) {
-    return res.status(401).json({ error: 'Not authenticated. Please log in.' });  
+    return res.status(401).json({ error: 'Not authenticated. Please log in.' });
   }
 
   const token = header.split(' ')[1];

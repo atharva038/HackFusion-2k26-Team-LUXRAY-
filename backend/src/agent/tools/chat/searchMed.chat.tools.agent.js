@@ -31,7 +31,6 @@ export const searchMedByDescription = tool({
   }),
 
   execute: async ({ query }) => {
-    console.log("first")
     try {
       if (!query || !query.trim()) {
         return { error: "Query is required" };
