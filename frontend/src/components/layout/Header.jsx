@@ -45,15 +45,15 @@ const Header = () => {
         <header className="h-16 flex items-center justify-between px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
 
             {/* Logo Area */}
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-soft">
                     <Stethoscope className="w-5 h-5" />
                 </div>
                 <div>
-                    <h1 className="font-semibold text-lg leading-tight tracking-tight">Cura AI</h1>
+                    <h1 className="font-semibold text-lg leading-tight tracking-tight text-text">Cura AI</h1>
                     <p className="text-xs text-text-muted">Autonomous Pharmacy Assistant</p>
                 </div>
-            </div>
+            </Link>
 
             {/* Customer Nav Links — hidden for admin/pharmacist */}
             {user && !STAFF_ROLES.includes(user.role) && (
@@ -61,11 +61,10 @@ const Header = () => {
                     <Link
                         to="/my-orders"
                         title="My Orders"
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                            location.pathname === '/my-orders'
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/my-orders'
                                 ? 'bg-primary/10 text-primary'
                                 : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
-                        }`}
+                            }`}
                     >
                         <ShoppingBag className="w-4 h-4" />
                         <span className="hidden sm:inline">My Orders</span>
@@ -73,11 +72,10 @@ const Header = () => {
                     <Link
                         to="/my-prescriptions"
                         title="My Prescriptions"
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                            location.pathname === '/my-prescriptions'
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/my-prescriptions'
                                 ? 'bg-primary/10 text-primary'
                                 : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
-                        }`}
+                            }`}
                     >
                         <FileText className="w-4 h-4" />
                         <span className="hidden sm:inline">My Prescriptions</span>

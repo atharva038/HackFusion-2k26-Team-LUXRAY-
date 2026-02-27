@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ShoppingBag, Loader2, RefreshCw, Package,
-    ChevronLeft, ChevronRight, Calendar, Hash, AlertCircle
+    ChevronLeft, ChevronRight, Calendar, Hash, AlertCircle, Home
 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { fetchUserOrders } from '../../services/api';
@@ -113,10 +113,19 @@ const MyOrders = () => {
             <Header />
             <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold tracking-tight text-text flex items-center gap-3">
-                        <ShoppingBag className="w-6 h-6 text-primary" />
-                        My Orders
-                    </h1>
+                    <div className="flex items-center gap-3 mb-2">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-text-muted transition-colors cursor-pointer"
+                            title="Back to Chat"
+                        >
+                            <Home className="w-5 h-5" />
+                        </button>
+                        <h1 className="text-2xl font-bold tracking-tight text-text flex items-center gap-3">
+                            <ShoppingBag className="w-6 h-6 text-primary" />
+                            My Orders
+                        </h1>
+                    </div>
                     <p className="text-text-muted text-sm mt-1">
                         View and reorder your past pharmacy orders.
                     </p>
