@@ -1,15 +1,16 @@
 import cron from 'node-cron';
 import { run } from '@openai/agents';
 import { notificationParentAgent } from '../agent/parent/parentNotify.agent.js';
+import logger from '../utils/logger.js';
 
 
-const targetHour = 8;    
-const targetMinute = 30; 
+const targetHour = 8;
+const targetMinute = 30;
 
 const runMedicationCheck = async () => {
     const now = new Date();
     const currentTime = now.getHours().toString().padStart(2, '0') + ":" +
-                        now.getMinutes().toString().padStart(2, '0');
+        now.getMinutes().toString().padStart(2, '0');
 
     console.log(`[${new Date().toISOString()}] ⏰ Dose Cron: Checking reminders for ${currentTime}`);
 
@@ -41,26 +42,12 @@ const runRefillCheck = async () => {
 
 
 export function initNotificationScheduler() {
-    
-    // for medication notify
-    // every Minute (Demo) or Every Hour (Production)
-    // cron.schedule('* * * * *', runMedicationCheck); 
+    // Dose reminder: daily at 8:00 AM
+    cron.schedule('0 8 * * *', runMedicationCheck);
 
-    // for refill
-    // runs once a day at 10:00 AM 
-    // cron.schedule('0 10 * * *', runRefillCheck);
+    // Refill check: daily at 10:00 AM
+    cron.schedule('0 10 * * *', runRefillCheck);
 
-    // console.log(`[INFO] 🕒 Schedulers Active: Doses (Every Minute) | Refills (10:00 AM Daily)`);
+    logger.info('🕒 Notification schedulers initialized: Doses @ 08:00 | Refills @ 10:00 (daily)');
 }
-// export function initNotificationScheduler() {
-//     // Specific time
-//     cron.schedule(`${targetMinute} ${targetHour} * * *`, runMedicationCheck);
 
-//     // to run every minute
-//     // cron.schedule('* * * * *', runMedicationCheck);
-
-//     // to run every hour
-//     // cron.schedule('0 * * * *', runMedicationCheck);
-
-//     console.log(`[INFO] 🕒 Notification scheduler initialized. Target Demo Time: ${targetHour}:${String(targetMinute).padStart(2, '0')}`);
-// }
