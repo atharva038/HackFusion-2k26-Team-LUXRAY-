@@ -17,6 +17,16 @@ export default defineConfig({
           });
         },
       },
+      '/socket.io': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        ws: true, // Enable WebSocket proxying
+        rewrite: (path) => path,
+      },
+    },
+    // Increase connection timeout
+    hmr: {
+      timeout: 10000,
     },
   },
   build: {

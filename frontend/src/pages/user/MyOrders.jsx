@@ -7,6 +7,7 @@ import {
 import Header from '../../components/layout/Header';
 import { fetchUserOrders } from '../../services/api';
 import useAppStore from '../../store/useAppStore';
+import { useSocket } from '../../context/SocketContext';
 
 const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -84,6 +85,7 @@ const MyOrders = () => {
     const LIMIT = 10;
 
     const navigate = useNavigate();
+    const { on, off } = useSocket();
 
     const load = (p) => {
         setLoading(true);
@@ -98,6 +100,68 @@ const MyOrders = () => {
     };
 
     useEffect(() => { load(page); }, [page]);
+
+    // WebSocket listeners for real-time order updates
+    useEffect(() => {
+        const handleOrderStatusUpdate = (data) => {
+            console.log('[MyOrders] Order status updated:', data);
+            
+            // Update the specific order in the list
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === data.orderId 
+                        ? { 
+                            ...order, 
+                            status: data.status,
+                            rejectionReason: data.rejectionReason || order.rejectionReason
+                          }
+                        : order
+                )
+            );
+        };
+
+        const handleOrderDispatched = (data) => {
+            console.log('[MyOrders] Order dispatched:', data);
+            
+            // Update order status to dispatched
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === data.orderId 
+                        ? { ...order, status: 'dispatched' }
+                        : order
+                )
+            );
+        };
+
+        const handleOrderRejected = (data) => {
+            console.log('[MyOrders] Order rejected:', data);
+            
+            // Update order status to rejected with reason
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === data.orderId 
+                        ? { 
+                            ...order, 
+                            status: 'rejected',
+                            rejectionReason: data.reason
+                          }
+                        : order
+                )
+            );
+        };
+
+        // Register event listeners
+        on('order:status-updated', handleOrderStatusUpdate);
+        on('order:dispatched', handleOrderDispatched);
+        on('order:rejected', handleOrderRejected);
+
+        // Cleanup listeners on unmount
+        return () => {
+            off('order:status-updated', handleOrderStatusUpdate);
+            off('order:dispatched', handleOrderDispatched);
+            off('order:rejected', handleOrderRejected);
+        };
+    }, [on, off]);
 
     const handleReorder = (order) => {
         const medList = order.items

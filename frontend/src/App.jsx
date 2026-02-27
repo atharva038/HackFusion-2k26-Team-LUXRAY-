@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react';
 import useAppStore from './store/useAppStore';
 import useAuthStore from './store/useAuthStore';
+import { SocketProvider } from './context/SocketContext';
+import { Toaster } from 'react-hot-toast';
 
 // Pages
 import ChatPage from './pages/chat/ChatPage';
@@ -27,7 +29,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 function App() {
   const { theme } = useAppStore();
   const { hydrate } = useAuthStore();
-
+  
   useEffect(() => {
     const applyTheme = () => {
       const root = document.documentElement;
@@ -61,52 +63,64 @@ function App() {
   useEffect(() => { hydrate(); }, []);
 
   return (
-    <Router>
-      <Routes>
-        {/* Auth Routes (public) */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+    <SocketProvider>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: theme === 'dark' ? '#1f2937' : '#ffffff',
+            color: theme === 'dark' ? '#f3f4f6' : '#111827',
+          },
+        }}
+      />
+      <Router>
+        <Routes>
+          {/* Auth Routes (public) */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Customer Chat Route (protected) */}
-        <Route path="/" element={
-          <ProtectedRoute allowedRoles={['customer', 'admin', 'pharmacist']}>
-            <ChatPage />
-          </ProtectedRoute>
-        } />
+          {/* Customer Chat Route (protected) */}
+          <Route path="/" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'pharmacist']}>
+              <ChatPage />
+            </ProtectedRoute>
+          } />
 
-        {/* User: My Orders (customer only) */}
-        <Route path="/my-orders" element={
-          <ProtectedRoute allowedRoles={['customer']}>
-            <MyOrders />
-          </ProtectedRoute>
-        } />
+          {/* User: My Orders (customer only) */}
+          <Route path="/my-orders" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <MyOrders />
+            </ProtectedRoute>
+          } />
 
-        {/* User: My Prescriptions (customer only) */}
-        <Route path="/my-prescriptions" element={
-          <ProtectedRoute allowedRoles={['customer']}>
-            <MyPrescriptions />
-          </ProtectedRoute>
-        } />
+          {/* User: My Prescriptions (customer only) */}
+          <Route path="/my-prescriptions" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <MyPrescriptions />
+            </ProtectedRoute>
+          } />
 
-        {/* Admin Dashboard Routes (pharmacist/admin only) */}
-        <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={['admin', 'pharmacist']}>
-            <AdminLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Overview />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="prescriptions" element={<PrescriptionReview />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="logs" element={<Logs />} />
-          <Route path="settings" element={<div className="p-4 text-text">Settings Content</div>} />
-        </Route>
+          {/* Admin Dashboard Routes (pharmacist/admin only) */}
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['admin', 'pharmacist']}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Overview />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="prescriptions" element={<PrescriptionReview />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="logs" element={<Logs />} />
+            <Route path="settings" element={<div className="p-4 text-text">Settings Content</div>} />
+          </Route>
 
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </SocketProvider>
   );
 }
 
