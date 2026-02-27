@@ -8,7 +8,9 @@
     "dev": "nodemon src/app.js",
     "start": "NODE_ENV=production node src/app.js",
     "seed": "node src/seed.js",
-    "create-admin": "node src/createAdmin.js"
+    "create-admin": "node src/createAdmin.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@mistralai/mistralai": "^1.14.0",
@@ -30,6 +32,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "vitest": "^4.0.18"
   }
 }

@@ -5,6 +5,7 @@ import User from '../models/user.model.js';
 import Prescription from '../models/prescription.model.js';
 import InventoryLog from '../models/inventoryLog.model.js';
 import logger from '../utils/logger.js';
+import { checkAndAlertLowStock } from '../scheduler/refill.scheduler.js';
 
 // ─── Dashboard Stats ─────────────────────────────────────────
 export const getDashboardStats = async (req, res) => {
@@ -210,6 +211,22 @@ export const getInventoryLogs = async (req, res) => {
   } catch (err) {
     logger.error('Inventory logs error:', err);
     res.status(500).json({ error: 'Failed to fetch inventory logs' });
+  }
+};
+
+// ─── Low-Stock Alert (manual trigger) ────────────────────────
+export const triggerLowStockAlert = async (req, res) => {
+  try {
+    const result = await checkAndAlertLowStock();
+    res.json({
+      message: result.alerted === 0
+        ? 'All medicines are above threshold — no alert sent.'
+        : `Low-stock alert sent for ${result.alerted} medicine(s) to ${result.recipients} recipient(s).`,
+      ...result,
+    });
+  } catch (err) {
+    logger.error('Manual low-stock alert error:', err);
+    res.status(500).json({ error: 'Failed to trigger low-stock alert' });
   }
 };
 
