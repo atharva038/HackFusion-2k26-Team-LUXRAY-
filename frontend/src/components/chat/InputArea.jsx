@@ -151,11 +151,14 @@ const InputArea = () => {
             cancelSpeechRef.current = false;
             setAiStatus(AI_STATUS.SPEAKING);
 
+            // Read language at call-time to prevent stale closures
+            const currentLang = useAppStore.getState().selectedLanguage;
+
             // Split into sentences for faster time-to-first-audio
             const sentences = splitIntoSentences(textToSpeak);
 
             // Fire ALL TTS requests in parallel immediately
-            const blobPromises = fetchTTSChunked(sentences, selectedLanguage);
+            const blobPromises = fetchTTSChunked(sentences, currentLang);
 
             // Play back-to-back as each resolves (in order)
             for (let i = 0; i < sentences.length; i++) {

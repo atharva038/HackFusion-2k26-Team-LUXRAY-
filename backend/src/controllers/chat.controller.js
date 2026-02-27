@@ -3,6 +3,7 @@ import { runChatAgent } from "../agent/service/chat.agent.service.js";
 import ChatSession from "../models/chatSession.model.js";
 import chatPharma from "../agent/parent/parentChat.agent.js";
 import { translateToEnglish, translateFromEnglish } from "../services/multilingual.service.js";
+import { getSessionHistory, appendSessionMessages } from "../services/cache.service.js";
 
 /**
  * handleMessage — POST /api/chat
@@ -30,6 +31,10 @@ export const handleMessage = async (req, res) => {
     }
     const history = session?.messages || [];
 
+    // ── Session Memory: try Redis first, fall back to MongoDB history ───
+    const redisHistory = await getSessionHistory(sessionId);
+    const agentHistory = redisHistory || history;
+
     // ── Multilingual Pre-Agent Translation ───────────────────────
     const { translatedText: englishMessage, latencyMs: preTranslateMs } = await translateToEnglish(message, language);
 
@@ -38,7 +43,7 @@ export const handleMessage = async (req, res) => {
       userId,
       sessionId,
       message: englishMessage,
-      history,
+      history: agentHistory,
     });
 
     // ── Multilingual Post-Agent Translation ──────────────────────
@@ -48,19 +53,19 @@ export const handleMessage = async (req, res) => {
       logger.info(`[Multilingual Trace] lang=${language} preTranslate=${preTranslateMs}ms postTranslate=${postTranslateMs}ms`);
     }
 
-    // Persist both turns to MongoDB (store original language text for display)
+    // Persist both turns ──────────────────────────────────────────────────
+    const newMessages = [
+      { role: 'user', content: message },
+      { role: 'ai', content: translatedReply },
+    ];
+
+    // Redis session (fast, temporary)
+    appendSessionMessages(sessionId, newMessages);
+
+    // MongoDB (persistent)
     await ChatSession.findByIdAndUpdate(
       sessionId,
-      {
-        $push: {
-          messages: {
-            $each: [
-              { role: 'user', content: message },
-              { role: 'ai', content: translatedReply },
-            ],
-          },
-        },
-      }
+      { $push: { messages: { $each: newMessages } } }
     );
 
     logger.info(`[Chat] Agent replied in ${durationMs}ms for user [${userId}]${blocked ? ' [BLOCKED]' : ''}`);
@@ -111,6 +116,10 @@ export const handleStreamMessage = async (req, res) => {
     }
     const history = session?.messages || [];
 
+    // ── Session Memory: try Redis first ─────────────────────────────
+    const redisHistory = await getSessionHistory(sessionId);
+    const agentHistory = redisHistory || history;
+
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -128,7 +137,7 @@ export const handleStreamMessage = async (req, res) => {
       userId,
       sessionId,
       message: englishMessage,
-      history,
+      history: agentHistory,
     });
 
     // ── Multilingual Post-Agent Translation ──────────────────────
@@ -142,19 +151,14 @@ export const handleStreamMessage = async (req, res) => {
       await new Promise(r => setTimeout(r, 20));
     }
 
-    // Persist to DB (store translated text for display)
+    const newMessages = [
+      { role: 'user', content: message },
+      { role: 'ai', content: translatedReply },
+    ];
+    appendSessionMessages(sessionId, newMessages);
     await ChatSession.findByIdAndUpdate(
       sessionId,
-      {
-        $push: {
-          messages: {
-            $each: [
-              { role: 'user', content: message },
-              { role: 'ai', content: translatedReply },
-            ],
-          },
-        },
-      }
+      { $push: { messages: { $each: newMessages } } }
     );
 
     // Signal completion
