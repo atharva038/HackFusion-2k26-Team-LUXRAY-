@@ -1,48 +1,66 @@
 import cron from 'node-cron';
 import { run } from '@openai/agents';
-import { medicationNotifyAgent } from '../agent/child/notify/medication.notify.child.js';
+import { notificationParentAgent } from '../agent/parent/parentNotify.agent.js';
 
-// --- CONFIGURATION ---
-const targetHour = 8;    // Set your demo hour (0-23)
-const targetMinute = 30; // Set your demo minute (0-59)
+
+const targetHour = 8;    
+const targetMinute = 30; 
 
 const runMedicationCheck = async () => {
     const now = new Date();
     const currentTime = now.getHours().toString().padStart(2, '0') + ":" +
                         now.getMinutes().toString().padStart(2, '0');
 
-    console.log(`[${new Date().toISOString()}] ⏰ Cron Trigger: Running Agent for ${currentTime}`);
+    console.log(`[${new Date().toISOString()}] ⏰ Dose Cron: Checking reminders for ${currentTime}`);
 
     try {
-        await run(medicationNotifyAgent,
-            `The current time is ${currentTime}.
-             Step 1: Fetch active prescriptions.
-             Step 2: Identify users who need to take medicine right now based on frequency.
-             Step 3: Send them a reminder email.`
+        await run(notificationParentAgent,
+            `The current time is ${currentTime}. 
+             Use 'get_active_prescriptions_data' to find patients due for medicine now and send them a 'reminder' email.`
         );
-        console.log("✅ Medication Agent run successful.");
+        console.log("✅ Dose Reminder run successful.");
     } catch (error) {
-        console.error("❌ Cron Agent Error:", error);
+        console.error("❌ Dose Cron Error:", error);
     }
 };
 
-/**
- * Initialize medication notification scheduler.
- * Call this after the DB connection is established.
- *
- * OPTION 1: SPECIFIC TIME (Best for demonstrating a single event)
- * OPTION 2: EVERY MINUTE — uncomment for instant demo testing
- * OPTION 3: EVERY HOUR  — uncomment for production
- */
+
+const runRefillCheck = async () => {
+    console.log(`[${new Date().toISOString()}] 📉 Refill Cron: Checking for low stock...`);
+
+    try {
+        await run(notificationParentAgent,
+            `Perform a refill check. 
+             Use 'get_expiring_prescriptions' to find patients with <= 2 days left and send them a 'refill' alert.`
+        );
+        console.log("✅ Refill Alert run successful.");
+    } catch (error) {
+        console.error("❌ Refill Cron Error:", error);
+    }
+};
+
+
 export function initNotificationScheduler() {
-    // OPTION 1: Specific time
-    cron.schedule(`${targetMinute} ${targetHour} * * *`, runMedicationCheck);
+    
+    // for medication notify
+    // every Minute (Demo) or Every Hour (Production)
+    // cron.schedule('* * * * *', runMedicationCheck); 
 
-    // OPTION 2: Every minute (demo)
-    // cron.schedule('* * * * *', runMedicationCheck);
+    // for refill
+    // runs once a day at 10:00 AM 
+    // cron.schedule('0 10 * * *', runRefillCheck);
 
-    // OPTION 3: Every hour (production)
-    // cron.schedule('0 * * * *', runMedicationCheck);
-
-    console.log(`[INFO] 🕒 Notification scheduler initialized. Target Demo Time: ${targetHour}:${String(targetMinute).padStart(2, '0')}`);
+    // console.log(`[INFO] 🕒 Schedulers Active: Doses (Every Minute) | Refills (10:00 AM Daily)`);
 }
+// export function initNotificationScheduler() {
+//     // Specific time
+//     cron.schedule(`${targetMinute} ${targetHour} * * *`, runMedicationCheck);
+
+//     // to run every minute
+//     // cron.schedule('* * * * *', runMedicationCheck);
+
+//     // to run every hour
+//     // cron.schedule('0 * * * *', runMedicationCheck);
+
+//     console.log(`[INFO] 🕒 Notification scheduler initialized. Target Demo Time: ${targetHour}:${String(targetMinute).padStart(2, '0')}`);
+// }
