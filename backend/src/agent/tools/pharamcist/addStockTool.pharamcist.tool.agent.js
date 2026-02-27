@@ -4,35 +4,59 @@ import { z } from "zod";
 
 export const addStockTool = tool({
   name: "add_stock",
-  description: "Add stock quantity using PZN, medicine name, or MongoDB ID",
+  description:
+    "Add stock quantity to a medicine using its PZN code, medicine name, or MongoDB ID. " +
+    "Provide exactly one identifier; set the others to null.",
 
   parameters: z.object({
-    pzn: z.string().describe("The PZN number").optional(), // keep optional, but we’ll require it manually below
-    name: z.string().describe("The medicine name").optional(),
-    id: z.string().describe("The MongoDB ID").optional(),
-    quantity: z.number().positive().describe("Units to add"),
+    pzn: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("The PZN (Pharmazentralnummer) code. Pass null if not available."),
+    name: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("The medicine name. Pass null if not available."),
+    id: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("The MongoDB ObjectId of the medicine. Pass null if not available."),
+    quantity: z.number().positive().describe("Number of units to add to the current stock"),
   }),
 
-  async func({ pzn, name, id, quantity }) {
-    // Ensure at least one identifier exists
+  execute: async ({ pzn, name, id, quantity }) => {
     if (!pzn && !name && !id) {
-      return "You must provide at least one of: pzn, name, or id";
+      return "You must provide at least one identifier: pzn, name, or id.";
     }
+
+    // Escape special regex characters to prevent injection
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     let medicine;
     if (id) {
       medicine = await Medicine.findById(id);
     } else if (pzn) {
-      medicine = await Medicine.findOne({ pzn });
+      // Normalise: strip any "PZN-" / "PZN " prefix the agent might include
+      const cleanPzn = pzn.trim().replace(/^pzn[-\s]*/i, "");
+      medicine = await Medicine.findOne({ pzn: cleanPzn });
     } else if (name) {
-      medicine = await Medicine.findOne({ name: { $regex: new RegExp(`^${name.trim()}$`, "i") } });
+      const cleanName = name.trim();
+      // Partial, case-insensitive match — works for "Alprazolam" → "Alprazolam 0.5mg"
+      medicine = await Medicine.findOne({
+        name: { $regex: new RegExp(escapeRegex(cleanName), "i") },
+      });
     }
 
-    if (!medicine) return `Medicine not found for "${pzn || name || id}"`;
+    if (!medicine) {
+      return `Medicine not found for "${pzn || name || id}". Check the name/PZN spelling and try again.`;
+    }
 
     medicine.stock = (medicine.stock || 0) + quantity;
     await medicine.save();
 
-    return `Successfully added ${quantity} units to ${medicine.name}. New stock: ${medicine.stock}`;
+    return `Successfully added ${quantity} units to "${medicine.name}" (PZN: ${medicine.pzn}). New stock: ${medicine.stock} units.`;
   },
 });

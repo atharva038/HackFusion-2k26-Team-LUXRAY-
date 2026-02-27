@@ -1,10 +1,20 @@
 import express from 'express';
 const router = express.Router();
 import * as adminController from '../controllers/admin.controller.js';
+import * as pharmacistAgentController from '../controllers/pharmacistAgent.controller.js';
 import { protect, restrictTo } from '../middleware/auth.middleware.js';
+import { createRedisRateLimiter } from '../middleware/redisRateLimiter.js';
+import { validate, chatSchema } from '../middleware/validate.middleware.js';
 
 // All admin routes require a valid JWT and admin/pharmacist role
 router.use(protect, restrictTo('admin', 'pharmacist'));
+
+// Rate limiter for pharmacist agent (10 req/min per user)
+const pharmacistAgentLimiter = createRedisRateLimiter({
+  prefix: 'pharmacist-agent',
+  max: 10,
+  windowMs: 60 * 1000,
+});
 
 /** GET  /api/admin/stats — Dashboard summary statistics */
 router.get('/stats', adminController.getDashboardStats);
@@ -44,5 +54,21 @@ router.post('/low-stock-alert', adminController.triggerLowStockAlert);
 
 /** GET  /api/admin/traces — Get AI reasoning traces */
 router.get('/traces', adminController.getTraces);
+
+// ─── Pharmacist AI Agent Routes ────────────────────────────────────────────
+/** POST /api/admin/agent/chat — Sync pharmacist agent message */
+router.post('/agent/chat', pharmacistAgentLimiter, validate(chatSchema), pharmacistAgentController.handlePharmacistMessage);
+
+/** POST /api/admin/agent/chat/stream — SSE streaming pharmacist agent */
+router.post('/agent/chat/stream', pharmacistAgentLimiter, validate(chatSchema), pharmacistAgentController.handlePharmacistStream);
+
+/** GET  /api/admin/agent/sessions — List pharmacist agent sessions */
+router.get('/agent/sessions', pharmacistAgentController.getPharmacistSessions);
+
+/** GET  /api/admin/agent/history/:sessionId — Session message history */
+router.get('/agent/history/:sessionId', pharmacistAgentController.getPharmacistHistory);
+
+/** DELETE /api/admin/agent/sessions/:sessionId — Delete a session */
+router.delete('/agent/sessions/:sessionId', pharmacistAgentController.deletePharmacistSession);
 
 export default router;
