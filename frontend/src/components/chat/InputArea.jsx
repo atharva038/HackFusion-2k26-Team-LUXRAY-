@@ -5,6 +5,7 @@ import useAppStore, { AI_STATUS, STT_CODES } from '../../store/useAppStore';
 import { sendChatMessage, fetchTTSAudio, splitIntoSentences, fetchTTSChunked } from '../../services/api';
 import PrescriptionUpload from '../../features/prescription/PrescriptionUpload';
 import { uploadPrescription } from '../../features/prescription/uploadService';
+import { parseStructuredOutput } from '../../utils/parseStructuredOutput';
 
 // Get browser SpeechRecognition constructor
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -223,11 +224,15 @@ const InputArea = () => {
                 status: 'success'
             }));
 
+            // Parse structured output (lists, tables, summaries)
+            const structured = parseStructuredOutput(aiText);
+
             const aiMessage = {
                 id: Date.now(),
                 role: 'ai',
                 text: aiText,
                 tools,
+                structured,
                 isStreaming: true,
                 isVoice: isVoiceInput, // Pass flag to determine initial delay in UI
                 requiresPrescription

@@ -15,6 +15,7 @@
   "dependencies": {
     "@mistralai/mistralai": "^1.14.0",
     "@openai/agents": "^0.4.15",
+    "@tavily/core": "^0.7.1",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.5",

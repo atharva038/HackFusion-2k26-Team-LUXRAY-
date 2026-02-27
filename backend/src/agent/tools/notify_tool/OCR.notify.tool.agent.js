@@ -1,4 +1,3 @@
-// agent/tools/ocr.tool.js
 import { tool } from '@openai/agents';
 import { Mistral } from '@mistralai/mistralai';
 import { z } from 'zod';
@@ -13,16 +12,16 @@ export const ocrTool = tool({
     }),
     execute: async ({ imageUrl }) => {
         try {
-            // 1. Fetch image using native Node.js fetch
+            
             const response = await fetch(imageUrl);
             
             if (!response.ok) {
                 throw new Error(`Failed to fetch image: ${response.statusText}`);
             }
 
-            // 2. Convert response to arrayBuffer and then to Base64
+            
             const contentType = response.headers.get('content-type') || 'image/jpeg';
-            // Normalize to a supported MIME type
+            
             const mimeType = contentType.split(';')[0].trim() || 'image/jpeg';
             const arrayBuffer = await response.arrayBuffer();
             const base64Data = Buffer.from(arrayBuffer).toString('base64');
