@@ -11,6 +11,16 @@ import User from './models/user.model.js';
 
 
 
+const ADMIN = {
+  name: 'Atharva',
+  email: 'atharvsjoshi2005@gmail.com',
+  password: 'Atharva@2005',
+  role: 'admin',
+  phone: '',
+  age: 20,
+  gender: 'male',
+};
+
 async function createAdmin() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
