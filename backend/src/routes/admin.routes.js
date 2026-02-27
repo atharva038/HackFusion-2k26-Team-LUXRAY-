@@ -39,6 +39,9 @@ router.patch('/refills/:id', adminController.updateRefillAlert);
 /** GET  /api/admin/logs — Get inventory logs */
 router.get('/logs', adminController.getInventoryLogs);
 
+/** POST /api/admin/low-stock-alert — Manually trigger low-stock email to pharmacists */
+router.post('/low-stock-alert', adminController.triggerLowStockAlert);
+
 /** GET  /api/admin/traces — Get AI reasoning traces */
 router.get('/traces', adminController.getTraces);
 

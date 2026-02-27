@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const medicineSchema = new mongoose.Schema(
   {
@@ -19,18 +19,18 @@ const medicineSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
-      min: [0, 'Price cannot be negative'],
+      min: [0, "Price cannot be negative"],
     },
 
     description: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
 
     unitType: {
       type: String,
-      enum: ['tablet', 'strip', 'bottle', 'injection'],
+      enum: ["tablet", "strip", "bottle", "injection"],
       required: true,
     },
 
@@ -50,7 +50,7 @@ const medicineSchema = new mongoose.Schema(
       default: 10,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model('Medicine', medicineSchema);
+export default mongoose.model("Medicine", medicineSchema);

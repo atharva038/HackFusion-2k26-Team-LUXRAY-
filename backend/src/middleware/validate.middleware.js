@@ -33,6 +33,7 @@ export const chatSchema = z.object({
     .min(1, 'Message cannot be empty')
     .max(1000, 'Message is too long (max 1000 characters)'),
   sessionId: z.string().nullable().optional(),
+  language: z.enum(['en', 'hi', 'mr']).optional().default('en'),
 });
 
 /**

@@ -8,6 +8,7 @@ import { testAgentSystem } from '../controllers/notification.controller.js';
 
 
 router.post('/upload', protect, upload.single('prescriptions'), imageExtractor.handlePrescriptionUpload);
+router.delete('/:entryId', protect, imageExtractor.deletePrescription);
 // /mail is an admin-only test endpoint — requires auth and admin role
 router.post('/mail', protect, restrictTo('admin', 'pharmacist'), testMailer.testEmail);
 router.post('/testMail', testAgentSystem);
