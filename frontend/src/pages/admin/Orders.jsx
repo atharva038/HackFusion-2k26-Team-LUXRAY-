@@ -125,7 +125,7 @@ const Orders = () => {
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
                             {filteredOrders.length > 0 ? filteredOrders.map((order) => (
                                 <tr key={order._id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
-                                    <td className="px-6 py-4 font-mono text-text text-xs">{order._id.slice(-6).toUpperCase()}</td>
+                                    <td className="px-6 py-4 font-mono text-text text-xs">{order._id}</td>
                                     <td className="px-6 py-4 text-text-muted">{order.user?.name || 'N/A'}</td>
                                     <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">{order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}</td>
                                     <td className="px-6 py-4">

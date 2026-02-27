@@ -33,8 +33,8 @@ No explanation.
 export const pharmacyInputGuardrail = {
   name: "pharmacy_input_guardrail",
 
-  execute: async ({ input }) => {
-    const result = await run(pharmacyInputSafetyAgent, input);
+  execute: async ({ input ,context}) => {
+    const result = await run(pharmacyInputSafetyAgent, input,{context});
     const decision = result.finalOutput.trim();
 
     const blocked = decision === "BLOCKED";
