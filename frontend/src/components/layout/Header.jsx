@@ -47,4 +47,3 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
 };
 
 export default Header;
-

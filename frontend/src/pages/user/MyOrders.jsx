@@ -8,6 +8,8 @@ import {
 import Header from '../../components/layout/Header';
 import { fetchUserOrders, sendChatMessage } from '../../services/api';
 import useAppStore from '../../store/useAppStore';
+import useAuthStore from '../../store/useAuthStore';
+import { useSocket } from '../../context/SocketContext';
 import { downloadInvoicePdf } from '../../utils/generateInvoice';
 
 const getStatusColor = (status) => {
@@ -188,7 +190,9 @@ const MyOrders = () => {
     const [reorderStates, setReorderStates] = useState({});
 
     const navigate = useNavigate();
+    const { on, off } = useSocket();
     const sessionId = useAppStore((s) => s.sessionId);
+    const currentUserId = useAuthStore((s) => s.user?.id);
     const LIMIT = 10;
 
     const load = useCallback((p) => {
@@ -204,6 +208,78 @@ const MyOrders = () => {
     }, []);
 
     useEffect(() => { load(page); }, [page, load]);
+
+    // WebSocket listeners for real-time order updates
+    useEffect(() => {
+        // Prepend a new order only if it belongs to the current user and we're on page 1
+        const handleNewOrder = (order) => {
+            const orderUserId = order.user?._id?.toString() ?? order.user?.toString();
+            if (orderUserId !== currentUserId) return;
+            if (page !== 1) return;
+            setOrders(prev => prev.some(o => o._id === order._id) ? prev : [order, ...prev]);
+        };
+
+        const handleOrderStatusUpdate = (data) => {
+            console.log('[MyOrders] Order status updated:', data);
+            
+            // Update the specific order in the list
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === data.orderId 
+                        ? { 
+                            ...order, 
+                            status: data.status,
+                            rejectionReason: data.rejectionReason || order.rejectionReason
+                          }
+                        : order
+                )
+            );
+        };
+
+        const handleOrderDispatched = (data) => {
+            console.log('[MyOrders] Order dispatched:', data);
+            
+            // Update order status to dispatched
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === data.orderId 
+                        ? { ...order, status: 'dispatched' }
+                        : order
+                )
+            );
+        };
+
+        const handleOrderRejected = (data) => {
+            console.log('[MyOrders] Order rejected:', data);
+            
+            // Update order status to rejected with reason
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === data.orderId 
+                        ? { 
+                            ...order, 
+                            status: 'rejected',
+                            rejectionReason: data.reason
+                          }
+                        : order
+                )
+            );
+        };
+
+        // Register event listeners
+        on('order:new', handleNewOrder);
+        on('order:status-updated', handleOrderStatusUpdate);
+        on('order:dispatched', handleOrderDispatched);
+        on('order:rejected', handleOrderRejected);
+
+        // Cleanup listeners on unmount
+        return () => {
+            off('order:new', handleNewOrder);
+            off('order:status-updated', handleOrderStatusUpdate);
+            off('order:dispatched', handleOrderDispatched);
+            off('order:rejected', handleOrderRejected);
+        };
+    }, [on, off, currentUserId, page]);
 
     // ── Core reorder: build query → send to chat agent → show result ──────
     const handleReorder = useCallback(async (order) => {

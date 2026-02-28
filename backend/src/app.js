@@ -8,6 +8,7 @@ import { closeRedis } from './config/redis.js';
 import { createRedisRateLimiter } from './middleware/redisRateLimiter.js';
 import { initScheduler } from './scheduler/refill.scheduler.js';
 import { initNotificationScheduler } from './scheduler/notification.schedule.js';
+import { initializeSocket } from './config/socket.js';
 
 import chatRoutes from './routes/chat.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -131,6 +132,9 @@ async function start() {
   const server = app.listen(PORT, () =>
     console.log(`🚀 Backend running on http://localhost:${PORT} [${isProduction ? 'PRODUCTION' : 'DEV'}]`)
   );
+
+  // Initialize Socket.IO — must be attached to the HTTP server, not the Express app
+  initializeSocket(server);
 
   // ─── Graceful Shutdown ──────────────────────────────────────────
   // On SIGTERM/SIGINT: stop accepting new requests, drain existing ones,

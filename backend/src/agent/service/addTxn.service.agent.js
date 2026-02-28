@@ -1,5 +1,6 @@
 import Order from "../../models/order.model.js";
 import mongoose from "mongoose";
+import { isSocketInitialized, getIO } from "../../config/socket.js";
 
 export async function addTransaction({
   patientId,
@@ -51,6 +52,17 @@ export async function addTransaction({
     });
 
     await order.save();
+
+    // Emit real-time event so admin Orders page updates instantly
+    if (isSocketInitialized()) {
+      try {
+        const populated = await Order.findById(order._id)
+          .populate('user', 'name email')
+          .populate('items.medicine', 'name')
+          .lean();
+        getIO().emit('order:new', populated);
+      } catch (_) { /* non-fatal */ }
+    }
 
     return {
       message: "Order saved successfully",

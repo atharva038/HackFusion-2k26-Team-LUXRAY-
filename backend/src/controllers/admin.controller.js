@@ -7,6 +7,7 @@ import InventoryLog from '../models/inventoryLog.model.js';
 import logger from '../utils/logger.js';
 import { checkAndAlertLowStock } from '../scheduler/refill.scheduler.js';
 import { sendLowStockAlert } from '../agent/service/email.service.agent.js';
+import { emitToUser, isSocketInitialized, getIO } from '../config/socket.js';
 
 // ─── Dashboard Stats ─────────────────────────────────────────
 export const getDashboardStats = async (req, res) => {
@@ -146,6 +147,47 @@ export const updateOrderStatus = async (req, res) => {
           order: updated._id,
         });
       }
+    }
+
+    // ── Real-time socket events ──────────────────────────────────
+    if (isSocketInitialized()) {
+      const userId = updated.user?._id?.toString() ?? updated.user?.toString();
+      const orderId = updated._id.toString();
+
+      // Notify the customer who placed the order
+      if (userId) {
+        emitToUser(userId, 'order:status-updated', {
+          orderId,
+          status: updated.status,
+          rejectionReason: updated.rejectionReason,
+          approvedBy: updated.approvedBy?.toString?.(),
+          totalAmount: updated.totalAmount,
+        });
+
+        if (status === 'dispatched') {
+          emitToUser(userId, 'order:dispatched', {
+            orderId,
+            message: 'Your order has been dispatched!',
+          });
+        }
+
+        if (status === 'rejected') {
+          emitToUser(userId, 'order:rejected', {
+            orderId,
+            reason: updated.rejectionReason || 'Your order has been rejected.',
+          });
+        }
+      }
+
+      // Broadcast to all admins/pharmacists so their Orders table updates
+      getIO().emit('order:admin-updated', {
+        orderId,
+        status: updated.status,
+        userName: updated.user?.name,
+        rejectionReason: updated.rejectionReason,
+        approvedBy: updated.approvedBy?.toString?.(),
+        totalAmount: updated.totalAmount,
+      });
     }
 
     res.json(updated);
