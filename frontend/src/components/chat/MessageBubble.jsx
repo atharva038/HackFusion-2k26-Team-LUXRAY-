@@ -51,7 +51,14 @@ const TypewriterText = ({ text, delayStart = 800, typingSpeed = 20, onComplete }
         );
     }
 
-    return <MarkdownText text={displayedText} />;
+    return (
+        <div className="relative">
+            <MarkdownText text={displayedText} />
+            {started && displayedText !== text && (
+                <span className="inline-block w-1.5 h-4 bg-cyan-400 ml-1 animate-pulse align-middle shadow-[0_0_8px_theme('colors.cyan.400')]" />
+            )}
+        </div>
+    );
 };
 
 const ToolExecutionBadge = ({ tool, index }) => {
@@ -119,8 +126,8 @@ const MessageBubble = ({ message }) => {
                     <div className={`
                         relative px-5 py-4 text-[15px] leading-relaxed overflow-hidden w-fit
                         ${isAi
-                            ? 'rounded-3xl rounded-tl-sm bg-card text-text border border-black/5 dark:border-white/5 shadow-sm'
-                            : 'rounded-3xl rounded-tr-sm bg-primary text-white shadow-soft font-medium'
+                            ? 'rounded-3xl rounded-tl-sm bg-glass backdrop-blur-md text-text border border-white/10 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                            : 'rounded-3xl rounded-tr-sm bg-gradient-to-br from-emerald-500 to-cyan-600 text-white shadow-soft font-medium'
                         }
                     `}>
                         {/* Image Preview (uploaded prescription) */}

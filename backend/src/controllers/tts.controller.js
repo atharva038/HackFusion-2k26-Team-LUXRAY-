@@ -23,8 +23,24 @@ export const generateSpeech = async (req, res) => {
 
     const voice = getTTSVoice(language);
 
+    // ── Pre-TTS Cleanup ──────────────────────────────────────────
+    // Strip out structural elements from the text so the voice doesn't read out payment cards literally
+    const ttsCleanedText = text.replace(/Order\s*(ID)?|आदेश आईडी|ऑर्डर आयडी|ऑर्डर आईडी:?.*?(?=\n\n|$)/gis, '')
+      .replace(/Status|स्थिति|Items|आइटम|Total|कुल|रक्कम|Total Price|Razorpay ID|payment id:?.*?(?=\n|$)/gis, '')
+      .replace(/Please click the "Pay Now" button below to confirm your order\.|कृपया अपने ऑर्डर की पुष्टि के लिए नीचे दिए गए "Pay Now" बटन पर क्लिक करें। धन्यवाद!/gis, '')
+      .replace(/<[^>]*>?/gm, '') // strip any accidental HTML
+      .replace(/\[ACTION: REQUIRE_PRESCRIPTION\]/g, '')
+      .trim();
+
+    if (!ttsCleanedText) {
+      // if the entire string was just structural, send a tiny silent 1kb mp3
+      // but here we can just throw or send a dummy space to openai
+      console.log('[TTS] Text was entirely structural UI, safely bypassing voice synthesis.');
+      return res.status(200).send(Buffer.from([]));
+    }
+
     // ── TTS Cache lookup ─────────────────────────────────────────
-    const cachedBuffer = await getCachedTTS(language, text.trim());
+    const cachedBuffer = await getCachedTTS(language, ttsCleanedText);
     if (cachedBuffer) {
       console.log(`[TTS] CACHE HIT — ${cachedBuffer.length} bytes (lang=${language})`);
       res.set('Content-Type', 'audio/mpeg');
@@ -33,12 +49,12 @@ export const generateSpeech = async (req, res) => {
       return res.send(cachedBuffer);
     }
 
-    console.log(`[TTS] Generating speech for ${text.length} chars (lang=${language}, voice=${voice})...`);
+    console.log(`[TTS] Generating speech for ${ttsCleanedText.length} chars (lang=${language}, voice=${voice})...`);
 
     const mp3Response = await openai.audio.speech.create({
       model: 'tts-1',
       voice,
-      input: text.trim(),
+      input: ttsCleanedText,
     });
 
     const buffer = Buffer.from(await mp3Response.arrayBuffer());
@@ -46,7 +62,7 @@ export const generateSpeech = async (req, res) => {
     console.log(`[TTS] Success — ${buffer.length} bytes`);
 
     // ── TTS Cache store ──────────────────────────────────────────
-    setCachedTTS(language, text.trim(), buffer);
+    setCachedTTS(language, ttsCleanedText, buffer);
 
     res.set('Content-Type', 'audio/mpeg');
     res.set('Content-Length', String(buffer.length));
@@ -80,8 +96,21 @@ export const generateSpeechStream = async (req, res) => {
 
     const voice = getTTSVoice(language);
 
+    // ── Pre-TTS Cleanup ──────────────────────────────────────────
+    const ttsCleanedText = text.replace(/Order\s*(ID)?|आदेश आईडी|ऑर्डर आयडी|ऑर्डर आईडी:?.*?(?=\n\n|$)/gis, '')
+      .replace(/Status|स्थिति|Items|आइटम|Total|कुल|रक्कम|Total Price|Razorpay ID|payment id:?.*?(?=\n|$)/gis, '')
+      .replace(/Please click the "Pay Now" button below to confirm your order\.|कृपया अपने ऑर्डर की पुष्टि के लिए नीचे दिए गए "Pay Now" बटन पर क्लिक करें। धन्यवाद!/gis, '')
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/\[ACTION: REQUIRE_PRESCRIPTION\]/g, '')
+      .trim();
+
+    if (!ttsCleanedText) {
+      console.log('[TTS-Stream] Text was entirely structural UI, safely bypassing voice synthesis.');
+      return res.end();
+    }
+
     // ── TTS Cache lookup (stream endpoint) ───────────────────────
-    const cachedBuffer = await getCachedTTS(language, text.trim());
+    const cachedBuffer = await getCachedTTS(language, ttsCleanedText);
     if (cachedBuffer) {
       console.log(`[TTS-Stream] CACHE HIT — ${cachedBuffer.length} bytes (lang=${language})`);
       res.set('Content-Type', 'audio/mpeg');
@@ -91,12 +120,12 @@ export const generateSpeechStream = async (req, res) => {
       return res.end();
     }
 
-    console.log(`[TTS-Stream] Generating speech for ${text.length} chars (lang=${language}, voice=${voice})...`);
+    console.log(`[TTS-Stream] Generating speech for ${ttsCleanedText.length} chars (lang=${language}, voice=${voice})...`);
 
     const response = await openai.audio.speech.create({
       model: 'tts-1',
       voice,
-      input: text.trim(),
+      input: ttsCleanedText,
       response_format: 'mp3',
     });
 
@@ -131,7 +160,7 @@ export const generateSpeechStream = async (req, res) => {
     res.end();
 
     // ── TTS Cache store (fire-and-forget) ──────────────────────
-    setCachedTTS(language, text.trim(), Buffer.concat(chunks));
+    setCachedTTS(language, ttsCleanedText, Buffer.concat(chunks));
   } catch (err) {
     console.error('[TTS-Stream] Error:', err.message || err);
     if (!res.headersSent) {

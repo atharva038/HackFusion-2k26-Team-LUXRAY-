@@ -14,15 +14,15 @@ const InvoiceSummaryCard = ({ invoiceId, orderId, amountPaid, items }) => {
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: 'spring', damping: 22, stiffness: 180 }}
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 shadow-sm bg-card"
+            className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 shadow-[0_8px_32px_rgba(16,185,129,0.15)] bg-glass backdrop-blur-xl group"
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-green-500/10 border-b border-black/8 dark:border-white/8">
-                <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold text-sm">
+            <div className="flex items-center justify-between px-5 py-4 bg-emerald-900/10 border-b border-white/10">
+                <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs tracking-widest uppercase">
                     <ReceiptCent className="w-4 h-4" />
                     Invoice Generated
                 </div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/25">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Paid
                 </span>

@@ -6,6 +6,7 @@ import { SocketProvider } from './context/SocketContext';
 import { Toaster } from 'react-hot-toast';
 import AllergySetupModal from './components/ui/AllergySetupModal';
 import { fetchUserAllergies } from './services/api';
+import PremiumBackground from './components/ui/PremiumBackground';
 
 // Pages
 import ChatPage from './pages/chat/ChatPage';
@@ -102,6 +103,9 @@ function App() {
           onClose={() => { setAllergyModalOpen(false); setIsFirstTimeAllergy(false); }}
           isFirstTime={isFirstTimeAllergy}
         />
+
+        {/* Next-Level Premium Animated Background */}
+        <PremiumBackground />
 
         <Routes>
           {/* Auth Routes (public) */}

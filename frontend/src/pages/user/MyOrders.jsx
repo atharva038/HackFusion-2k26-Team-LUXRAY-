@@ -179,7 +179,7 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
 };
 
 // ─── Page ──────────────────────────────────────────────────────────────────
-const MyOrders = () => {
+const MyOrders = ({ isSlideOver = false }) => {
     const [orders, setOrders] = useState([]);
     const [pagination, setPagination] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -224,12 +224,12 @@ const MyOrders = () => {
                 prevOrders.map(order => {
                     if (order._id !== data.orderId) return order;
                     const updated = { ...order, status: data.status };
-                    if (data.rejectionReason)  updated.rejectionReason  = data.rejectionReason;
+                    if (data.rejectionReason) updated.rejectionReason = data.rejectionReason;
                     // Carry through payment confirmation fields so the invoice
                     // download button appears immediately without a page refresh
-                    if (data.paymentStatus)    updated.paymentStatus    = data.paymentStatus;
-                    if (data.invoiceId)        updated.invoiceId        = data.invoiceId;
-                    if (data.totalAmount != null) updated.totalAmount   = data.totalAmount;
+                    if (data.paymentStatus) updated.paymentStatus = data.paymentStatus;
+                    if (data.invoiceId) updated.invoiceId = data.invoiceId;
+                    if (data.totalAmount != null) updated.totalAmount = data.totalAmount;
                     return updated;
                 })
             );
@@ -237,11 +237,11 @@ const MyOrders = () => {
 
         const handleOrderDispatched = (data) => {
             console.log('[MyOrders] Order dispatched:', data);
-            
+
             // Update order status to dispatched
-            setOrders(prevOrders => 
-                prevOrders.map(order => 
-                    order._id === data.orderId 
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order._id === data.orderId
                         ? { ...order, status: 'dispatched' }
                         : order
                 )
@@ -250,16 +250,16 @@ const MyOrders = () => {
 
         const handleOrderRejected = (data) => {
             console.log('[MyOrders] Order rejected:', data);
-            
+
             // Update order status to rejected with reason
-            setOrders(prevOrders => 
-                prevOrders.map(order => 
-                    order._id === data.orderId 
-                        ? { 
-                            ...order, 
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order._id === data.orderId
+                        ? {
+                            ...order,
                             status: 'rejected',
                             rejectionReason: data.reason
-                          }
+                        }
                         : order
                 )
             );
@@ -403,18 +403,20 @@ const MyOrders = () => {
     }, [sessionId]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-bg text-text transition-colors duration-500">
-            <Header />
-            <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className={`flex flex-col ${isSlideOver ? 'h-full bg-transparent' : 'min-h-screen bg-bg'} text-text transition-colors duration-500`}>
+            {!isSlideOver && <Header />}
+            <main className={`flex-1 w-full max-w-[1600px] mx-auto ${isSlideOver ? 'p-6' : 'px-4 sm:px-6 lg:px-8 py-8'} overflow-y-auto`}>
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <button
-                            onClick={() => navigate('/')}
-                            className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-text-muted transition-colors cursor-pointer"
-                            title="Back to Chat"
-                        >
-                            <Home className="w-5 h-5" />
-                        </button>
+                        {!isSlideOver && (
+                            <button
+                                onClick={() => navigate('/')}
+                                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-text-muted transition-colors cursor-pointer"
+                                title="Back to Chat"
+                            >
+                                <Home className="w-5 h-5" />
+                            </button>
+                        )}
                         <h1 className="text-2xl font-bold tracking-tight text-text flex items-center gap-3">
                             <ShoppingBag className="w-6 h-6 text-primary" />
                             My Orders

@@ -22,7 +22,8 @@ CRITICAL SAFETY RULES — violations could harm patients:
 • NEVER translate medicine/drug names — keep them exactly as-is (e.g. Amlodipine, Paracetamol)
 • NEVER translate brand names
 • NEVER change dosage units: mg, ml, mcg, strips, tablets, capsules — keep them in English
-• NEVER translate structured JSON or code
+• NEVER translate structured JSON, code, or payment structural keys (Order ID, Status, Items, Total, Razorpay ID)
+• NEVER translate order status identifiers (e.g. awaiting_payment, pending)
 • Preserve date formats exactly
 • Maintain a calm, professional healthcare tone
 • If a term is ambiguous, prefer the original medical term

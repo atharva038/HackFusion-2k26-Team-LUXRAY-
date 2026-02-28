@@ -22,14 +22,14 @@ const PrescriptionCard = ({ data }) => {
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className="w-full max-w-sm mt-2"
         >
-            <div className="rounded-2xl overflow-hidden border border-primary/15 bg-gradient-to-br from-primary/[0.03] via-card to-card shadow-sm">
+            <div className="rounded-3xl overflow-hidden border border-white/10 bg-glass backdrop-blur-xl shadow-[0_8px_32px_rgba(6,182,212,0.15)] group">
                 {/* Header */}
-                <div className="px-5 py-4 bg-primary/5 border-b border-primary/10">
+                <div className="px-5 py-4 bg-cyan-900/10 border-b border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Pill className="w-4 h-4 text-primary" />
+                        <div className="w-8 h-8 rounded-full bg-cyan-500/10 flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                            <Pill className="w-4 h-4 text-cyan-400" />
                         </div>
-                        <h3 className="text-sm font-bold text-text tracking-tight">Prescription Extracted</h3>
+                        <h3 className="text-sm font-bold text-cyan-400 tracking-widest uppercase">Prescription Extracted</h3>
                     </div>
 
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
@@ -64,8 +64,8 @@ const PrescriptionCard = ({ data }) => {
                             transition={{ delay: i * 0.08, duration: 0.3 }}
                             className="flex gap-3 py-2 border-b border-black/[0.03] dark:border-white/[0.03] last:border-0"
                         >
-                            <div className="shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center mt-0.5">
-                                <span className="text-xs font-bold text-primary">{i + 1}</span>
+                            <div className="shrink-0 w-7 h-7 rounded-lg bg-cyan-500/10 flex items-center justify-center mt-0.5 border border-cyan-500/20 shadow-sm">
+                                <span className="text-xs font-bold text-cyan-400">{i + 1}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-text leading-tight">

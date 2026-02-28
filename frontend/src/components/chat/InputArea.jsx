@@ -34,7 +34,7 @@ const InputArea = () => {
     const isListening = aiStatus === AI_STATUS.LISTENING;
     const isProcessing = aiStatus === AI_STATUS.PROCESSING;
     const isSpeaking = aiStatus === AI_STATUS.SPEAKING;
-    const isBusy = isProcessing || isSpeaking;
+    const isBusy = isProcessing; // Unblock inputs during isSpeaking
 
     // ─── Reorder / Prescription Chat Bridge ─────────────────────
     // Keeps a live ref to processSend so the mount effect below never stales
@@ -310,6 +310,10 @@ const InputArea = () => {
         e?.preventDefault();
         if (isBusy) return;
 
+        if (isSpeaking) {
+            stopSpeaking();
+        }
+
         if (isListening) {
             stopListening();
             return;
@@ -436,8 +440,23 @@ const InputArea = () => {
         }
     };
 
+    const stopSpeaking = () => {
+        cancelSpeechRef.current = true;
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
+        setCurrentAudioElement(null);
+        setActiveSubtitle('');
+        setAiStatus(AI_STATUS.READY);
+    };
+
     const toggleVoice = () => {
         if (isBusy) return;
+        if (isSpeaking) {
+            stopSpeaking();
+            return;
+        }
         if (isListening) {
             stopListening();
         } else {
@@ -523,9 +542,17 @@ const InputArea = () => {
                 )}
             </AnimatePresence>
 
-            {isListening && (
-                <div className="absolute inset-x-4 -bottom-2 h-16 bg-primary/15 blur-2xl rounded-full z-0 transition-all duration-700" />
-            )}
+            <AnimatePresence>
+                {isListening && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: [1, 1.03, 1] }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        className="absolute inset-x-4 -bottom-2 h-16 bg-cyan-500/20 blur-2xl rounded-full z-0 pointer-events-none"
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Queued Image Preview Area */}
             <AnimatePresence>
@@ -600,12 +627,14 @@ const InputArea = () => {
                     className="hidden"
                 />
 
-                <button
+                <motion.button
+                    whileHover={{ scale: isBusy ? 1 : 1.05 }}
+                    whileTap={{ scale: isBusy ? 1 : 0.95 }}
                     type="button"
                     onClick={toggleVoice}
                     disabled={isBusy}
-                    className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all duration-500 relative ${isListening
-                        ? 'bg-primary text-white shadow-[0_0_20px_rgba(37,99,235,0.5)]'
+                    className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-colors duration-300 relative ${isListening || isSpeaking
+                        ? 'bg-cyan-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.5)]'
                         : isBusy
                             ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
                             : 'bg-black/5 dark:bg-white/5 text-text-muted hover:bg-black/10 dark:hover:bg-white/10 hover:text-text'
@@ -613,7 +642,11 @@ const InputArea = () => {
                 >
                     {isListening ? (
                         <>
-                            <span className="absolute inset-0 rounded-full animate-ping bg-primary opacity-30" />
+                            <span className="absolute inset-0 rounded-full animate-ping bg-cyan-400 opacity-40" />
+                            <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                        </>
+                    ) : isSpeaking ? (
+                        <>
                             <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                         </>
                     ) : isBusy ? (
@@ -621,7 +654,7 @@ const InputArea = () => {
                     ) : (
                         <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
-                </button>
+                </motion.button>
 
                 <input
                     ref={inputRef}

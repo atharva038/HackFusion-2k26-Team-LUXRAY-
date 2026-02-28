@@ -16,32 +16,42 @@
 }
 
 :root {
-  /* Request Beige Premium Theme */
-  --bg: #F5F1E8;
-  --card: #EDE6DA;
-  --text: #1F2937;
-  --text-muted: #4B5563;
-  --primary: #2563EB;
-  --secondary: #84A98C;
-  --glass: rgba(237, 230, 218, 0.7);
+  /* Bright Mode */
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --primary: #06b6d4;
+  --secondary: #10b981;
+  --glass: rgba(255, 255, 255, 0.7);
 }
 
 .dark {
-  /* Request Dark Mode */
-  --bg: #1E1B18;
-  --card: #2A2622;
-  --text: #F4F1EC;
-  --text-muted: #9CA3AF;
-  --primary: #3B82F6; /* Soft blue glow */
-  --secondary: #84A98C;
-  --glass: rgba(42, 38, 34, 0.7);
+  /* Auroral Health Dark Mode */
+  --bg: #0B1120;
+  --card: rgba(30, 41, 59, 0.4);
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --primary: #06b6d4; /* Cyan */
+  --secondary: #10b981; /* Emerald */
+  --glass: rgba(15, 23, 42, 0.6);
+}
+
+@utility bg-aurora {
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
-  @apply bg-bg text-text transition-colors duration-500 ease-in-out;
+  @apply bg-aurora text-text transition-colors duration-500 ease-in-out;
 }
 
 /* Custom scrollbar for premium feel */

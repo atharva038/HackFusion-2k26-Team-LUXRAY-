@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BrainCircuit } from 'lucide-react';
 import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import { useAudioAmplitude } from '../../hooks/useAudioAmplitude';
-import { BrainCircuit } from 'lucide-react';
+import Spline from '@splinetool/react-spline';
 
 const STATUS_CONFIG = {
     [AI_STATUS.READY]: { label: 'AI Ready', color: 'bg-emerald-500', glow: 'shadow-emerald-500/50' },
@@ -52,12 +53,42 @@ const AiAvatar = () => {
                         className={`absolute inset-0 rounded-full blur-md opacity-40 transition-colors duration-500 ${config.color}`}
                     />
 
-                    {/* Core Orb */}
-                    <div className={`relative z-10 w-full h-full rounded-full flex items-center justify-center shadow-lg overflow-hidden transition-colors duration-500 ${config.color}`}>
+                    {/* Core Pseudo-3D AI Orb with Amplitude Talking Mode Animation */}
+                    <div className={`relative z-10 w-full h-full rounded-full flex items-center justify-center shadow-[inset_0_-10px_20px_rgba(0,0,0,0.4)] overflow-hidden transition-colors duration-500 ${config.color} border-[1px] border-white/20`}>
                         {aiStatus === AI_STATUS.PROCESSING ? (
                             <div className="w-5 h-5 border-2 border-white/20 border-t-white/90 rounded-full animate-spin" />
                         ) : (
-                            <img src="/avatar.png" alt="AI Avatar" className="w-full h-full object-cover scale-110" />
+                            <motion.div
+                                className="relative w-full h-full rounded-full overflow-hidden shadow-[inset_0_10px_20px_rgba(255,255,255,0.4),inset_0_-10px_20px_rgba(0,0,0,0.6)]"
+                                animate={{ scale: isSpeaking ? 0.95 + amplitude * 0.4 : 1 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                            >
+                                {/* 3D Core Layer 1: Base Gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-600 via-blue-500 to-emerald-400" />
+
+                                {/* 3D Core Layer 2: Pulse/Shine Map */}
+                                <motion.div
+                                    className="absolute inset-[-50%] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0)_50%)] mix-blend-overlay"
+                                    animate={{
+                                        rotate: isSpeaking ? [0, 360] : 0,
+                                        scale: isSpeaking ? [1, 1.2, 1] : 1
+                                    }}
+                                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                />
+
+                                {/* 3D Core Layer 3: Inner Glass Highlight */}
+                                <div className="absolute top-1 left-1.5 right-1.5 h-1/3 bg-gradient-to-b from-white/60 to-transparent rounded-full opacity-70" />
+
+                                {/* Center Tech Brain Icon */}
+                                <div className="absolute inset-0 flex items-center justify-center text-white/90">
+                                    <motion.div
+                                        animate={{ scale: isSpeaking ? 1 + amplitude * 0.3 : 1, opacity: isSpeaking ? 1 : 0.8 }}
+                                        transition={{ duration: 0.1 }}
+                                    >
+                                        <BrainCircuit className="w-5 h-5 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                    </motion.div>
+                                </div>
+                            </motion.div>
                         )}
                     </div>
 

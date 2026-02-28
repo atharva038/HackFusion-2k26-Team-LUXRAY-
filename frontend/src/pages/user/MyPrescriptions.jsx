@@ -158,7 +158,7 @@ const PrescriptionUploadEntry = ({ entry, index, onView, onDownload, onUseForOrd
     );
 };
 
-const MyPrescriptions = () => {
+const MyPrescriptions = ({ isSlideOver = false }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -237,23 +237,31 @@ const MyPrescriptions = () => {
             imageUrl: entry.imageUrl,
             medications: meds
         });
-        navigate('/');
+
+        // If in slide over mode, close it to return to chat, otherwise navigate
+        if (isSlideOver) {
+            useAppStore.getState().setActiveSlideOver(null);
+        } else {
+            navigate('/');
+        }
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-bg text-text transition-colors duration-500">
-            <Header />
-            <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className={`flex flex-col ${isSlideOver ? 'h-full bg-transparent' : 'min-h-screen bg-bg'} text-text transition-colors duration-500`}>
+            {!isSlideOver && <Header />}
+            <main className={`flex-1 w-full max-w-[1600px] mx-auto ${isSlideOver ? 'p-6' : 'px-4 sm:px-6 lg:px-8 py-8'} overflow-y-auto`}>
                 <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <button
-                                onClick={() => navigate('/')}
-                                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-text-muted transition-colors cursor-pointer"
-                                title="Back to Chat"
-                            >
-                                <Home className="w-5 h-5" />
-                            </button>
+                            {!isSlideOver && (
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-text-muted transition-colors cursor-pointer"
+                                    title="Back to Chat"
+                                >
+                                    <Home className="w-5 h-5" />
+                                </button>
+                            )}
                             <h1 className="text-2xl font-bold tracking-tight text-text flex items-center gap-3">
                                 <FileText className="w-6 h-6 text-primary" />
                                 My Prescriptions

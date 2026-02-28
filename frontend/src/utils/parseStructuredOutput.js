@@ -127,27 +127,30 @@ function detectMedicineList(text) {
  *   "Order ID: ... / Items: ... / Status: ... / Total: ..."
  */
 function detectOrderSummary(text) {
-    const hasOrderId = /order id[:\s]/i.test(text) || /orderid[:\s]/i.test(text);
-    const hasStatus = /status[:\s]/i.test(text);
-    const hasItems = /items?[:\s]/i.test(text);
+    // English + Hindi/Marathi fallbacks
+    const hasOrderId = /order id[:\s]|orderid[:\s]|आदेश आईडी[:\s]|ऑर्डर आयडी[:\s]|ऑर्डर आईडी[:\s]/i.test(text);
+    const hasStatus = /status[:\s]|स्थिति[:\s]/i.test(text);
+    const hasItems = /items?[:\s]|आइटम[:\s]/i.test(text);
 
     // Must be a summary block, not a list (no multiple numbered lines with orderId)
-    const nOrderLines = numberedLines(text).filter(l => /orderid:/i.test(l));
+    const nOrderLines = numberedLines(text).filter(l => /orderid:|आदेश आईडी:|ऑर्डर आयडी:|ऑर्डर आईडी:/i.test(l));
     if (!hasOrderId || !hasStatus || !hasItems || nOrderLines.length > 1) return null;
 
-    const get = (key) => {
-        const m = text.match(new RegExp(`${key}[:\\s]+([^\\n|,]+)`, 'i'));
-        return m ? m[1].trim() : '';
+    const get = (keyRegexes) => {
+        // match any of the provided regex strings
+        const pattern = `(${keyRegexes.join('|')})[:\\s]+([^\\n|,]*)`;
+        const m = text.match(new RegExp(pattern, 'i'));
+        return m ? m[2].trim() : '';
     };
 
-    const orderId = get('order id') || get('orderid');
-    const status = normalizeStatus(get('status'));
-    const items = get('items');
-    const total = get('total') || get('amount');
-    const customer = get('customer');
+    const orderId = get(['order id', 'orderid', 'आदेश आईडी', 'ऑर्डर आयडी', 'ऑर्डर आईडी']);
+    const status = normalizeStatus(get(['status', 'स्थिति']));
+    const items = get(['items', 'item', 'आइटम']);
+    const total = get(['total', 'amount', 'कुल', 'रक्कम', 'Total Price']);
+    const customer = get(['customer', 'ग्राहक']);
 
     // Extracted razorpay fields if provided by agent 
-    const razorpayOrderId = get('razorpay id') || get('razorpayorderid') || get('payment id');
+    const razorpayOrderId = get(['razorpay id', 'razorpayorderid', 'payment id', 'razorpay आईडी']);
 
     if (!orderId) return null;
 
