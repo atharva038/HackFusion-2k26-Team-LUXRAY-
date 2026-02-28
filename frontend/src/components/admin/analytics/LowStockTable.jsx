@@ -1,14 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
-const mockLowStock = [
-    { id: 'MED-089', name: 'Amoxicillin 500mg', stock: 30, minRequired: 40, status: 'Critical' },
-    { id: 'MED-142', name: 'Ceterizine 10mg', stock: 15, minRequired: 30, status: 'Critical' },
-    { id: 'MED-004', name: 'Atorvastatin 20mg', stock: 45, minRequired: 50, status: 'Warning' },
-    { id: 'MED-211', name: 'Lisinopril 10mg', stock: 22, minRequired: 25, status: 'Warning' },
-];
-
-const LowStockTable = () => {
+const LowStockTable = ({ data = [] }) => {
     return (
         <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
             <div className="px-6 py-5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
@@ -19,7 +12,9 @@ const LowStockTable = () => {
                     </h2>
                     <p className="text-xs text-text-muted mt-1">Items requiring immediate restock.</p>
                 </div>
-                <button className="text-sm text-primary hover:underline font-medium">Reorder All</button>
+                {data.length > 0 && (
+                    <button className="text-sm text-primary hover:underline font-medium">Reorder All</button>
+                )}
             </div>
 
             <div className="overflow-x-auto flex-grow">
@@ -33,20 +28,22 @@ const LowStockTable = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-black/5 dark:divide-white/5">
-                        {mockLowStock.map((item) => (
+                        {data.map((item) => (
                             <tr key={item.id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-text">{item.name}</div>
-                                    <div className="text-xs text-text-muted font-mono mt-0.5">{item.id}</div>
+                                    <div className="text-xs text-text-muted font-mono mt-0.5">{item.displayId || item.id}</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className="font-bold text-red-600 dark:text-red-400">{item.stock}</span> units
+                                    <span className={`font-bold ${item.status === 'Critical' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                        {item.stock}
+                                    </span> units
                                 </td>
                                 <td className="px-6 py-4 text-text-muted">{item.minRequired} units</td>
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${item.status === 'Critical'
-                                            ? 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
-                                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                                        ? 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
+                                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
                                         }`}>
                                         {item.status}
                                     </span>
@@ -56,8 +53,8 @@ const LowStockTable = () => {
                     </tbody>
                 </table>
             </div>
-            {mockLowStock.length === 0 && (
-                <div className="p-8 text-center text-text-muted text-sm flex-grow flex items-center justify-center">
+            {data.length === 0 && (
+                <div className="p-8 text-center text-text-muted text-sm flex-grow flex items-center justify-center bg-card">
                     All inventory levels are healthy.
                 </div>
             )}

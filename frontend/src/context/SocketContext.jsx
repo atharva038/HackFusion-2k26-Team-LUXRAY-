@@ -45,7 +45,7 @@ export const SocketProvider = ({ children }) => {
     const onConnect = () => {
       console.log('✅ Socket connected in context');
       setIsConnected(true);
-      toast.success('Connected to real-time updates', { id: 'socket-connect' });
+      // toast.success('Connected to real-time updates', { id: 'socket-connect' });
     };
 
     const onDisconnect = () => {

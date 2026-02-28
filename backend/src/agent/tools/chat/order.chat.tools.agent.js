@@ -230,7 +230,7 @@ export const order = tool({
 Order ID: ${result.orderId}
 Medicine: ${medicine.name}
 Quantity: ${quantity}
-Total Price: €${totalPrice}
+Total Price: ₹${totalPrice}
 Status: ${result.status}`;
     } catch (error) {
       return `❌ ${error.message}`;

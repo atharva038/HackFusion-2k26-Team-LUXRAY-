@@ -95,7 +95,7 @@ export const getOrdersTool = tool({
           customerEmail: order.user?.email || "",
           status: order.status,
           totalItems: order.totalItems,
-          totalAmount: order.totalAmount != null ? `€${order.totalAmount.toFixed(2)}` : "N/A",
+          totalAmount: order.totalAmount != null ? `₹${order.totalAmount.toFixed(2)}` : "N/A",
           createdAt: new Date(order.createdAt).toLocaleString(),
           items: order.items.map((item) => ({
             medicine: item.medicine?.name || "Unknown",
