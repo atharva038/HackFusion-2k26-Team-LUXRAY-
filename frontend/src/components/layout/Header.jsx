@@ -1,104 +1,48 @@
 import React from 'react';
-import { Moon, Sun, Monitor, Stethoscope, LogOut, User, ShoppingBag, FileText, ShieldAlert } from 'lucide-react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
-import useAppStore, { AI_STATUS } from '../../store/useAppStore';
-import useAuthStore, { STAFF_ROLES } from '../../store/useAuthStore';
+import { Stethoscope, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import LanguageSelector from '../chat/LanguageSelector';
+import UserDropdown from '../shared/UserDropdown';
 
-
-
-const Header = ({ onOpenAllergies }) => {
-    const { theme, toggleTheme } = useAppStore();
-    const { user, logout } = useAuthStore();
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
-
+const Header = ({ onOpenAllergies, onToggleSidebar }) => {
     return (
-        <header className="h-16 flex items-center justify-between px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
-
-            {/* Logo Area */}
-            <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-soft">
-                    <Stethoscope className="w-5 h-5" />
-                </div>
-                <div>
-                    <h1 className="font-semibold text-lg leading-tight tracking-tight text-text">Cura AI</h1>
-                    <p className="text-xs text-text-muted">Autonomous Pharmacy Assistant</p>
-                </div>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
-                <Link to="/traces" className={`flex items-center gap-2 text-sm font-medium transition-colors ${location.pathname === '/traces' ? 'text-indigo-600 dark:text-indigo-400' : 'text-text-muted hover:text-text'}`}>
-                    <Monitor className="w-4 h-4" /> Agent Traces
-                </Link>
-                {user && !STAFF_ROLES.includes(user.role) && (
-                <div className="flex items-center gap-1">
-                    <Link
-                        to="/my-orders"
-                        title="My Orders"
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/my-orders'
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
-                            }`}
-                    >
-                        <ShoppingBag className="w-4 h-4" />
-                        <span className="hidden sm:inline">My Orders</span>
-                    </Link>
-                    <Link
-                        to="/my-prescriptions"
-                        title="My Prescriptions"
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/my-prescriptions'
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/5'
-                            }`}
-                    >
-                        <FileText className="w-4 h-4" />
-                        <span className="hidden sm:inline">My Prescriptions</span>
-                    </Link>
-                    {/* Allergies button */}
-                    <button
-                        onClick={onOpenAllergies}
-                        title="My Allergies"
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors text-text-muted hover:text-primary hover:bg-primary/5"
-                    >
-                        <ShieldAlert className="w-4 h-4" />
-                        <span className="hidden sm:inline">Allergies</span>
-                    </button>
-                </div>
-            )}
-            </nav>
-
-        
-            {/* Right Actions */}
+        <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
+            {/* Left Box: Menu Toggle (Mobile) & Logo */}
             <div className="flex items-center gap-3">
-                <LanguageSelector />
-                {user && (
-                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-black/5 dark:border-white/5">
-                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="w-3 h-3 text-primary" />
-                        </div>
-                        <span className="text-xs font-medium text-text-muted truncate max-w-[100px]">{user.name}</span>
-                    </div>
-                )}
-                <button onClick={toggleTheme}
-                    className="p-2.5 rounded-full bg-card hover:scale-105 transition-transform shadow-soft flex items-center justify-center text-text-muted hover:text-text cursor-pointer"
-                    aria-label="Toggle Theme">
-                    {theme === 'dark' ? <Moon className="w-4 h-4" /> : theme === 'light' ? <Sun className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
-                </button>
-                {user && (
-                    <button onClick={handleLogout}
-                        className="p-2.5 rounded-full bg-card hover:scale-105 transition-transform shadow-soft flex items-center justify-center text-text-muted hover:text-red-500 cursor-pointer"
-                        aria-label="Logout" title="Logout">
-                        <LogOut className="w-4 h-4" />
+                {onToggleSidebar && (
+                    <button
+                        onClick={onToggleSidebar}
+                        className="md:hidden p-2 -ml-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text"
+                        aria-label="Toggle Menu"
+                    >
+                        <Menu className="w-5 h-5" />
                     </button>
                 )}
+                <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-soft shrink-0">
+                        <Stethoscope className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h1 className="font-semibold text-lg leading-tight tracking-tight text-text">Cura AI</h1>
+                        <p className="text-[10px] sm:text-xs text-text-muted hidden sm:block">Autonomous Pharmacy Assistant</p>
+                    </div>
+                </Link>
             </div>
 
+            {/* AI Status / Active State (Center - Optional) */}
+            <div className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2 opacity-60 pointer-events-none">
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-medium tracking-widest uppercase text-text-muted">System Active</span>
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
+                <LanguageSelector />
+                <UserDropdown onOpenAllergies={onOpenAllergies} />
+            </div>
         </header>
     );
 };

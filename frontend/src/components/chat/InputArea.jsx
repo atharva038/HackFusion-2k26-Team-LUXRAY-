@@ -556,11 +556,11 @@ const InputArea = () => {
             <form
                 id="chat-form"
                 onSubmit={handleSend}
-                className={`relative z-10 flex items-center gap-3 w-full bg-card border rounded-[2rem] p-2 pr-3 transition-all duration-500 ${isListening
-                    ? 'ring-2 ring-primary/60 border-primary/20 bg-bg shadow-[0_0_30px_rgba(37,99,235,0.12)]'
+                className={`relative z-10 flex items-center gap-2 sm:gap-3 w-full bg-card/90 backdrop-blur-xl border rounded-full p-2 pr-3 transition-all duration-500 ${isListening
+                    ? 'ring-2 ring-primary/60 border-primary/30 shadow-[0_8px_32px_rgba(37,99,235,0.15)]'
                     : isBusy
-                        ? 'border-black/5 dark:border-white/5 opacity-80'
-                        : 'border-black/5 dark:border-white/5 shadow-soft focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-white/10'
+                        ? 'border-black/5 dark:border-white/5 opacity-80 shadow-sm'
+                        : 'border-black/10 dark:border-white/10 shadow-lg hover:shadow-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/30'
                     }`}
             >
                 {/* Camera Button — opens camera modal */}
