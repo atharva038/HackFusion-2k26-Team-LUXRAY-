@@ -46,30 +46,34 @@ const LoginPage = () => {
     return (
         <div className="min-h-screen bg-bg text-text flex transition-colors duration-300">
             {/* Left Panel – Decorative / Brand */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center p-12 bg-primary">
-                {/* Soft circle accents */}
-                <div className="absolute top-[-80px] left-[-80px] w-[360px] h-[360px] rounded-full bg-white/5" />
-                <div className="absolute bottom-[-100px] right-[-100px] w-[400px] h-[400px] rounded-full bg-white/5" />
-                <div className="absolute top-1/2 right-[-60px] w-[200px] h-[200px] rounded-full bg-white/10" />
+            <div
+                className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden flex-col items-center justify-center p-12 bg-cover bg-center"
+                style={{ backgroundImage: "url('/auth-bg.png')" }}
+            >
+                {/* Glassmorphism Overlay */}
+                <div className="absolute inset-0 bg-primary/80 dark:bg-black/70 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                <div className="relative z-10 text-white max-w-md text-center">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm border border-white/20">
-                        <Stethoscope className="w-8 h-8 text-white" />
+                <div className="relative z-10 text-white max-w-lg text-center mt-auto">
+                    <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-8 backdrop-blur-md border border-white/20 shadow-2xl">
+                        <Stethoscope className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold mb-4 tracking-tight">AI Pharmacy Assistant</h1>
-                    <p className="text-white/70 text-lg leading-relaxed">
-                        Your intelligent medication management platform — order medicines, track refills, and consult your AI pharmacist, anytime.
+                    <h1 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight drop-shadow-lg">
+                        MediSage
+                    </h1>
+                    <p className="text-white/90 text-lg md:text-xl leading-relaxed mb-12 drop-shadow-md font-medium">
+                        The next generation of intelligent healthcare. Order medicines, track prescriptions, and consult your autonomous pharmacist instantly.
                     </p>
 
-                    <div className="mt-12 space-y-4 text-left">
+                    <div className="grid gap-4 text-left max-w-sm mx-auto mb-8">
                         {[
-                            { icon: '🤖', label: 'AI-Powered ordering and refill reminders' },
-                            { icon: '🔒', label: 'Secure prescription validation system' },
-                            { icon: '⚡', label: 'Real-time inventory and dispatch tracking' },
+                            { icon: '🤖', label: 'Autonomous AI routing & fulfillment' },
+                            { icon: '🧾', label: 'Instant OCR prescription extraction' },
+                            { icon: '⚡', label: 'Sub-second Voice & TTS engine' },
                         ].map((f) => (
-                            <div key={f.label} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm border border-white/10">
-                                <span className="text-xl">{f.icon}</span>
-                                <span className="text-white/90 text-sm font-medium">{f.label}</span>
+                            <div key={f.label} className="flex items-center gap-3 bg-black/20 rounded-2xl px-5 py-3.5 backdrop-blur-md border border-white/10 shadow-lg transform transition hover:scale-105">
+                                <span className="text-2xl drop-shadow-lg">{f.icon}</span>
+                                <span className="text-white font-medium drop-shadow">{f.label}</span>
                             </div>
                         ))}
                     </div>
@@ -77,7 +81,7 @@ const LoginPage = () => {
             </div>
 
             {/* Right Panel – Login Form */}
-            <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+            <div className="flex-1 flex items-center justify-center p-6 md:p-12 h-screen overflow-y-auto w-full">
                 <div className="w-full max-w-md">
 
                     {/* Mobile Logo */}
@@ -85,7 +89,7 @@ const LoginPage = () => {
                         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                             <Stethoscope className="w-5 h-5 text-white" />
                         </div>
-                        <span className="font-bold text-lg text-text">AI Pharmacy</span>
+                        <span className="font-bold text-lg text-text">MediSage</span>
                     </div>
 
                     <div className="mb-8">
