@@ -72,7 +72,7 @@ function detectOrderList(text) {
 /**
  * Detect medicine / inventory list pattern.
  * Matches lines like:
- *   "1. Paracetamol 500mg | Stock: 20 | Price: €2.50"
+ *   "1. Paracetamol 500mg | Stock: 20 | Price: ₹2.50"
  *   "1. Name: Amlodipine | Dosage: 5mg | Stock: 15"
  */
 function detectMedicineList(text) {

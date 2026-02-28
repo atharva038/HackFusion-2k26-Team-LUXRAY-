@@ -556,7 +556,7 @@ const InputArea = () => {
             <form
                 id="chat-form"
                 onSubmit={handleSend}
-                className={`relative z-10 flex items-center gap-2 sm:gap-3 w-full bg-card/90 backdrop-blur-xl border rounded-full p-2 pr-3 transition-all duration-500 ${isListening
+                className={`relative z-10 flex items-center gap-2 sm:gap-3 w-full bg-card/90 backdrop-blur-xl border rounded-full p-2 pr-3 transition-all duration-500 overflow-hidden ${isListening
                     ? 'ring-2 ring-primary/60 border-primary/30 shadow-[0_8px_32px_rgba(37,99,235,0.15)]'
                     : isBusy
                         ? 'border-black/5 dark:border-white/5 opacity-80 shadow-sm'
@@ -569,13 +569,13 @@ const InputArea = () => {
                     onClick={() => setShowPrescriptionModal(true)}
                     disabled={isBusy || isListening}
                     title="Scan Prescription"
-                    className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300
+                    className={`shrink-0 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all duration-300
                         ${isBusy || isListening
                             ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
                             : 'bg-black/5 dark:bg-white/5 text-text-muted hover:bg-primary/10 hover:text-primary'
                         }`}
                 >
-                    <Camera className="w-[18px] h-[18px]" />
+                    <Camera className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                 </button>
 
                 {/* File Upload Button — direct file picker */}
@@ -584,13 +584,13 @@ const InputArea = () => {
                     onClick={() => fileUploadRef.current?.click()}
                     disabled={isBusy || isListening}
                     title="Upload Prescription Image"
-                    className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300
+                    className={`shrink-0 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all duration-300
                         ${isBusy || isListening
                             ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
                             : 'bg-black/5 dark:bg-white/5 text-text-muted hover:bg-primary/10 hover:text-primary'
                         }`}
                 >
-                    <Paperclip className="w-[18px] h-[18px]" />
+                    <Paperclip className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                 </button>
                 <input
                     ref={fileUploadRef}
@@ -604,7 +604,7 @@ const InputArea = () => {
                     type="button"
                     onClick={toggleVoice}
                     disabled={isBusy}
-                    className={`shrink-0 w-12 h-12 flex items-center justify-center rounded-full transition-all duration-500 relative ${isListening
+                    className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all duration-500 relative ${isListening
                         ? 'bg-primary text-white shadow-[0_0_20px_rgba(37,99,235,0.5)]'
                         : isBusy
                             ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
@@ -614,12 +614,12 @@ const InputArea = () => {
                     {isListening ? (
                         <>
                             <span className="absolute inset-0 rounded-full animate-ping bg-primary opacity-30" />
-                            <Square className="w-4 h-4 fill-current" />
+                            <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                         </>
                     ) : isBusy ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                     ) : (
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
                 </button>
 
@@ -631,22 +631,22 @@ const InputArea = () => {
                     onPaste={handlePaste}
                     placeholder={getPlaceholder()}
                     disabled={isListening || isBusy}
-                    className="flex-1 min-w-0 bg-transparent border-none focus:outline-none text-[15px] px-2 text-text placeholder:text-text-muted/50 disabled:opacity-60 transition-opacity duration-300"
+                    className="flex-1 w-0 min-w-0 bg-transparent border-none focus:outline-none text-[14px] sm:text-[15px] px-1 sm:px-2 text-text placeholder:text-text-muted/50 disabled:opacity-60 transition-opacity duration-300"
                 />
 
                 <button
                     type="submit"
                     disabled={(!text.trim() && !isListening) || isBusy}
-                    className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${(text.trim() || isListening) && !isBusy
+                    className={`shrink-0 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all duration-300 ${(text.trim() || isListening) && !isBusy
                         ? 'bg-primary text-white hover:bg-blue-700 shadow-sm'
                         : 'bg-transparent text-text-muted opacity-40 cursor-default'
                         }`}
                 >
                     {isListening ? (
                         <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" />
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-white animate-bounce" />
+                            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                     ) : (
                         <Send className="w-4 h-4 translate-x-px" />

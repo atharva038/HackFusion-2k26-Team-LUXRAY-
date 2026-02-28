@@ -56,7 +56,7 @@ const Orders = () => {
             };
             // Carry through payment fields when order is confirmed paid
             if (data.paymentStatus) patch.paymentStatus = data.paymentStatus;
-            if (data.invoiceId)     patch.invoiceId     = data.invoiceId;
+            if (data.invoiceId) patch.invoiceId = data.invoiceId;
             patchOrder(data.orderId, patch);
             // Clear any lingering spinner (e.g. from another admin's action)
             setUpdatingIds(prev => { const s = new Set(prev); s.delete(data.orderId); return s; });
@@ -93,9 +93,9 @@ const Orders = () => {
 
     const triggerModal = (id, status) => {
         const configs = {
-            approved:   { title: 'Approve Order',  message: 'Are you sure you want to approve this order for processing?',                              type: 'approve',  color: 'bg-green-600 hover:bg-green-700 text-white' },
-            rejected:   { title: 'Reject Order',   message: 'Are you sure you want to reject this order? This action cannot be undone.',                type: 'reject',   color: 'bg-red-600 hover:bg-red-700 text-white'   },
-            dispatched: { title: 'Dispatch Order', message: 'Confirm that this order has been packaged and handed over to the delivery partner.',        type: 'dispatch', color: 'bg-blue-600 hover:bg-blue-700 text-white'  },
+            approved: { title: 'Approve Order', message: 'Are you sure you want to approve this order for processing?', type: 'approve', color: 'bg-green-600 hover:bg-green-700 text-white' },
+            rejected: { title: 'Reject Order', message: 'Are you sure you want to reject this order? This action cannot be undone.', type: 'reject', color: 'bg-red-600 hover:bg-red-700 text-white' },
+            dispatched: { title: 'Dispatch Order', message: 'Confirm that this order has been packaged and handed over to the delivery partner.', type: 'dispatch', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
         };
         setModalConfig({ isOpen: true, id, status, ...configs[status] });
     };
@@ -103,13 +103,13 @@ const Orders = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'paid':
-            case 'approved':              return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
+            case 'approved': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
             case 'pending':
             case 'awaiting_prescription': return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
-            case 'awaiting_payment':      return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
-            case 'dispatched':            return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
-            case 'rejected':              return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
-            default:                      return 'bg-black/5 text-text-muted border-black/10';
+            case 'awaiting_payment': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
+            case 'dispatched': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
+            case 'rejected': return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
+            default: return 'bg-black/5 text-text-muted border-black/10';
         }
     };
 
@@ -134,11 +134,10 @@ const Orders = () => {
                     <p className="text-text-muted text-sm mt-1">Review and process all incoming pharmacy orders.</p>
                 </div>
                 {/* Real-time connection badge */}
-                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
-                    isConnected
+                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${isConnected
                         ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
                         : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
-                }`}>
+                    }`}>
                     {isConnected
                         ? <><Wifi className="w-3 h-3" /> Live</>
                         : <><WifiOff className="w-3 h-3" /> Offline</>
@@ -219,7 +218,7 @@ const Orders = () => {
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-text-muted text-[13px]">
-                                        {order.totalAmount ? `€${order.totalAmount.toFixed(2)}` : '€0.00'}
+                                        {order.totalAmount ? `₹${order.totalAmount.toFixed(2)}` : '₹0.00'}
                                     </td>
                                     <td className="px-6 py-4 text-text-muted text-[13px]">{new Date(order.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right">

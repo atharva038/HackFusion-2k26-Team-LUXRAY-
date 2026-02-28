@@ -37,14 +37,14 @@ const LanguageSelector = () => {
             {/* Trigger Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300 cursor-pointer group"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-card border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300 cursor-pointer group shrink-0"
                 title="Change Language"
             >
                 <Globe className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
                 <span className="text-xs font-medium text-text-muted group-hover:text-text transition-colors hidden sm:inline">
                     {current.native}
                 </span>
-                <ChevronDown className={`w-3 h-3 text-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-text-muted transition-transform duration-200 hidden xs:block ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}
@@ -63,8 +63,8 @@ const LanguageSelector = () => {
                                     key={lang.code}
                                     onClick={() => handleSelect(lang.code)}
                                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${selectedLanguage === lang.code
-                                            ? 'bg-primary/10 text-primary'
-                                            : 'text-text hover:bg-black/5 dark:hover:bg-white/5'
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-text hover:bg-black/5 dark:hover:bg-white/5'
                                         }`}
                                 >
                                     <span className="text-base">{lang.flag}</span>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ShoppingCart, FileSignature, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { fetchDashboardStats } from '../../services/api';
 
-// New Analytics Components
+// Analytics Components
 import KPICard from '../../components/admin/analytics/KPICard';
 import OrderTrendsChart from '../../components/admin/analytics/OrderTrendsChart';
 import InventoryChart from '../../components/admin/analytics/InventoryChart';
@@ -15,7 +15,6 @@ const Overview = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Will fetch actual stats eventually. Mocking structure for now while API updates.
         fetchDashboardStats()
             .then(setStats)
             .catch(console.error)
@@ -36,28 +35,28 @@ const Overview = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:h-32">
                 <KPICard
                     title="Total Orders Today"
-                    value={stats.ordersToday || 142}
+                    value={stats.ordersToday || 0}
                     icon={ShoppingCart}
                     colorClass="text-blue-600 dark:text-blue-400 bg-blue-500"
-                    subtitle="+12% from yesterday"
+                    subtitle="Last 24 hours"
                 />
                 <KPICard
-                    title="Approved Prescriptions"
-                    value={stats.approvedOrders || 118}
+                    title="Approved Orders"
+                    value={stats.approvedOrders || 0}
                     icon={CheckCircle}
                     colorClass="text-emerald-600 dark:text-emerald-400 bg-emerald-500"
-                    subtitle="Avg. 2.4 min approval time"
+                    subtitle="Processed & dispatched"
                 />
                 <KPICard
                     title="Awaiting Prescription"
-                    value={stats.pendingApprovals || 24}
+                    value={stats.pendingApprovals || 0}
                     icon={FileSignature}
                     colorClass="text-amber-600 dark:text-amber-400 bg-amber-500"
-                    subtitle="4 require immediate review"
+                    subtitle="Requires review"
                 />
                 <KPICard
                     title="System Actions (AI)"
-                    value="1,204"
+                    value={(stats.systemActions || 0).toLocaleString()}
                     icon={Clock}
                     colorClass="text-purple-600 dark:text-purple-400 bg-purple-500"
                     subtitle="Automated checks last 24h"
@@ -67,26 +66,26 @@ const Overview = () => {
             {/* Row 2: Charts (Order Trends & Inventory) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 h-full">
-                    <OrderTrendsChart />
+                    <OrderTrendsChart data={stats.orderTrends} />
                 </div>
                 <div className="h-full">
-                    <InventoryChart />
+                    <InventoryChart data={stats.inventoryHealth} />
                 </div>
             </div>
 
             {/* Row 3: Advanced Breakdowns */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="h-full">
-                    <OrderStatusChart />
+                    <OrderStatusChart data={stats.orderStatusDistribution} />
                 </div>
                 <div className="lg:col-span-2 h-full">
-                    <RefillAnalyticsCard />
+                    <RefillAnalyticsCard data={stats.refillStats} />
                 </div>
             </div>
 
             {/* Row 4: Data Tables */}
             <div className="grid grid-cols-1 gap-6">
-                <LowStockTable />
+                <LowStockTable data={stats.lowStockItems} />
             </div>
 
         </div>
