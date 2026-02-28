@@ -16,11 +16,11 @@ if (!JWT_SECRET) {
 const socketAuthMiddleware = async (socket, next) => {
   try {
     // Try to get token from multiple sources
-    const token = 
-      socket.handshake.auth.token || 
+    const token =
+      socket.handshake.auth.token ||
       socket.handshake.headers.authorization?.replace('Bearer ', '') ||
       socket.handshake.query.token;
-    
+
     if (!token || token === 'null' || token === 'undefined') {
       logger.warn('Socket connection attempted without valid token');
       return next(new Error('Authentication error: No token provided'));
@@ -39,7 +39,7 @@ const socketAuthMiddleware = async (socket, next) => {
       }
       return next(new Error('Invalid token'));
     }
-    
+
     // Verify user exists in database
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
@@ -52,7 +52,7 @@ const socketAuthMiddleware = async (socket, next) => {
     socket.username = user.username || user.name;
     socket.email = user.email;
     socket.role = user.role || 'user';
-    
+
     logger.info(`✅ Socket authenticated: ${socket.username} (${socket.userId}) [${socket.role}]`);
     next();
   } catch (error) {
@@ -72,7 +72,7 @@ const handleJoinRoom = async (socket, roomId) => {
     }
 
     socket.join(`room:${roomId}`);
-    
+
     // Notify others in the room
     socket.to(`room:${roomId}`).emit('user:joined', {
       userId: socket.userId,
@@ -80,13 +80,13 @@ const handleJoinRoom = async (socket, roomId) => {
       roomId,
       timestamp: new Date()
     });
-    
+
     // Send confirmation to the user
     socket.emit('room:joined', {
       roomId,
       message: `Successfully joined room ${roomId}`
     });
-    
+
     logger.info(`User ${socket.username} joined room ${roomId}`);
   } catch (error) {
     logger.error(`Error joining room ${roomId}:`, error);
@@ -100,19 +100,19 @@ const handleJoinRoom = async (socket, roomId) => {
 const handleLeaveRoom = (socket, roomId) => {
   try {
     socket.leave(`room:${roomId}`);
-    
+
     socket.to(`room:${roomId}`).emit('user:left', {
       userId: socket.userId,
       username: socket.username,
       roomId,
       timestamp: new Date()
     });
-    
+
     socket.emit('room:left', {
       roomId,
       message: `Successfully left room ${roomId}`
     });
-    
+
     logger.info(`User ${socket.username} left room ${roomId}`);
   } catch (error) {
     logger.error(`Error leaving room ${roomId}:`, error);
@@ -149,7 +149,7 @@ const handleSendMessage = async (socket, data) => {
 
     // Emit to all users in the room (including sender)
     io.to(`room:${roomId}`).emit('message:received', message);
-    
+
     logger.info(`Message sent in room ${roomId} by ${socket.username}`);
   } catch (error) {
     logger.error('Error sending message:', error);
@@ -162,7 +162,7 @@ const handleSendMessage = async (socket, data) => {
  */
 const handleTypingStart = (socket, roomId) => {
   if (!roomId) return;
-  
+
   socket.to(`room:${roomId}`).emit('user:typing', {
     userId: socket.userId,
     username: socket.username,
@@ -172,7 +172,7 @@ const handleTypingStart = (socket, roomId) => {
 
 const handleTypingStop = (socket, roomId) => {
   if (!roomId) return;
-  
+
   socket.to(`room:${roomId}`).emit('user:stopped-typing', {
     userId: socket.userId,
     roomId
@@ -198,10 +198,10 @@ const updateUserStatus = async (userId, isOnline) => {
  */
 const handleDisconnect = async (socket) => {
   logger.info(`User disconnected: ${socket.userId} (${socket.username})`);
-  
+
   // Update user offline status
   await updateUserStatus(socket.userId, false);
-  
+
   // Notify all rooms the user was in
   const rooms = Array.from(socket.rooms).filter(room => room.startsWith('room:'));
   rooms.forEach(room => {
@@ -228,7 +228,9 @@ export const initializeSocket = (server) => {
           'http://localhost:5173',
           'http://localhost:3000',
           'https://hack-fusion-2k26-team-luxray.vercel.app',
-          'https://coral-app-neg9t.ondigitalocean.app'
+          'https://coral-app-neg9t.ondigitalocean.app',
+          'https://www.medisage.me',
+          'https://medisage.me',
         ];
 
         // Allow Vercel preview deployments
@@ -341,7 +343,7 @@ export const emitToUser = (userId, event, data) => {
     logger.warn(`Cannot emit ${event} to user: Socket.io not initialized`);
     return false;
   }
-  
+
   try {
     // Ensure userId is a string
     const userIdStr = userId.toString();
@@ -362,7 +364,7 @@ export const emitToRoom = (roomId, event, data) => {
     logger.warn(`Cannot emit ${event} to room: Socket.io not initialized`);
     return false;
   }
-  
+
   try {
     io.to(`room:${roomId}`).emit(event, data);
     logger.info(`✅ Emitted ${event} to room ${roomId}`);
@@ -381,14 +383,14 @@ export const emitNewMessage = async (roomId, messageData) => {
     logger.warn('Cannot emit new message: Socket.io not initialized');
     return false;
   }
-  
+
   try {
     io.to(`room:${roomId}`).emit('message:new', {
       roomId,
       message: messageData,
       timestamp: new Date()
     });
-    
+
     logger.info(`✅ New message notification sent to room ${roomId}`);
     return true;
   } catch (error) {
@@ -405,7 +407,7 @@ export const broadcastToAll = (event, data) => {
     logger.warn(`Cannot broadcast ${event}: Socket.io not initialized`);
     return false;
   }
-  
+
   try {
     io.emit(event, data);
     logger.info(`✅ Broadcasted ${event} to all users`);
@@ -423,7 +425,7 @@ export const getConnectedUsers = async () => {
   if (!isSocketInitialized()) {
     return [];
   }
-  
+
   try {
     const sockets = await io.fetchSockets();
     return sockets.map(socket => ({
@@ -447,7 +449,7 @@ export const disconnectUser = async (userId, reason = 'Server disconnect') => {
     logger.warn('Cannot disconnect user: Socket.io not initialized');
     return false;
   }
-  
+
   try {
     const userIdStr = userId.toString();
     const sockets = await io.in(`user:${userIdStr}`).fetchSockets();
@@ -455,7 +457,7 @@ export const disconnectUser = async (userId, reason = 'Server disconnect') => {
       socket.emit('force:disconnect', { reason });
       socket.disconnect(true);
     });
-    
+
     logger.info(`✅ Disconnected user ${userIdStr}. Reason: ${reason}`);
     return true;
   } catch (error) {

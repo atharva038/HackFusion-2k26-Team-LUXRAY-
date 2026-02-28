@@ -40,6 +40,8 @@ app.use(cors({
       'http://localhost:3000',
       'https://hack-fusion-2k26-team-luxray.vercel.app',
       'https://coral-app-neg9t.ondigitalocean.app',
+      'https://www.medisage.me',
+      'https://medisage.me',
     ];
 
     // Allow all Vercel preview deployments for this project
