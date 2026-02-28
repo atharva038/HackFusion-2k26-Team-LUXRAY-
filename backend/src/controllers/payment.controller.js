@@ -20,7 +20,13 @@ function emitPaymentConfirmed(order) {
     };
     // Notify the customer so MyOrders updates immediately
     if (userId) emitToUser(userId, 'order:status-updated', payload);
-    // Notify all admins so the Orders table updates
+    // Notify all admins — order:new triggers the "new order" notification banner
+    // order:admin-updated keeps the Orders table row in sync
+    getIO().emit('order:new', {
+        ...payload,
+        user: { name: order.user?.name, email: order.user?.email },
+        items: order.items?.map(i => ({ name: i.medicine?.name || i.name, quantity: i.quantity })) ?? [],
+    });
     getIO().emit('order:admin-updated', {
         ...payload,
         userName: order.user?.name,

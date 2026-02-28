@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
+import AdminNotificationPanel from '../../components/admin/AdminNotificationPanel';
+import { useSocket } from '../../context/SocketContext';
 
 const NavItem = ({ to, icon: Icon, label, end = false }) => (
     <NavLink
@@ -39,6 +41,7 @@ const NavItem = ({ to, icon: Icon, label, end = false }) => (
 const AdminLayout = () => {
     const { theme, toggleTheme } = useAppStore();
     const { user, logout } = useAuthStore();
+    const { isConnected } = useSocket();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -74,11 +77,17 @@ const AdminLayout = () => {
 
                 {/* Footer: User Info + Controls */}
                 <div className="p-4 border-t border-black/5 dark:border-white/5 space-y-1">
-                    {/* Logged-in user chip */}
+                    {/* Logged-in user chip with live connection dot */}
                     {user && (
                         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 mb-2">
-                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                            <div className="relative w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                                 <User className="w-4 h-4 text-primary" />
+                                <span
+                                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${
+                                        isConnected ? 'bg-emerald-500' : 'bg-text-muted/40'
+                                    }`}
+                                    title={isConnected ? 'Live updates on' : 'Reconnecting…'}
+                                />
                             </div>
                             <div className="min-w-0">
                                 <p className="text-text text-sm font-semibold truncate">{user.name}</p>
@@ -86,6 +95,8 @@ const AdminLayout = () => {
                             </div>
                         </div>
                     )}
+                    {/* Real-time notification bell */}
+                    <AdminNotificationPanel />
                     <NavItem to="/admin/settings" icon={Settings} label="Settings" />
                     <button
                         onClick={toggleTheme}

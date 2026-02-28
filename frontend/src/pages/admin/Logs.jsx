@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { History, ArrowDownRight, ArrowUpRight, Loader2, Search, Filter } from 'lucide-react';
 import { fetchInventoryLogs } from '../../services/api';
+import { useSocket } from '../../context/SocketContext';
 
 const Logs = () => {
     const [logs, setLogs] = useState([]);
@@ -8,9 +9,24 @@ const Logs = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    useEffect(() => {
+    const { on, off } = useSocket();
+
+    const load = () => {
         fetchInventoryLogs().then(setLogs).catch(console.error).finally(() => setLoading(false));
-    }, []);
+    };
+
+    useEffect(load, []);
+
+    // Reload whenever a restock or order dispatch creates a new log entry
+    useEffect(() => {
+        const refresh = () => load();
+        on('inventory:medicine-restocked', refresh);
+        on('order:admin-updated', refresh);
+        return () => {
+            off('inventory:medicine-restocked', refresh);
+            off('order:admin-updated', refresh);
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const filteredLogs = logs.filter((log) => {
         const matchesSearch =

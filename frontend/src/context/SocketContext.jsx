@@ -207,6 +207,31 @@ export const SocketProvider = ({ children }) => {
       });
     };
 
+    const onRefillAdminUpdated = (data) => {
+      console.log('[SocketContext] Refill admin updated:', data);
+      if (isAdmin) {
+        addNotification({
+          type: 'refill',
+          title: 'Refill Alert Updated',
+          message: `Alert for ${data.userName} (${data.medicine}) → ${data.status}`,
+          data,
+        });
+      }
+    };
+
+    const onPrescriptionSubmitted = (data) => {
+      console.log('[SocketContext] Prescription submitted:', data);
+      if (!isAdmin) return;
+      toast(`New prescription from ${data.userName}`, { icon: '📋', duration: 5000 });
+      addNotification({
+        type: 'prescription',
+        title: 'New Prescription',
+        message: `${data.userName} uploaded ${data.medicineCount} medicine(s) for review`,
+        data,
+        priority: 'high',
+      });
+    };
+
     const onErrorResponse = (data) => {
       console.error('[SocketContext] Socket error:', data.message);
       toast.error(data.message, { duration: 4000 });
@@ -228,6 +253,8 @@ export const SocketProvider = ({ children }) => {
     socketService.on('inventory:low-stock-alert', onLowStockAlert);
     socketService.on('inventory:low-stock-manual-alert', onLowStockManualAlert);
     socketService.on('refill:alert-updated', onRefillAlertUpdated);
+    socketService.on('refill:admin-updated', onRefillAdminUpdated);
+    socketService.on('prescription:submitted', onPrescriptionSubmitted);
     socketService.on('error:response', onErrorResponse);
 
     return () => {
@@ -250,6 +277,8 @@ export const SocketProvider = ({ children }) => {
       socketService.off('inventory:low-stock-alert', onLowStockAlert);
       socketService.off('inventory:low-stock-manual-alert', onLowStockManualAlert);
       socketService.off('refill:alert-updated', onRefillAlertUpdated);
+      socketService.off('refill:admin-updated', onRefillAdminUpdated);
+      socketService.off('prescription:submitted', onPrescriptionSubmitted);
       socketService.off('error:response', onErrorResponse);
 
       // disconnect() keeps page-level listeners buffered; reset() (on logout) clears them
