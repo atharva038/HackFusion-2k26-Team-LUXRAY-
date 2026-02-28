@@ -1,0 +1,106 @@
+name: Bug Report
+description: Report a bug in the HackFusion pharmacy system
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below so we can reproduce and fix it quickly.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      description: Which part of the application is affected?
+      options:
+        - Frontend (React UI)
+        - Backend API (Express)
+        - AI Agent / Chat
+        - Prescription Upload / OCR
+        - Orders & Payments (Razorpay)
+        - Admin Panel
+        - Socket.IO / Real-time
+        - Authentication / JWT
+        - Screen Recording
+        - Notifications / Email
+        - Documentation (Docusaurus)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: "When I do X, Y happens instead of Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Provide exact steps to reproduce the bug.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Enter '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include error messages or console output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: Paste any relevant screenshots, browser console errors, or server logs.
+      render: shell
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical (data loss / security / payment failure)
+        - High (feature broken, no workaround)
+        - Medium (feature degraded, workaround exists)
+        - Low (minor cosmetic issue)
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: "e.g. Chrome 124 / Ubuntu 22.04 / Node 20.x"
+      placeholder: "Browser, OS, Node version"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have included all the information needed to reproduce this bug.
+          required: true
