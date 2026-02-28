@@ -220,19 +220,18 @@ const MyOrders = () => {
         };
 
         const handleOrderStatusUpdate = (data) => {
-            console.log('[MyOrders] Order status updated:', data);
-            
-            // Update the specific order in the list
-            setOrders(prevOrders => 
-                prevOrders.map(order => 
-                    order._id === data.orderId 
-                        ? { 
-                            ...order, 
-                            status: data.status,
-                            rejectionReason: data.rejectionReason || order.rejectionReason
-                          }
-                        : order
-                )
+            setOrders(prevOrders =>
+                prevOrders.map(order => {
+                    if (order._id !== data.orderId) return order;
+                    const updated = { ...order, status: data.status };
+                    if (data.rejectionReason)  updated.rejectionReason  = data.rejectionReason;
+                    // Carry through payment confirmation fields so the invoice
+                    // download button appears immediately without a page refresh
+                    if (data.paymentStatus)    updated.paymentStatus    = data.paymentStatus;
+                    if (data.invoiceId)        updated.invoiceId        = data.invoiceId;
+                    if (data.totalAmount != null) updated.totalAmount   = data.totalAmount;
+                    return updated;
+                })
             );
         };
 
