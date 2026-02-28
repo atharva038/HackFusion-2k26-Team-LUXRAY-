@@ -98,6 +98,7 @@ Your job is routing and delegation — not execution.
 
 async function chatPharmacist(messages = []) {
   try {
+    console.log("hi i am here")
     const result = await run(parentPharamcist, messages);
 
     console.log("RAW TRACE ITEM 0:", JSON.stringify(result.state._generatedItems[0], null, 2));
