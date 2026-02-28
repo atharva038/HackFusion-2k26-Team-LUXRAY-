@@ -9,23 +9,23 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
     const { theme, toggleTheme } = useAppStore();
 
     return (
-        <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
-            <div className="flex items-center gap-3">
+        <header className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
+            <div className="flex items-center gap-2 sm:gap-3">
                 {onToggleSidebar && (
                     <button
                         onClick={onToggleSidebar}
-                        className="p-2 -ml-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text"
+                        className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text shrink-0"
                         aria-label="Toggle Menu"
                     >
                         <Menu className="w-5 h-5" />
                     </button>
                 )}
-                <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center shadow-soft shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
+                <Link to="/" className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-90 transition-opacity">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center shadow-soft shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
                         <img src="/logo.png" alt="MediSage Logo" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                        <h1 className="font-semibold text-lg leading-tight tracking-tight text-text">MediSage</h1>
+                        <h1 className="font-semibold text-base sm:text-lg leading-tight tracking-tight text-text">MediSage</h1>
                         <p className="text-[10px] sm:text-xs text-text-muted hidden sm:block">Autonomous Pharmacy Assistant</p>
                     </div>
                 </Link>
@@ -42,16 +42,16 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-1.5 sm:gap-3">
-                <Link to="/showcase" className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd] hover:bg-[#e0f2fe] rounded-full transition-colors whitespace-nowrap">
+                <Link to="/showcase" className="hidden sm:flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd] hover:bg-[#e0f2fe] rounded-full transition-colors whitespace-nowrap">
                     Showcase
                 </Link>
                 <button
                     onClick={toggleTheme}
-                    className="p-1.5 sm:p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-muted hover:text-text shrink-0"
+                    className="p-1.5 sm:p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-muted hover:text-text shrink-0 hidden xs:block"
                     aria-label="Toggle Theme"
                     title={`Current theme: ${theme}`}
                 >
-                    
+
                     {theme === 'dark' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : theme === 'light' ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
                 <LanguageSelector />

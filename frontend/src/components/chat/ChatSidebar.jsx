@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Plus, Trash2, Loader2 } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, Loader2, X } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
 import { fetchChatSessions, fetchChatHistory, deleteChatSession } from '../../services/api';
 import { parseStructuredOutput } from '../../utils/parseStructuredOutput';
 
-const ChatSidebar = () => {
+const ChatSidebar = ({ onClose }) => {
     const { chatSessions, setChatSessions, currentSessionId, setCurrentSessionId, setMessages, clearMessages } = useAppStore();
     const [loading, setLoading] = useState(false);
 
@@ -24,10 +24,14 @@ const ChatSidebar = () => {
     const handleNewChat = () => {
         clearMessages();
         setCurrentSessionId(null);
+        if (onClose) onClose();
     };
 
     const handleSelectSession = async (id) => {
-        if (id === currentSessionId) return;
+        if (id === currentSessionId) {
+            if (onClose) onClose();
+            return;
+        }
         setLoading(true);
         setCurrentSessionId(id);
         try {
@@ -51,6 +55,7 @@ const ChatSidebar = () => {
             clearMessages();
         } finally {
             setLoading(false);
+            if (onClose) onClose();
         }
     };
 
@@ -68,14 +73,23 @@ const ChatSidebar = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-card/50 backdrop-blur-md border-r border-black/5 dark:border-white/5 w-64 md:w-72 flex-shrink-0 relative z-20 transition-all duration-300">
-            <div className="p-4 border-b border-black/5 dark:border-white/5">
+        <div className="flex flex-col h-full bg-card/95 backdrop-blur-xl md:bg-card/50 border-r border-black/5 dark:border-white/5 w-full md:w-72 flex-shrink-0 relative z-20 transition-all duration-300">
+            <div className="p-4 border-b border-black/5 dark:border-white/5 flex items-center gap-3">
                 <button
                     onClick={handleNewChat}
-                    className="w-full flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary py-2.5 px-4 rounded-xl transition-colors font-medium text-sm border border-primary/20"
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary py-2.5 px-4 rounded-xl transition-colors font-medium text-sm border border-primary/20"
                 >
                     <Plus className="w-4 h-4" /> New Chat
                 </button>
+                {/* Mobile Close Button */}
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="md:hidden p-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-text hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-hide">
