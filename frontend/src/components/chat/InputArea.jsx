@@ -34,7 +34,7 @@ const InputArea = () => {
     const isListening = aiStatus === AI_STATUS.LISTENING;
     const isProcessing = aiStatus === AI_STATUS.PROCESSING;
     const isSpeaking = aiStatus === AI_STATUS.SPEAKING;
-    const isBusy = isProcessing || isSpeaking;
+    const isBusy = isProcessing; // Unblock inputs during isSpeaking
 
     // ─── Reorder / Prescription Chat Bridge ─────────────────────
     // Keeps a live ref to processSend so the mount effect below never stales
@@ -310,6 +310,10 @@ const InputArea = () => {
         e?.preventDefault();
         if (isBusy) return;
 
+        if (isSpeaking) {
+            stopSpeaking();
+        }
+
         if (isListening) {
             stopListening();
             return;
@@ -436,8 +440,23 @@ const InputArea = () => {
         }
     };
 
+    const stopSpeaking = () => {
+        cancelSpeechRef.current = true;
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
+        setCurrentAudioElement(null);
+        setActiveSubtitle('');
+        setAiStatus(AI_STATUS.READY);
+    };
+
     const toggleVoice = () => {
         if (isBusy) return;
+        if (isSpeaking) {
+            stopSpeaking();
+            return;
+        }
         if (isListening) {
             stopListening();
         } else {
@@ -604,7 +623,7 @@ const InputArea = () => {
                     type="button"
                     onClick={toggleVoice}
                     disabled={isBusy}
-                    className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all duration-500 relative ${isListening
+                    className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all duration-500 relative ${isListening || isSpeaking
                         ? 'bg-primary text-white shadow-[0_0_20px_rgba(37,99,235,0.5)]'
                         : isBusy
                             ? 'bg-black/5 dark:bg-white/5 text-text-muted opacity-50 cursor-not-allowed'
@@ -614,6 +633,10 @@ const InputArea = () => {
                     {isListening ? (
                         <>
                             <span className="absolute inset-0 rounded-full animate-ping bg-primary opacity-30" />
+                            <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                        </>
+                    ) : isSpeaking ? (
+                        <>
                             <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                         </>
                     ) : isBusy ? (

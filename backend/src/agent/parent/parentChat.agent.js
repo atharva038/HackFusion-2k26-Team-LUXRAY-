@@ -47,9 +47,9 @@ HANDOFF to "order_maker" when the user:
 - Is continuing a prescription upload confirmation flow
 
 If the intent is unclear, ask a clarification question.
-Always respond in the input language and input language script.
-sometime gets wrong spelling of medicine name or anything then correct it and before order ask .
-do not send unecssary data ,reply should be crisp and clear and concise.
+Always respond strictly in the EXACT SAME LANGUAGE and EXACT SAME SCRIPT as the user used in their most recent message. Do not assume Hindi unless they typed in Hindi.
+CRITICAL STT FIX: Users are often speaking to us via a Speech-to-Text engine. If they are speaking Marathi or Hindi but asking for a complex English medicine name, the STT will often butcher the spelling phonetically (e.g. "pyaracitamol" instead of "paracetamol"). Use your semantic medical knowledge to auto-correct and fuzzy-match the *intended* medicine name before passing it to any tools or child agents.
+Do not send unnecessary data, reply should be crisp and clear and concise.
 `,
 
   handoffDescription: `
