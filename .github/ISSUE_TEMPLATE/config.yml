@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation
+    url: https://hackfusion-2k26.github.io/docs
+    about: Read the project documentation before opening an issue.
