@@ -39,16 +39,20 @@ async function uploadPdfToCloudinary(pdfBuffer, publicId) {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
             {
-                resource_type: "raw",
+                resource_type: "image",
                 folder: "invoices",
                 public_id: publicId,
-                format: "pdf",
+                // We let Cloudinary ingest the PDF, and then we will request it as a PNG image 
+                // because Cloudinary Free Tier blocks raw PDF delivery, causing Twilio to fail with a 401 error.
                 // PDFs expire after 1 hour — avoids long-term storage of invoices
                 // (comment out `invalidate: true` if you want to cache them)
             },
             (error, result) => {
                 if (error) return reject(error);
-                resolve(result.secure_url);
+                // Force the extension to be .png so Cloudinary rasterizes the PDF into an image 
+                // Twilio can then easily download and display it inline.
+                const pngUrl = result.secure_url.replace(/\.pdf$/, '.png');
+                resolve(pngUrl);
             }
         );
         uploadStream.end(pdfBuffer);
