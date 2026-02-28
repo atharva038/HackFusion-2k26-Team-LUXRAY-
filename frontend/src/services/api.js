@@ -61,6 +61,10 @@ export const updatePrescription = (id, data) =>
 // ─── Admin: Inventory ─────────────────────────────────────────
 export const fetchInventory = () => api.get('/admin/inventory');
 
+export const addMedicine = (data) => api.post('/admin/medicines', data);
+
+export const deleteMedicine = (id) => api.delete(`/admin/medicines/${id}`);
+
 export const restockMedicine = (id, quantity) =>
   api.post(`/admin/inventory/${id}/restock`, { quantity });
 

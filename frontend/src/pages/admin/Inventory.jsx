@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Edit2, Loader2, Search, Filter, Package, AlertTriangle, TrendingUp } from 'lucide-react';
-import { fetchInventory, restockMedicine } from '../../services/api';
+import { Edit2, Loader2, Search, Filter, Package, AlertTriangle, TrendingUp, Plus, X, Trash2 } from 'lucide-react';
+import { fetchInventory, restockMedicine, addMedicine, deleteMedicine } from '../../services/api';
 import InventoryStockModal from '../../components/ui/InventoryStockModal';
 import { useSocket } from '../../context/SocketContext';
 
@@ -10,6 +10,15 @@ const Inventory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [modalConfig, setModalConfig] = useState({ isOpen: false, item: null });
+    const [addModal, setAddModal] = useState(false);
+    const [addForm, setAddForm] = useState({
+        name: '', pzn: '', price: '', stock: '', unitType: 'tablet',
+        description: '', prescriptionRequired: false, lowStockThreshold: '10',
+    });
+    const [addError, setAddError] = useState('');
+    const [addLoading, setAddLoading] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const { on, off } = useSocket();
 
@@ -79,6 +88,48 @@ const Inventory = () => {
         setModalConfig({ isOpen: true, item });
     };
 
+    const handleAddMedicine = async (e) => {
+        e.preventDefault();
+        setAddError('');
+        setAddLoading(true);
+        try {
+            const payload = {
+                name: addForm.name.trim(),
+                pzn: addForm.pzn.trim(),
+                price: Number(addForm.price),
+                stock: Number(addForm.stock),
+                unitType: addForm.unitType,
+                description: addForm.description,
+                prescriptionRequired: addForm.prescriptionRequired,
+                lowStockThreshold: Number(addForm.lowStockThreshold) || 10,
+            };
+            const newMed = await addMedicine(payload);
+            setInventory(prev => [newMed, ...prev]);
+            setAddModal(false);
+            setAddForm({ name: '', pzn: '', price: '', stock: '', unitType: 'tablet', description: '', prescriptionRequired: false, lowStockThreshold: '10' });
+        } catch (err) {
+            setAddError(err.message || 'Failed to add medicine');
+        } finally {
+            setAddLoading(false);
+        }
+    };
+
+    const fieldCls = 'w-full bg-white dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40';
+
+    const handleDeleteMedicine = async () => {
+        if (!confirmDelete) return;
+        setDeleteLoading(true);
+        try {
+            await deleteMedicine(confirmDelete.id);
+            setInventory(prev => prev.filter(i => i._id !== confirmDelete.id));
+            setConfirmDelete(null);
+        } catch (err) {
+            alert(err.message || 'Failed to delete medicine');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
     const getStockStatusColor = (stock, threshold) => {
         if (stock <= threshold * 0.2) return 'text-red-600 dark:text-red-400 font-semibold';
         if (stock <= threshold) return 'text-amber-600 dark:text-amber-400 font-semibold';
@@ -106,9 +157,18 @@ const Inventory = () => {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-text">Inventory Control</h1>
-                <p className="text-text-muted text-sm mt-1">Manage medicine stock levels and configuration.</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-text">Inventory Control</h1>
+                    <p className="text-text-muted text-sm mt-1">Manage medicine stock levels and configuration.</p>
+                </div>
+                <button
+                    onClick={() => setAddModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm"
+                >
+                    <Plus className="w-4 h-4" />
+                    Add Medicine
+                </button>
             </div>
 
             {/* ── Real-time Stats Bar ── */}
@@ -204,9 +264,14 @@ const Inventory = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button onClick={() => triggerModal(item)} className="p-1.5 rounded-md hover:bg-primary/10 text-text-muted hover:text-primary transition-colors" title="Adjust Stock">
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <button onClick={() => triggerModal(item)} className="p-1.5 rounded-md hover:bg-primary/10 text-text-muted hover:text-primary transition-colors" title="Adjust Stock">
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => setConfirmDelete({ id: item._id, name: item.name })} className="p-1.5 rounded-md hover:bg-red-500/10 text-text-muted hover:text-red-500 transition-colors" title="Remove Medicine">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             )) : (
@@ -228,8 +293,117 @@ const Inventory = () => {
                 medicineName={modalConfig.item?.name}
                 currentStock={modalConfig.item?.stock}
             />
+
+            {/* ── Delete Confirmation Modal ── */}
+            {confirmDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-sm bg-card rounded-2xl shadow-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+                        <div className="flex items-center gap-3 px-6 py-4 border-b border-black/5 dark:border-white/5">
+                            <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-semibold text-text">Remove Medicine</h2>
+                                <p className="text-xs text-text-muted mt-0.5">This action cannot be undone</p>
+                            </div>
+                        </div>
+                        <div className="px-6 py-5">
+                            <p className="text-sm text-text">
+                                Are you sure you want to permanently remove{' '}
+                                <span className="font-semibold text-red-500">{confirmDelete.name}</span>{' '}
+                                from the inventory?
+                            </p>
+                            <p className="text-xs text-text-muted mt-2">All associated stock data will be deleted. This cannot be recovered.</p>
+                        </div>
+                        <div className="flex gap-3 px-6 pb-5">
+                            <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-text font-semibold text-sm hover:bg-black/10 dark:hover:bg-white/10 transition-all">
+                                Cancel
+                            </button>
+                            <button onClick={handleDeleteMedicine} disabled={deleteLoading} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                                {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                {deleteLoading ? 'Removing...' : 'Remove'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Add Medicine Modal ── */}
+            {addModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-black/5 dark:border-white/5">
+                            <div>
+                                <h2 className="text-lg font-semibold text-text">Add New Medicine</h2>
+                                <p className="text-xs text-text-muted mt-0.5">Add a brand-new medicine to the inventory</p>
+                            </div>
+                            <button onClick={() => { setAddModal(false); setAddError(''); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                                <X className="w-4 h-4 text-text-muted" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddMedicine} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Medicine Name *</label>
+                                    <input required value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Azithromycin 500mg" className={fieldCls} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">PZN Code *</label>
+                                    <input required value={addForm.pzn} onChange={e => setAddForm(f => ({ ...f, pzn: e.target.value }))} placeholder="e.g. 12345678" className={fieldCls} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Unit Type *</label>
+                                    <select required value={addForm.unitType} onChange={e => setAddForm(f => ({ ...f, unitType: e.target.value }))} className={fieldCls}>
+                                        {['tablet','strip','bottle','injection','tube','box','capsule'].map(u => (
+                                            <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Price (₹) *</label>
+                                    <input required type="number" min="0" step="0.01" value={addForm.price} onChange={e => setAddForm(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 150" className={fieldCls} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Initial Stock *</label>
+                                    <input required type="number" min="0" value={addForm.stock} onChange={e => setAddForm(f => ({ ...f, stock: e.target.value }))} placeholder="e.g. 100" className={fieldCls} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Low Stock Alert Threshold</label>
+                                    <input type="number" min="0" value={addForm.lowStockThreshold} onChange={e => setAddForm(f => ({ ...f, lowStockThreshold: e.target.value }))} placeholder="Default: 10" className={fieldCls} />
+                                </div>
+                                <div className="flex items-center gap-3 pt-5">
+                                    <input id="rxRequired" type="checkbox" checked={addForm.prescriptionRequired} onChange={e => setAddForm(f => ({ ...f, prescriptionRequired: e.target.checked }))} className="w-4 h-4 accent-primary rounded" />
+                                    <label htmlFor="rxRequired" className="text-sm font-medium text-text">Prescription Required (Rx)</label>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Description</label>
+                                    <textarea value={addForm.description} onChange={e => setAddForm(f => ({ ...f, description: e.target.value }))} placeholder="Short description (optional)" rows={2} className={`${fieldCls} resize-none`} />
+                                </div>
+                            </div>
+
+                            {addError && (
+                                <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+                                    {addError}
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => { setAddModal(false); setAddError(''); }} className="flex-1 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-text font-semibold text-sm hover:bg-black/10 dark:hover:bg-white/10 transition-all">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={addLoading} className="flex-1 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-blue-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                    {addLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                    {addLoading ? 'Adding...' : 'Add Medicine'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default Inventory;
+
