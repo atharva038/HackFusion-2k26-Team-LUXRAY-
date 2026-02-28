@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
+import { Link } from 'react-router-dom';
 
 /**
  * MarkdownText — robust markdown renderer using ReactMarkdown.
@@ -73,7 +74,31 @@ const MarkdownText = ({ text }) => {
                     // Custom handling for <u> and <ins> tags if they appear in HTML
                     u: ({ ...props }) => <u className="underline decoration-primary/60 underline-offset-2 font-medium" {...props} />,
                     ins: ({ ...props }) => <ins className="underline decoration-primary/60 underline-offset-2 font-medium no-underline" {...props} />,
-                    a: ({ ...props }) => <a className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors" target="_blank" rel="noopener noreferrer" {...props} />
+                    a: ({ href, children, ...props }) => {
+                        // If it's a local routing link (like /my-orders), render it as a styled interactive button using react-router
+                        if (href && href.startsWith('/')) {
+                            return (
+                                <Link
+                                    to={href}
+                                    className="inline-flex items-center justify-center px-4 py-1.5 mt-2 bg-primary text-white text-[14px] font-medium rounded-xl shadow-soft hover:bg-primary/90 active:scale-95 transition-all no-underline"
+                                >
+                                    {children} <span className="ml-1.5 opacity-80 text-[16px] leading-none">→</span>
+                                </Link>
+                            );
+                        }
+                        // Default external link styling
+                        return (
+                            <a
+                                href={href}
+                                className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors font-medium"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                {...props}
+                            >
+                                {children}
+                            </a>
+                        );
+                    }
                 }}
             >
                 {preprocessedText}

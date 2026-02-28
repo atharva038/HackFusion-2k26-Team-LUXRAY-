@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     BrainCircuit, Bot, Languages, ScanFace, CreditCard, ShieldCheck,
     Zap, Share2, Layers, Search, Database, Lock, Cpu, Server, CheckCircle2,
