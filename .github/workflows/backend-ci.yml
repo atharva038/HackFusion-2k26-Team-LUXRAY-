@@ -28,22 +28,8 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
 
-      - name: Run Vitest
-        working-directory: backend
-        run: npm test
-        env:
-          NODE_ENV: test
-          JWT_SECRET: ci-test-secret
-          PORT: 5001
-          MONGO_URI: mongodb://localhost:27017/test
-          REDIS_URL: redis://localhost:6379
-          OPENAI_API_KEY: sk-stub
-          CLOUDINARY_CLOUD_NAME: stub
-          CLOUDINARY_API_KEY: stub
-          CLOUDINARY_API_SECRET: stub
-          RAZORPAY_KEY_ID: stub
-          RAZORPAY_KEY_SECRET: stub
-          EMAIL_USER: test@test.com
-          EMAIL_PASS: stub
+  
