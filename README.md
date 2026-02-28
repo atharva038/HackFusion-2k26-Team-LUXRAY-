@@ -81,10 +81,3 @@ npm install
 npm run dev
 ```
 
-## 👥 Team Workflow
-
-| Developer | Area | Folders |
-|-----------|------|---------|
-| Dev 1 | Chat + Voice + AI | `frontend/src/features/chat/`, `frontend/src/features/voice/`, `backend/src/agents/`, `backend/src/tools/` |
-| Dev 2 | Admin Dashboard | `frontend/src/features/admin/`, `backend/src/controllers/admin.controller.js`, `backend/src/routes/admin.routes.js` |
-| Dev 3 | Backend Core + DB | `backend/src/models/`, `backend/src/services/`, `backend/src/scheduler/`, `backend/src/config/` |
