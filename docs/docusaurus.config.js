@@ -11,7 +11,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'MediSage',
-  tagline: 'Dinosaurs are cool',
+  tagline: 'AI-Powered Pharmacy — Autonomous Agent, Real-Time Orders, Multilingual Support',
   favicon: 'img/logo.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -30,7 +30,7 @@ const config = {
   organizationName: 'facebook', // Usually your GitHub org/user name.
   projectName: 'docusaurus', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -49,24 +49,10 @@ const config = {
           sidebarPath: './sidebars.js',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            editUrl:
+            'https://github.com/atharva038/HackFusion-2k26-Team-LUXRAY-/tree/main/docs/',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -91,11 +77,21 @@ const config = {
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            sidebarId: 'mainSidebar',
             position: 'left',
-            label: 'Tutorial',
+            label: 'Docs',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          {
+            type: 'docSidebar',
+            sidebarId: 'apiSidebar',
+            position: 'left',
+            label: 'API Reference',
+          },
+          {
+            href: 'https://medisage.me',
+            label: 'Live Demo',
+            position: 'right',
+          },
           {
             href: 'https://github.com/atharva038/HackFusion-2k26-Team-LUXRAY-',
             label: 'GitHub',
@@ -107,50 +103,30 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Documentation',
             items: [
-              {
-                label: 'Tutorial',
-                to: '/docs/intro',
-              },
-              {
-                label: 'Wiki',
-                href: 'https://github.com/atharva038/HackFusion-2k26-Team-LUXRAY-/wiki',
-              },
+              { label: 'Introduction', to: '/docs/intro' },
+              { label: 'Architecture', to: '/docs/architecture/overview' },
+              { label: 'Features', to: '/docs/features/ai-pharmacist' },
             ],
           },
           {
-            title: 'Community',
+            title: 'API Reference',
             items: [
-              {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
-                label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
-              },
-              {
-                label: 'X',
-                href: 'https://x.com/docusaurus',
-              },
+              { label: 'Authentication', to: '/docs/api/authentication' },
+              { label: 'Chat API', to: '/docs/api/chat' },
+              { label: 'Admin API', to: '/docs/api/admin' },
             ],
           },
           {
-            title: 'More',
+            title: 'Project',
             items: [
-              {
-                label: 'Blog',
-                to: '/blog',
-              },
-              {
-                label: 'GitHub',
-                href: 'https://github.com/atharva038/HackFusion-2k26-Team-LUXRAY-',
-              },
+              { label: 'GitHub', href: 'https://github.com/atharva038/HackFusion-2k26-Team-LUXRAY-' },
+              { label: 'Live App', href: 'https://medisage.me' },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Build By Team Luxray.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Team LUXRAY — HackFusion 2k26. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,

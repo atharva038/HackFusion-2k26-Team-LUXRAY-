@@ -4,42 +4,48 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
-    description: (
-      <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
-      </>
-    ),
+    emoji: '🤖',
+    title: 'Multi-Agent AI Pharmacist',
+    description:
+      'Autonomous OpenAI Agents SDK orchestration with parent/child agent chain. Handles medicine queries, order placement, prescription validation, and refill automation in natural language.',
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
-    description: (
-      <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
-      </>
-    ),
+    emoji: '⚡',
+    title: 'Real-Time Order Management',
+    description:
+      'Socket.IO-powered live updates. Admins dispatch orders and customers are notified instantly. Full order lifecycle from pending → paid → approved → dispatched.',
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
-    description: (
-      <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
-      </>
-    ),
+    emoji: '🌍',
+    title: 'Multilingual Support',
+    description:
+      'Supports English, Hindi, and Marathi. User messages are auto-translated before reaching the AI and responses are translated back — all transparently.',
+  },
+  {
+    emoji: '💊',
+    title: 'Prescription OCR & Validation',
+    description:
+      'Upload prescription images via camera or file. AI extracts doctor, medicine, dosage, and duration. Admin reviews and approves before fulfilling prescription orders.',
+  },
+  {
+    emoji: '📦',
+    title: 'Smart Inventory System',
+    description:
+      'Real-time stock tracking, low-stock alerts via email/WhatsApp, automated refill reminders with node-cron scheduling, and full inventory audit logs.',
+  },
+  {
+    emoji: '🔒',
+    title: 'Secure & Auditable',
+    description:
+      'JWT auth, bcrypt hashing, Redis rate limiting, Razorpay webhook HMAC verification, and a full AgentAuditLog with prompt injection detection and token usage tracking.',
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({emoji, title, description}) {
   return (
-    <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+    <div className={clsx('col col--4')} style={{marginBottom: '2rem'}}>
+      <div className="text--center" style={{fontSize: '3rem', marginBottom: '0.5rem'}}>
+        {emoji}
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>

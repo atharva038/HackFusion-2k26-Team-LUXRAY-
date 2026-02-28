@@ -1,47 +1,64 @@
 ---
 sidebar_position: 1
+slug: /intro
+title: Introduction
 ---
 
-# Tutorial Intro
+# MediSage — AI Pharmacy System
 
-Let's discover **Docusaurus in less than 5 minutes**.
+**MediSage** is a full-stack, AI-powered pharmacy platform built for **HackFusion 2k26** by **Team LUXRAY**. It replaces the traditional pharmacy counter with an autonomous AI pharmacist that understands natural language, processes prescriptions, manages inventory, and orchestrates real-time orders — all through a conversational chat interface.
 
-## Getting Started
+**Live:** [medisage.me](https://medisage.me)
+**Repository:** [github.com/atharva038/HackFusion-2k26-Team-LUXRAY-](https://github.com/atharva038/HackFusion-2k26-Team-LUXRAY-)
 
-Get started by **creating a new site**.
+---
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+## What It Does
 
-### What you'll need
+| Capability | Description |
+|---|---|
+| **AI Chat Pharmacist** | GPT-4o–powered agent answers medicine queries, checks interactions, places orders |
+| **Prescription OCR** | Upload prescription images; AI extracts doctor, medicines, dosages automatically |
+| **Order Management** | Full lifecycle — pending → payment → admin approval → dispatch, with real-time socket updates |
+| **Inventory Tracking** | Stock management, low-stock alerts, automated refill reminders |
+| **Multilingual** | English, Hindi, Marathi — transparent translation before/after AI processing |
+| **Text-to-Speech** | Streaming TTS for voice-first interaction |
+| **Payment** | Razorpay integration with HMAC-verified webhooks |
+| **Admin Dashboard** | Orders, prescriptions, inventory, refill alerts, AI reasoning traces |
+| **Session Recording** | Screen recording of chat sessions stored to Cloudinary |
 
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+---
 
-## Generate a new site
+## Tech Stack
 
-Generate a new Docusaurus site using the **classic template**.
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 19, Vite, Zustand, TailwindCSS, Framer Motion, Socket.IO-client |
+| **Backend** | Node.js (ESM), Express, MongoDB/Mongoose, Socket.IO, Redis |
+| **AI** | OpenAI GPT-4o, OpenAI Agents SDK, Mistral AI, Tavily |
+| **Storage** | Cloudinary (images + video), MongoDB |
+| **Payments** | Razorpay |
+| **Notifications** | Resend (email), Twilio (WhatsApp) |
+| **Scheduling** | node-cron |
+| **Caching** | Redis |
 
-The classic template will automatically be added to your project after you run the command:
+---
 
-```bash
-npm init docusaurus@latest my-website classic
+## Project Structure
+
+```
+HackFusion-2k26-Team-LUXRAY-/
+├── backend/          # Express API, agents, models, socket
+├── frontend/         # React SPA
+└── docs/             # This documentation site (Docusaurus)
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+---
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+## Quick Navigation
 
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+- **[Architecture Overview](./architecture/overview)** — How all the pieces fit together
+- **[AI Pharmacist](./features/ai-pharmacist)** — Multi-agent orchestration deep dive
+- **[API Reference](./api/authentication)** — All REST endpoints
+- **[Database Models](./database/models)** — MongoDB schema reference
+- **[Getting Started](./development/getting-started)** — Run locally in minutes
