@@ -4,30 +4,40 @@ import { isSocketInitialized, getIO } from "../../config/socket.js";
 
 export async function addTransaction({
   patientId,
-  medicineId,
+  items, // Expected array: [{ medicineId, quantity, dosageFrequency, totalPrice, prescriptionRequired, prescriptionProof }]
   age,
   gender,
   purchaseDate,
-  quantity,
-  totalPrice,
-  dosageFrequency,
-  prescriptionRequired,
-  prescriptionProof = "",
 }) {
   try {
     if (!mongoose.Types.ObjectId.isValid(patientId)) {
       return { error: "Invalid userId" };
     }
 
-    if (!mongoose.Types.ObjectId.isValid(medicineId)) {
-      return { error: "Invalid medicineId" };
+    for (const item of items) {
+      if (!mongoose.Types.ObjectId.isValid(item.medicineId)) {
+        return { error: `Invalid medicineId: ${item.medicineId}` };
+      }
     }
 
-    let status = "awaiting_payment";
+    let globalStatus = "awaiting_payment";
+    let totalAmount = 0;
+    let totalItems = 0;
 
-    if (prescriptionRequired && !prescriptionProof) {
-      status = "awaiting_prescription";
+    const needsPrescription = items.some(i => i.prescriptionRequired && !i.prescriptionProof);
+    if (needsPrescription) {
+      globalStatus = "awaiting_prescription";
     }
+
+    const orderItems = items.map(i => {
+      totalAmount += i.totalPrice;
+      totalItems += i.quantity;
+      return {
+        medicine: i.medicineId,
+        dosage: i.dosageFrequency,
+        quantity: i.quantity,
+      };
+    });
 
     const order = new Order({
       user: patientId,
@@ -35,20 +45,14 @@ export async function addTransaction({
       gender,
       purchasingDate: purchaseDate || new Date(),
 
-      prescription: prescriptionRequired,
-      prescriptionProof: prescriptionProof || "",
+      prescription: items.some(i => i.prescriptionRequired),
+      prescriptionProof: items.find(i => i.prescriptionProof)?.prescriptionProof || "",
 
-      items: [
-        {
-          medicine: medicineId,
-          dosage: dosageFrequency,
-          quantity,
-        },
-      ],
+      items: orderItems,
 
-      totalItems: quantity,
-      totalAmount: totalPrice,
-      status,
+      totalItems,
+      totalAmount,
+      status: globalStatus,
     });
 
     await order.save();
@@ -67,8 +71,8 @@ export async function addTransaction({
     return {
       message: "Order saved successfully",
       orderId: order._id,
-      prescriptionRequired,
-      prescriptionProofProvided: !!prescriptionProof,
+      prescriptionRequired: order.prescription,
+      prescriptionProofProvided: !!order.prescriptionProof,
       status: order.status,
     };
   } catch (error) {

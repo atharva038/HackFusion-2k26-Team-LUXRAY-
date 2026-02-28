@@ -56,7 +56,7 @@ const AdminNotificationPanel = () => {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute left-full ml-2 bottom-0 z-50 w-80 max-h-[480px] flex flex-col bg-white dark:bg-slate-900 border border-black/8 dark:border-white/8 rounded-xl shadow-xl overflow-hidden">
+        <div className="absolute left-full ml-2 bottom-0 z-50 w-80 max-h-[480px] flex flex-col bg-card/95 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/5 shrink-0">
             <div className="flex items-center gap-2">

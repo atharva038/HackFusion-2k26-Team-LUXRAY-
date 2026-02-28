@@ -166,35 +166,75 @@ export const sendInvoiceWithPdf = async (toEmail, invoiceData) => {
     return { success: false, error: "PDF generation failed" };
   }
 
-  const { invoiceId, orderId, customerName, medicines, totalAmount } = invoiceData;
+  const { invoiceId, orderId, customerName, items, medicines, totalAmount } = invoiceData;
   const now = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+
+  // Build a readable items list for the email body
+  const itemRows = Array.isArray(items) && items.length > 0
+    ? items.map(it =>
+        `<tr>
+          <td style="padding:6px 8px; border:1px solid #E2E8F0;">${it.name}</td>
+          <td style="padding:6px 8px; border:1px solid #E2E8F0; text-align:center;">${it.dosage || "—"}</td>
+          <td style="padding:6px 8px; border:1px solid #E2E8F0; text-align:center;">${it.quantity}</td>
+          <td style="padding:6px 8px; border:1px solid #E2E8F0; text-align:right;">Rs. ${Number(it.unitPrice).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+          <td style="padding:6px 8px; border:1px solid #E2E8F0; text-align:right; font-weight:bold;">Rs. ${Number(it.totalPrice).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+        </tr>`
+      ).join("")
+    : `<tr><td colspan="5" style="padding:8px; border:1px solid #E2E8F0; text-align:center; color:#666;">${medicines || "—"}</td></tr>`;
 
   const mailOptions = {
     from: `"MediAI Pharmacy" <${process.env.EMAIL_USER}>`,
     to: toEmail,
-    subject: `✅ Payment Confirmed — Invoice ${invoiceId}`,
+    subject: `Payment Confirmed — Invoice ${invoiceId}`,
     html: `
-      <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 560px; margin: auto;">
-        <div style="background: #2563EB; padding: 24px 30px; border-radius: 8px 8px 0 0;">
-          <h2 style="color: #fff; margin: 0;">💊 MediAI Pharmacy</h2>
-          <p style="color: #BFDBFE; margin: 4px 0 0;">Payment Confirmation</p>
+      <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 600px; margin: auto; border: 1px solid #E2E8F0; border-radius: 4px;">
+        <div style="background: #1a1a1a; padding: 20px 28px;">
+          <h2 style="color: #fff; margin: 0; font-size: 18px; letter-spacing: 1px;">MEDIAI PHARMACY</h2>
+          <p style="color: #aaa; margin: 4px 0 0; font-size: 12px;">Your Trusted AI-Powered Pharmacy</p>
         </div>
-        <div style="background: #F8FAFC; padding: 24px 30px; border: 1px solid #E2E8F0;">
-          <p>Dear <strong>${customerName || "Customer"}</strong>,</p>
-          <p>Your payment has been successfully received. Please find your invoice attached as a PDF.</p>
-
-          <table style="width:100%; border-collapse:collapse; margin: 16px 0;">
-            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Invoice ID</td><td style="font-weight:bold;">${invoiceId}</td></tr>
-            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Order ID</td><td>${orderId}</td></tr>
-            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Medicines</td><td>${medicines}</td></tr>
-            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Amount Paid</td><td style="font-weight:bold; color:#2563EB;">₹${totalAmount}</td></tr>
-            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Date & Time</td><td>${now}</td></tr>
+        <div style="background: #fff; padding: 24px 28px;">
+          <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+            <tr>
+              <td style="vertical-align:top; width:50%;">
+                <p style="margin:0 0 6px; font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px;">Invoice No.</p>
+                <p style="margin:0; font-size:13px; font-weight:bold;">${invoiceId}</p>
+                <p style="margin:8px 0 6px; font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px;">Order ID</p>
+                <p style="margin:0; font-size:12px;">${orderId}</p>
+                <p style="margin:8px 0 6px; font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px;">Date</p>
+                <p style="margin:0; font-size:12px;">${now}</p>
+              </td>
+              <td style="vertical-align:top; padding-left:20px;">
+                <p style="margin:0 0 6px; font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px;">Billed To</p>
+                <p style="margin:0; font-size:13px; font-weight:bold;">${customerName || "Customer"}</p>
+                <p style="margin:4px 0 0; font-size:12px; color:#555;">${toEmail}</p>
+              </td>
+            </tr>
           </table>
 
-          <p style="font-size:13px; color:#64748B;">Your order is now being processed. You will be notified when it is dispatched.</p>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="padding:8px; border:1px solid #DDD; text-align:left;">Medicine</th>
+                <th style="padding:8px; border:1px solid #DDD; text-align:center;">Dosage</th>
+                <th style="padding:8px; border:1px solid #DDD; text-align:center;">Qty</th>
+                <th style="padding:8px; border:1px solid #DDD; text-align:right;">Unit Price</th>
+                <th style="padding:8px; border:1px solid #DDD; text-align:right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>${itemRows}</tbody>
+            <tfoot>
+              <tr style="background:#f0f0f0;">
+                <td colspan="4" style="padding:8px 8px; border:1px solid #DDD; font-weight:bold; text-align:right;">TOTAL AMOUNT PAID</td>
+                <td style="padding:8px 8px; border:1px solid #DDD; font-weight:bold; text-align:right;">Rs. ${Number(totalAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <p style="font-size:12px; color:#666; margin-top:16px;">Your order is now being processed. You will be notified when it is dispatched.</p>
+          <p style="font-size:11px; color:#999; margin-top:8px;">A PDF copy of this invoice is attached to this email.</p>
         </div>
-        <div style="padding: 14px 30px; background:#F1F5F9; border: 1px solid #E2E8F0; border-top:0; border-radius: 0 0 8px 8px; font-size:11px; color:#94A3B8;">
-          This is an automated email. Please do not reply. · MediAI Pharmacy · HackFusion 2k26
+        <div style="padding: 12px 28px; background:#f9f9f9; border-top: 1px solid #E2E8F0; font-size:10px; color:#AAA; text-align:center;">
+          This is an automated email. Please do not reply. &nbsp;|&nbsp; MediAI Pharmacy &nbsp;|&nbsp; HackFusion 2k26
         </div>
       </div>
     `,

@@ -62,7 +62,7 @@ const ChatPage = ({ onOpenAllergies }) => {
                     </section>
 
                     {/* Contextual Slide-Over for AI Routing */}
-                    <div className={`absolute inset-y-0 right-0 z-[60] w-full md:w-[800px] bg-glass backdrop-blur-3xl border-l border-white/10 ${activeSlideOver ? 'shadow-[-20px_0_50px_rgba(0,0,0,0.5)] opacity-100 pointer-events-auto translate-x-0' : 'shadow-none opacity-0 pointer-events-none translate-x-full'} transform transition-all duration-500 ease-in-out flex flex-col`}>
+                    <div className={`absolute inset-y-0 right-0 z-[60] w-full md:w-[800px] bg-card/95 backdrop-blur-3xl border-l border-white/10 ${activeSlideOver ? 'shadow-[-20px_0_50px_rgba(0,0,0,0.5)] opacity-100 pointer-events-auto translate-x-0' : 'shadow-none opacity-0 pointer-events-none translate-x-full'} transform transition-all duration-500 ease-in-out flex flex-col`}>
                         {activeSlideOver && (
                             <>
                                 <div className="flex items-center justify-between p-4 border-b border-white/10 bg-cyan-900/20">

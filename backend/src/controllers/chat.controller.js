@@ -12,7 +12,7 @@ import { streamAgentResponse, prepareAgentMessages } from "../services/streamSer
  */
 export const handleMessage = async (req, res) => {
   try {
-    const { message, sessionId: reqSessionId, language = 'en' } = req.body; // Already validated & sanitised by Zod middleware
+    const { message, sessionId: reqSessionId, language = 'en', imageUrl } = req.body; // Already validated & sanitised by Zod middleware
     const userId = req.user.id;
 
     logger.info(`[Chat] User [${userId}] (${language}) → "${message.substring(0, 80)}${message.length > 80 ? '...' : ''}"`);
@@ -55,7 +55,7 @@ export const handleMessage = async (req, res) => {
 
     // Persist both turns ──────────────────────────────────────────────────
     const newMessages = [
-      { role: 'user', content: message },
+      { role: 'user', content: message, ...(imageUrl ? { imageUrl } : {}) },
       { role: 'ai', content: translatedReply },
     ];
 
@@ -93,7 +93,7 @@ export const handleMessage = async (req, res) => {
  */
 export const handleStreamMessage = async (req, res) => {
   try {
-    const { message, sessionId: reqSessionId, language = 'en' } = req.body;
+    const { message, sessionId: reqSessionId, language = 'en', imageUrl } = req.body;
     const userId = req.user.id;
 
     logger.info(`[Chat-Stream] User [${userId}] (${language}) → "${message.substring(0, 80)}${message.length > 80 ? '...' : ''}"`);
@@ -180,7 +180,7 @@ export const handleStreamMessage = async (req, res) => {
 
     // ── Persist to Redis + MongoDB ONLY after full completion ────────────
     const newMessages = [
-      { role: 'user', content: message },
+      { role: 'user', content: message, ...(imageUrl ? { imageUrl } : {}) },
       { role: 'ai', content: finalReply },
     ];
     appendSessionMessages(sessionId, newMessages);
