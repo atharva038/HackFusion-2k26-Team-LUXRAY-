@@ -146,6 +146,34 @@ export const handlePharmacistStream = async (req, res) => {
         }
       }
 
+      //MONITOR TRACES
+      const monitorTraces = result.state._generatedItems.map((item) => {
+        const actor = item.agent?.name || item.targetAgent?.name || "System";
+        const itemType = item.type || item.constructor.name;
+
+        let actionName = "AI Reasoning";
+        let detailData = "Processing...";
+
+        if (item.rawItem?.type === 'function_call') {
+          actionName = item.rawItem.name.includes('transfer') ? "🤝 Handoff" : `⚙️ Tool: ${item.rawItem.name}`;
+          detailData = item.rawItem.arguments;
+        }
+        else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output') {
+          actionName = `✅ Result: ${item.rawItem.name}`;
+          detailData = item.rawItem.output?.text || item.rawItem.output || "Success";
+        }
+        else if (itemType === 'message_output_item' || item.rawItem?.type === 'message') {
+          actionName = "💬 Response";
+          detailData = item.rawItem?.content?.[0]?.text || item.content || "...";
+        }
+
+        return { agent: actor, action: actionName, data: detailData };
+      }).filter(t => t.action !== "AI Reasoning");
+
+      console.log("\n📍 --- STREAMING TRACE ---");
+      monitorTraces.forEach(t => console.log(`${t.agent} ➔ ${t.action}`));
+      console.log("--------------------------\n");
+
       // Use authoritative finalOutput (not accumulated chunks which may differ)
       const finalOutput = result.finalOutput || accumulatedText;
       accumulatedText = finalOutput;
@@ -201,7 +229,7 @@ export const handlePharmacistStream = async (req, res) => {
         status,
         errorMessage,
         durationMs,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }
 };

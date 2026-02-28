@@ -78,6 +78,7 @@ export async function runPharmacistAgent({ userId, sessionId, message, history =
 
   try {
     reply = await chatPharmacist(messages);
+    console.log("result of pharma agent in pharmacist.agent.service: ", reply)
   } catch (err) {
     status = 'error';
     errorMessage = err.message;
