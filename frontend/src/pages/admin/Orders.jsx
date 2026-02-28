@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, X, Truck, Loader2, Search, Filter, Wifi, WifiOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, X, Truck, Loader2, Search, Filter, Wifi, WifiOff, PackageOpen } from 'lucide-react';
 import { fetchOrders, updateOrderStatus } from '../../services/api';
 import ActionModal from '../../components/ui/ActionModal';
 import { useSocket } from '../../context/SocketContext';
@@ -103,13 +104,13 @@ const Orders = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'paid':
-            case 'approved': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
+            case 'approved': return 'bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.15)]';
             case 'pending':
-            case 'awaiting_prescription': return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
-            case 'awaiting_payment': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
-            case 'dispatched': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
-            case 'rejected': return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
-            default: return 'bg-black/5 text-text-muted border-black/10';
+            case 'awaiting_prescription': return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]';
+            case 'awaiting_payment': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 ring-1 ring-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.15)]';
+            case 'dispatched': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 ring-1 ring-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.15)]';
+            case 'rejected': return 'bg-red-500/10 text-red-700 dark:text-red-400 ring-1 ring-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.15)]';
+            default: return 'bg-black/5 text-text-muted ring-1 ring-black/10 dark:ring-white/10';
         }
     };
 
@@ -130,17 +131,17 @@ const Orders = () => {
         <div className="space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-text">Orders Management</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-text bg-gradient-to-r from-text to-text-muted bg-clip-text text-transparent">Orders Management</h1>
                     <p className="text-text-muted text-sm mt-1">Review and process all incoming pharmacy orders.</p>
                 </div>
                 {/* Real-time connection badge */}
-                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${isConnected
-                        ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
-                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+                <div className={`flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full ring-1 ${isConnected
+                    ? 'bg-green-500/10 text-green-600 dark:text-green-400 ring-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                    : 'bg-red-500/10 text-red-600 dark:text-red-400 ring-red-500/30'
                     }`}>
                     {isConnected
-                        ? <><Wifi className="w-3 h-3" /> Live</>
-                        : <><WifiOff className="w-3 h-3" /> Offline</>
+                        ? <><Wifi className="w-3.5 h-3.5 animate-pulse" /> Live</>
+                        : <><WifiOff className="w-3.5 h-3.5" /> Offline</>
                     }
                 </div>
             </div>
@@ -155,7 +156,7 @@ const Orders = () => {
                         placeholder="Search by Order ID or Customer..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                        className="pl-10 pr-4 py-2 w-full bg-card/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text shadow-sm transition-all focus:bg-card/90"
                     />
                 </div>
                 <div className="relative min-w-[180px]">
@@ -165,7 +166,7 @@ const Orders = () => {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="pl-10 pr-8 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text"
+                        className="pl-10 pr-8 py-2 w-full bg-card/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text shadow-sm"
                     >
                         <option value="all">All Statuses</option>
                         <option value="pending">Pending</option>
@@ -179,11 +180,11 @@ const Orders = () => {
                 </div>
             </div>
 
-            <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card/40 backdrop-blur-3xl border border-white/5 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
-                            <tr className="bg-black/5 dark:bg-white/5 text-text-muted text-xs uppercase tracking-wider">
+                            <tr className="bg-black/5 dark:bg-black/40 text-text-muted text-[11px] uppercase tracking-wider">
                                 <th className="px-6 py-4 font-semibold">Order ID</th>
                                 <th className="px-6 py-4 font-semibold">Customer</th>
                                 <th className="px-6 py-4 font-semibold">Items</th>
@@ -194,79 +195,89 @@ const Orders = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
-                            {filteredOrders.length > 0 ? filteredOrders.map((order) => (
-                                <tr key={order._id} className={`transition-colors text-[14px] ${newOrderIds.has(order._id) ? 'bg-green-500/10 dark:bg-green-500/10' : 'hover:bg-black/2 dark:hover:bg-white/2'}`}>
-                                    <td className="px-6 py-4 font-mono text-text text-xs">{order._id}</td>
-                                    <td className="px-6 py-4">{order.user?.name
-                                        ? (
-                                            <span className="font-medium text-text">
-                                                {order.user.name}
-                                                {order.user.email && (
-                                                    <span className="block text-xs text-text-muted font-normal">{order.user.email}</span>
+                            <AnimatePresence>
+                                {filteredOrders.length > 0 ? filteredOrders.map((order, index) => (
+                                    <motion.tr
+                                        key={order._id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3) }}
+                                        className={`transition-colors text-[14px] group ${newOrderIds.has(order._id) ? 'bg-green-500/10 dark:bg-green-500/10 shadow-[inset_0_0_20px_rgba(34,197,94,0.3)]' : 'hover:bg-white/40 dark:hover:bg-black/20'}`}
+                                    >
+                                        <td className="px-6 py-4 font-mono text-text-muted/80 text-[13px]">{order._id.substring(order._id.length - 8).toUpperCase()}</td>
+                                        <td className="px-6 py-4">{order.user?.name
+                                            ? (
+                                                <span className="font-semibold text-text">
+                                                    {order.user.name}
+                                                    {order.user.email && (
+                                                        <span className="block text-[11px] text-text-muted mt-0.5 font-normal">{order.user.email}</span>
+                                                    )}
+                                                </span>
+                                            )
+                                            : <span className="italic text-text-muted/60 text-xs">Unknown user</span>}</td>
+                                        <td className="px-6 py-4 text-text-muted font-medium truncate max-w-[200px]">{order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}</td>
+                                        <td className="px-6 py-4">
+                                            {updatingIds.has(order._id) ? (
+                                                <Loader2 className="w-4 h-4 animate-spin text-primary drop-shadow-md" />
+                                            ) : (
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-widest uppercase shadow-sm ${getStatusColor(order.status)}`}>
+                                                    {order.status?.replace(/_/g, ' ')}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-text font-semibold text-[14px]">
+                                            {order.totalAmount ? `₹${order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '₹0.00'}
+                                        </td>
+                                        <td className="px-6 py-4 text-text-muted font-medium text-[13px]">{new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2 transition-opacity">
+                                                {(order.status === 'pending' || order.status === 'awaiting_prescription' || order.status === 'awaiting_payment') && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => triggerModal(order._id, 'approved')}
+                                                            disabled={updatingIds.has(order._id)}
+                                                            className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-green-500/20 text-text-muted hover:text-green-600 dark:hover:text-green-400 transition-all md:hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            title="Approve"
+                                                        >
+                                                            <Check className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => triggerModal(order._id, 'rejected')}
+                                                            disabled={updatingIds.has(order._id)}
+                                                            className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-red-500/20 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition-all md:hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            title="Reject"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </>
                                                 )}
-                                            </span>
-                                        )
-                                        : <span className="italic text-text-muted/60 text-xs">Unknown user</span>}</td>
-                                    <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">{order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}</td>
-                                    <td className="px-6 py-4">
-                                        {updatingIds.has(order._id) ? (
-                                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                        ) : (
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
-                                                {order.status?.replace(/_/g, ' ')}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-text-muted text-[13px]">
-                                        {order.totalAmount ? `₹${order.totalAmount.toFixed(2)}` : '₹0.00'}
-                                    </td>
-                                    <td className="px-6 py-4 text-text-muted text-[13px]">{new Date(order.createdAt).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {(order.status === 'pending' || order.status === 'awaiting_prescription' || order.status === 'awaiting_payment') && (
-                                                <>
+                                                {(order.status === 'approved' || order.status === 'paid') && (
                                                     <button
-                                                        onClick={() => triggerModal(order._id, 'approved')}
+                                                        onClick={() => triggerModal(order._id, 'dispatched')}
                                                         disabled={updatingIds.has(order._id)}
-                                                        className="p-1.5 rounded-md hover:bg-green-500/10 text-text-muted hover:text-green-600 dark:hover:text-green-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        title="Approve"
+                                                        className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-blue-500/20 text-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-all md:hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        title="Dispatch"
                                                     >
-                                                        <Check className="w-4 h-4" />
+                                                        <Truck className="w-4 h-4" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => triggerModal(order._id, 'rejected')}
-                                                        disabled={updatingIds.has(order._id)}
-                                                        className="p-1.5 rounded-md hover:bg-red-500/10 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        title="Reject"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </>
-                                            )}
-                                            {(order.status === 'approved' || order.status === 'paid') && (
-                                                <button
-                                                    onClick={() => triggerModal(order._id, 'dispatched')}
-                                                    disabled={updatingIds.has(order._id)}
-                                                    className="p-1.5 rounded-md hover:bg-blue-500/10 text-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    title="Dispatch"
-                                                >
-                                                    <Truck className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="7" className="px-6 py-8 text-center text-text-muted text-sm">
-                                        No orders found matching your criteria.
-                                    </td>
-                                </tr>
-                            )}
+                                                )}
+                                            </div>
+                                        </td>
+                                    </motion.tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-12 text-center text-text-muted text-sm">
+                                            <PackageOpen className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                                            No orders found matching your criteria.
+                                        </td>
+                                    </tr>
+                                )}
+                            </AnimatePresence>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </motion.div>
 
             <ActionModal
                 isOpen={modalConfig.isOpen}

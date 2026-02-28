@@ -56,7 +56,7 @@ const AdminNotificationPanel = () => {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute left-full ml-2 bottom-0 z-50 w-80 max-h-[480px] flex flex-col bg-card border border-black/8 dark:border-white/8 rounded-xl shadow-xl overflow-hidden">
+        <div className="absolute left-full ml-2 bottom-0 z-50 w-80 max-h-[480px] flex flex-col bg-white dark:bg-slate-900 border border-black/8 dark:border-white/8 rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/5 shrink-0">
             <div className="flex items-center gap-2">
@@ -111,9 +111,8 @@ const AdminNotificationPanel = () => {
                   return (
                     <li
                       key={n.id}
-                      className={`relative flex gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-black/3 dark:hover:bg-white/3 ${
-                        !n.read ? 'bg-primary/3' : ''
-                      }`}
+                      className={`relative flex gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-black/3 dark:hover:bg-white/3 ${!n.read ? 'bg-primary/3' : ''
+                        }`}
                       onClick={() => markNotificationAsRead(n.id)}
                     >
                       {/* Unread dot */}
@@ -136,7 +135,7 @@ const AdminNotificationPanel = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="shrink-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100">
+                      <div className="shrink-0 flex flex-col gap-1">
                         {!n.read && (
                           <button
                             onClick={(e) => { e.stopPropagation(); markNotificationAsRead(n.id); }}
