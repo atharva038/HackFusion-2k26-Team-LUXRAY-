@@ -4,6 +4,7 @@ import User from '../models/user.model.js'; // Ensure correct casing for your im
 import Prescription from '../models/prescription.model.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { logAgentRun } from '../utils/agentLogger.js';
+import { isSocketInitialized, getIO } from '../config/socket.js';
 
 export const handlePrescriptionUpload = async (req, res) => {
     try {
@@ -143,6 +144,17 @@ export const handlePrescriptionUpload = async (req, res) => {
             },
             { upsert: true, new: true }
         );
+
+        // Notify all admins that a new prescription needs review
+        if (isSocketInitialized()) {
+            getIO().emit('prescription:submitted', {
+                prescriptionId: savedRecord._id.toString(),
+                userName,
+                userEmail,
+                medicineCount: extractedContent.medicines.length,
+                imageUrl,
+            });
+        }
 
         // 4. Final Response
         res.status(200).json({

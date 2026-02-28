@@ -101,6 +101,11 @@ export const updateInventory = async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!updated) return res.status(404).json({ error: 'Medicine not found' });
+
+    if (isSocketInitialized()) {
+      getIO().emit('inventory:medicine-updated', { medicine: updated });
+    }
+
     res.json(updated);
   } catch (err) {
     logger.error('Inventory update error:', err);
@@ -134,6 +139,22 @@ export const restockMedicine = async (req, res) => {
         await sendLowStockAlert(emails, [medicine]);
         logger.info(`Immediate low stock alert sent for ${medicine.name}`);
       }
+      if (isSocketInitialized()) {
+        getIO().emit('inventory:low-stock-alert', {
+          medicine: { name: medicine.name, stock: medicine.stock, lowStockThreshold: medicine.lowStockThreshold },
+        });
+      }
+    }
+
+    if (isSocketInitialized()) {
+      getIO().emit('inventory:medicine-restocked', {
+        medicine: {
+          name: medicine.name,
+          previousStock,
+          newStock: medicine.stock,
+          quantityAdded: quantity,
+        },
+      });
     }
 
     res.json(medicine);
@@ -255,6 +276,22 @@ export const updatePrescription = async (req, res) => {
       .populate('user', 'name email')
       .populate('medicine', 'name');
     if (!updated) return res.status(404).json({ error: 'Prescription not found' });
+
+    if (isSocketInitialized()) {
+      const userId = updated.user?._id?.toString() ?? updated.user?.toString();
+      const medicineName = updated.medicine?.name ?? 'medicine';
+      const payload = {
+        prescriptionId: updated._id.toString(),
+        status: updated.approved ? 'approved' : 'rejected',
+        medicine: medicineName,
+        userName: updated.user?.name,
+      };
+      // Notify the customer
+      if (userId) emitToUser(userId, 'prescription:updated', payload);
+      // Broadcast to all admins
+      getIO().emit('prescription:admin-updated', payload);
+    }
+
     res.json(updated);
   } catch (err) {
     logger.error('Prescription update error:', err);
@@ -286,6 +323,19 @@ export const updateRefillAlert = async (req, res) => {
       .populate('user', 'name email')
       .populate('medicine', 'name');
     if (!updated) return res.status(404).json({ error: 'Alert not found' });
+
+    if (isSocketInitialized()) {
+      const userId = updated.user?._id?.toString() ?? updated.user?.toString();
+      const payload = {
+        alertId: updated._id.toString(),
+        status: updated.status,
+        medicine: updated.medicine?.name,
+        userName: updated.user?.name,
+      };
+      if (userId) emitToUser(userId, 'refill:alert-updated', payload);
+      getIO().emit('refill:admin-updated', payload);
+    }
+
     res.json(updated);
   } catch (err) {
     logger.error('Refill alert update error:', err);
@@ -312,6 +362,14 @@ export const getInventoryLogs = async (req, res) => {
 export const triggerLowStockAlert = async (req, res) => {
   try {
     const result = await checkAndAlertLowStock();
+
+    if (isSocketInitialized() && result.alerted > 0) {
+      getIO().emit('inventory:low-stock-manual-alert', {
+        alertedCount: result.alerted,
+        recipients: result.recipients,
+      });
+    }
+
     res.json({
       message: result.alerted === 0
         ? 'All medicines are above threshold — no alert sent.'
