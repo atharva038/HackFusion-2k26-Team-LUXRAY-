@@ -1,5 +1,4 @@
 import twilio from "twilio";
-import cloudinary from "../config/cloudinary.js";
 import { generateInvoicePdf } from "./invoicePdf.service.js";
 
 // ─── Twilio Client (lazy-initialized) ───────────────────────────────────────
@@ -26,41 +25,15 @@ function getClient() {
  */
 function toWhatsAppNumber(phone) {
     if (!phone) return null;
-    const digits = phone.replace(/\D/g, "");
+    let digits = phone.replace(/\D/g, "");
+    // Remove leading zero (e.g. "09876543210" → "9876543210")
+    if (digits.startsWith("0")) digits = digits.slice(1);
     const e164 = digits.length === 10 ? `+91${digits}` : `+${digits}`;
     return `whatsapp:${e164}`;
 }
 
 /**
- * Upload a PDF Buffer to Cloudinary as a raw file.
- * Returns the secure public URL of the uploaded file.
- */
-async function uploadPdfToCloudinary(pdfBuffer, publicId) {
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                resource_type: "image",
-                folder: "invoices",
-                public_id: publicId,
-                // We let Cloudinary ingest the PDF, and then we will request it as a PNG image 
-                // because Cloudinary Free Tier blocks raw PDF delivery, causing Twilio to fail with a 401 error.
-                // PDFs expire after 1 hour — avoids long-term storage of invoices
-                // (comment out `invalidate: true` if you want to cache them)
-            },
-            (error, result) => {
-                if (error) return reject(error);
-                // Force the extension to be .png so Cloudinary rasterizes the PDF into an image 
-                // Twilio can then easily download and display it inline.
-                const pngUrl = result.secure_url.replace(/\.pdf$/, '.png');
-                resolve(pngUrl);
-            }
-        );
-        uploadStream.end(pdfBuffer);
-    });
-}
-
-/**
- * Send a payment invoice WhatsApp message WITH a PDF attachment.
+ * Send a payment invoice WhatsApp message.
  *
  * @param {string} phone - User's phone number
  * @param {object} details
@@ -77,36 +50,59 @@ export async function sendPaymentInvoice(phone, details) {
     const to = toWhatsAppNumber(phone);
     const from = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
 
-    if (!twClient || !to) {
-        console.warn("[WhatsApp] Skipping invoice — no client or phone number.");
+    if (!twClient) {
+        console.warn("[WhatsApp] Skipping invoice — Twilio client not initialized (missing credentials).");
+        return;
+    }
+    if (!to) {
+        console.warn("[WhatsApp] Skipping invoice — no phone number provided for user.");
         return;
     }
 
-    const { invoiceId, orderId, medicines, totalAmount, customerName, customerEmail, totalItems } = details;
-    // Format current time nicely
+    console.log(`[WhatsApp] Sending invoice to ${to} from ${from}`);
+
+    const { invoiceId, orderId, medicines, totalAmount, customerName, totalItems } = details;
+
     const now = new Date().toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
         day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit"
+        hour: "2-digit", minute: "2-digit",
     });
 
-    // Make the text invoice highly readable since we dropped the PDF
     const body =
         `✅ *Payment Confirmed — MediAI Pharmacy*\n\n` +
-        `Your payment has been successfully received.\n\n` +
+        `Hello ${customerName || "Customer"}, your payment has been successfully received.\n\n` +
         `🧾 *Invoice ID:* ${invoiceId}\n` +
         `📦 *Order ID:* ${orderId}\n` +
         `💊 *Medicines:* ${medicines || "your items"}\n` +
+        `🔢 *Total Qty:* ${totalItems || 1}\n` +
         `💰 *Amount Paid:* ₹${totalAmount}\n` +
         `🕐 *Date & Time:* ${now}\n\n` +
         `Your order is now being processed and will be dispatched shortly.\n\n` +
-        `_Thank you for choosing MediAI Pharmacy!_`;
+        `_Thank you for choosing MediAI Pharmacy!_ 🏥`;
 
     try {
-        const msgOptions = { from, to, body };
-        const msg = await twClient.messages.create(msgOptions);
+        const msg = await twClient.messages.create({ from, to, body });
         console.log(`[WhatsApp] ✅ Invoice sent to ${to} — SID: ${msg.sid}`);
     } catch (err) {
-        console.error(`[WhatsApp] ❌ Failed to send invoice to ${to}:`, err.message);
+        const code = err.code || "unknown";
+        const moreInfo = err.moreInfo || "";
+        console.error(`[WhatsApp] ❌ Failed to send invoice to ${to} — Error ${code}: ${err.message}`);
+        if (moreInfo) console.error(`[WhatsApp]    More info: ${moreInfo}`);
+
+        // Sandbox-specific guidance
+        if (code === 63016 || code === 63007) {
+            console.error(
+                `[WhatsApp] ⚠️  Sandbox session issue. The recipient must first send` +
+                ` "join <your-sandbox-keyword>" to ${from.replace("whatsapp:", "")} on WhatsApp.` +
+                ` Check your Twilio Console → Messaging → Try it out → WhatsApp.`
+            );
+        }
+        if (code === 21608 || code === 21211) {
+            console.error(`[WhatsApp] ⚠️  Invalid 'to' number: ${to}. Check the phone stored in the user profile.`);
+        }
+        if (code === 20003) {
+            console.error(`[WhatsApp] ⚠️  Authentication failed. Verify TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in .env`);
+        }
     }
 }

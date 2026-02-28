@@ -91,9 +91,15 @@ export const handleRazorpayWebhook = async (req, res) => {
 
                 // ─── Send WhatsApp invoice with PDF ─────────────────────────
                 const userPhone = order.user?.phone;
-                const medicineNames = order.items && order.items.length > 0
-                    ? order.items.map(item => item.medicine?.name || 'Medicine').join(', ')
-                    : 'your items';
+                const totalAmount = order.totalAmount || (paymentEntity.amount / 100);
+                const invoiceItems = (order.items || []).map(item => ({
+                    name:       item.medicine?.name  || 'Medicine',
+                    dosage:     item.dosage           || '—',
+                    quantity:   item.quantity         || 1,
+                    unitPrice:  item.medicine?.price  || 0,
+                    totalPrice: (item.medicine?.price || 0) * (item.quantity || 1),
+                }));
+                const medicineNames = invoiceItems.map(i => i.name).join(', ') || 'your items';
 
                 if (userPhone) {
                     sendPaymentInvoice(userPhone, {
@@ -103,7 +109,7 @@ export const handleRazorpayWebhook = async (req, res) => {
                         customerEmail: order.user?.email || '',
                         medicines: medicineNames,
                         totalItems: order.totalItems || 1,
-                        totalAmount: order.totalAmount || (paymentEntity.amount / 100),
+                        totalAmount,
                     }).catch(err => console.error('[WhatsApp] Invoice fire-and-forget error:', err));
                 } else {
                     console.log('[WhatsApp] No phone number on user — skipping invoice message.');
@@ -118,9 +124,8 @@ export const handleRazorpayWebhook = async (req, res) => {
                         orderId: order._id.toString(),
                         customerName: order.user?.name || 'Customer',
                         customerEmail: userEmail,
-                        medicines: medicineNames,
-                        totalItems: order.totalItems || 1,
-                        totalAmount: order.totalAmount || (paymentEntity.amount / 100),
+                        items: invoiceItems,
+                        totalAmount,
                     }).catch(err => console.error('[Email] Invoice fire-and-forget error:', err));
                 } else {
                     console.log('[Email] No email on user — skipping invoice email.');
@@ -265,11 +270,15 @@ export const verifyPayment = async (req, res) => {
             console.error('[Verify] Warehouse fulfillment error:', err.message)
         );
 
-        const medicineNames = order.items?.length
-            ? order.items.map(i => i.medicine?.name || 'Medicine').join(', ')
-            : 'your items';
-
         const totalAmount = order.totalAmount || (parseInt(req.body.amount) / 100) || 0;
+        const invoiceItems = (order.items || []).map(item => ({
+            name:       item.medicine?.name  || 'Medicine',
+            dosage:     item.dosage           || '—',
+            quantity:   item.quantity         || 1,
+            unitPrice:  item.medicine?.price  || 0,
+            totalPrice: (item.medicine?.price || 0) * (item.quantity || 1),
+        }));
+        const medicineNames = invoiceItems.map(i => i.name).join(', ') || 'your items';
 
         // Fire notifications (fire-and-forget)
         const userPhone = order.user?.phone;
@@ -292,8 +301,7 @@ export const verifyPayment = async (req, res) => {
                 orderId: order._id.toString(),
                 customerName: order.user?.name || 'Customer',
                 customerEmail: userEmail,
-                medicines: medicineNames,
-                totalItems: order.totalItems || 1,
+                items: invoiceItems,
                 totalAmount,
             }).catch(err => console.error('[Verify/Email]', err.message));
         }

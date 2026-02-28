@@ -152,8 +152,24 @@ const MessageBubble = ({ message }) => {
                             /* AI completed message: markdown rendering */
                             <MarkdownText text={message.text} />
                         ) : (
-                            /* User message: plain text */
-                            message.text
+                            /* User message: plain text (Filter out hidden injection) */
+                            (() => {
+                                const t = message.text || '';
+                                if (t.includes('The OCR extracted these medicines:')) {
+                                    const userPart = t.split('The OCR extracted')[0];
+                                    if (userPart.includes('I also asked: "')) {
+                                        return userPart.split('I also asked: "')[1].replace(/"\.\s*$/, '').trim() || '📎 Uploaded a prescription';
+                                    }
+                                    return '📎 Uploaded a prescription';
+                                }
+                                if (t.includes('I have selected my existing prescription from file')) {
+                                    if (t.includes('I also asked: "')) {
+                                        return t.split('I also asked: "')[1].split('". The prescription contains:')[0].trim() || '📎 Selected existing prescription';
+                                    }
+                                    return '📎 Selected existing prescription';
+                                }
+                                return t;
+                            })()
                         )}
 
                         {/* Subtle shimmer on AI messages */}

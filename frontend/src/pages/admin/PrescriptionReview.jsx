@@ -238,7 +238,7 @@ const PrescriptionReview = () => {
             </div>
 
             {/* Search & Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 bg-card border border-black/5 dark:border-white/5 p-4 rounded-xl shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-4 bg-glass border border-black/5 dark:border-white/10 p-5 rounded-2xl shadow-xl backdrop-blur-md">
                 <div className="relative flex-grow">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-text-muted" />
@@ -248,7 +248,7 @@ const PrescriptionReview = () => {
                         placeholder="Search by patient or medicine…"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text transition-all"
+                        className="pl-10 pr-4 py-2.5 w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text transition-all"
                     />
                 </div>
                 <div className="relative min-w-[180px]">
@@ -258,7 +258,7 @@ const PrescriptionReview = () => {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="pl-10 pr-8 py-2 w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text transition-all"
+                        className="pl-10 pr-8 py-2.5 w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text transition-all"
                     >
                         <option value="all">All Prescriptions</option>
                         <option value="pending">Pending Review</option>
@@ -269,8 +269,8 @@ const PrescriptionReview = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* ── Left: List ───────────────────────────────────── */}
-                <div className="lg:col-span-1 bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden flex flex-col max-h-[680px]">
-                    <div className="px-5 py-4 border-b border-black/5 dark:border-white/5 shrink-0">
+                <div className="lg:col-span-1 bg-glass border border-black/5 dark:border-white/10 rounded-2xl shadow-xl backdrop-blur-md overflow-hidden flex flex-col max-h-[680px]">
+                    <div className="px-5 py-5 border-b border-black/5 dark:border-white/10 shrink-0 bg-black/[0.02] dark:bg-white/[0.02]">
                         <h3 className="font-semibold text-text text-sm">
                             Prescriptions ({filteredPrescriptions.length})
                         </h3>
@@ -280,10 +280,10 @@ const PrescriptionReview = () => {
                             <button
                                 key={rx._id}
                                 onClick={() => setSelected(rx)}
-                                className={`w-full text-left px-5 py-4 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors
+                                className={`w-full text-left px-5 py-4 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-all duration-300
                                     ${selected?._id === rx._id
-                                        ? 'bg-primary/5 border-l-2 border-primary'
-                                        : 'border-l-2 border-transparent'
+                                        ? 'bg-primary/10 border-l-4 border-primary'
+                                        : 'border-l-4 border-transparent'
                                     }`}
                             >
                                 <div className="flex justify-between items-start gap-2">
@@ -325,11 +325,11 @@ const PrescriptionReview = () => {
                 </div>
 
                 {/* ── Right: Detail Panel ──────────────────────────── */}
-                <div className="lg:col-span-2 space-y-5 overflow-y-auto max-h-[680px] pr-1">
+                <div className="lg:col-span-2 space-y-5 overflow-y-auto max-h-[680px] pr-2 custom-scrollbar">
                     {selected ? (
-                        <>
+                        <div className="bg-glass border border-black/5 dark:border-white/10 rounded-2xl shadow-xl backdrop-blur-md p-6 h-full flex flex-col">
                             {/* Header row */}
-                            <div className="flex items-center justify-between flex-wrap gap-3 sticky top-0 bg-bg pt-1 pb-2 z-10">
+                            <div className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-black/5 dark:border-white/10 shrink-0">
                                 <div>
                                     <h2 className="font-semibold text-text text-base">
                                         {selected.user?.name || 'Unknown Patient'}
@@ -344,16 +344,16 @@ const PrescriptionReview = () => {
                                     </p>
                                 </div>
                                 {!selected.approved && (
-                                    <div className="flex gap-2 shrink-0">
+                                    <div className="flex gap-3 shrink-0">
                                         <button
                                             onClick={() => triggerModal(selected._id, false)}
-                                            className="flex items-center gap-1.5 px-3 py-2 bg-card border border-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium"
+                                            className="flex items-center gap-2 px-4 py-2 border border-red-500/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/10 transition-colors text-sm font-semibold"
                                         >
                                             <X className="w-4 h-4" /> Reject
                                         </button>
                                         <button
                                             onClick={() => triggerModal(selected._id, true)}
-                                            className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:shadow-green-500/25 transition-all duration-300 text-sm font-semibold"
                                         >
                                             <Check className="w-4 h-4" /> Approve
                                         </button>
@@ -370,34 +370,36 @@ const PrescriptionReview = () => {
                             )}
 
                             {/* Patient info row */}
-                            <div className="flex flex-wrap gap-3 text-xs">
-                                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card border border-black/5 dark:border-white/5 text-text-muted">
-                                    <User className="w-3.5 h-3.5" /> {selected.user?.name || '—'}
+                            <div className="flex flex-wrap gap-3 text-sm py-4">
+                                <span className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-text-muted font-medium">
+                                    <User className="w-4 h-4" /> {selected.user?.name || '—'}
                                 </span>
                                 {selected.user?.email && (
-                                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card border border-black/5 dark:border-white/5 text-text-muted">
+                                    <span className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-text-muted font-medium">
                                         {selected.user.email}
                                     </span>
                                 )}
                             </div>
 
                             {/* Upload entries — newest first, first one open by default */}
-                            {selected.prescriptions && selected.prescriptions.length > 0 ? (
-                                <div className="space-y-3">
-                                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                                        Upload History ({selected.prescriptions.length} upload{selected.prescriptions.length > 1 ? 's' : ''})
-                                    </p>
-                                    {[...selected.prescriptions].reverse().map((entry, idx) => (
-                                        <UploadBlock key={idx} entry={entry} defaultOpen={idx === 0} />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-32 gap-2 text-text-muted border border-dashed border-black/10 dark:border-white/10 rounded-xl">
-                                    <ImageOff className="w-8 h-8 opacity-30" />
-                                    <p className="text-sm">No prescription uploads found.</p>
-                                </div>
-                            )}
-                        </>
+                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                                {selected.prescriptions && selected.prescriptions.length > 0 ? (
+                                    <>
+                                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                                            Upload History ({selected.prescriptions.length} upload{selected.prescriptions.length > 1 ? 's' : ''})
+                                        </p>
+                                        {[...selected.prescriptions].reverse().map((entry, idx) => (
+                                            <UploadBlock key={idx} entry={entry} defaultOpen={idx === 0} />
+                                        ))}
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-40 gap-3 text-text-muted border-2 border-dashed border-black/10 dark:border-white/10 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02]">
+                                        <ImageOff className="w-10 h-10 opacity-30" />
+                                        <p className="text-sm font-medium">No prescription uploads found.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     ) : (
                         <div className="flex items-center justify-center h-64 text-text-muted">
                             Select a prescription to review.

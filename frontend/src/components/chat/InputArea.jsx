@@ -193,15 +193,17 @@ const InputArea = () => {
     }, [setActiveSubtitle, setAiStatus, startListening, playAudioBlob]);
 
     // ─── Send Message Logic ─────────────────────────────────────
-    const processSend = async (userText, isVoiceInput = false) => {
+    const processSend = async (userText, isVoiceInput = false, imageUrl = null, skipLocalDisplay = false) => {
         if (!userText.trim()) return;
 
-        addMessage({ id: Date.now(), role: 'user', text: userText });
+        if (!skipLocalDisplay) {
+            addMessage({ id: Date.now(), role: 'user', text: userText, imagePreview: imageUrl });
+        }
         setAiStatus(AI_STATUS.PROCESSING);
         setTyping(true);
 
         try {
-            const result = await sendChatMessage(userText, currentSessionId, selectedLanguage);
+            const result = await sendChatMessage(userText, currentSessionId, selectedLanguage, imageUrl);
             setTyping(false);
 
             if (result.sessionId && result.sessionId !== currentSessionId) {
@@ -350,11 +352,17 @@ const InputArea = () => {
                 prescriptionData: existingRxToUse,
             });
 
-            const agentTriggerMessage = userText
-                ? `I have selected my existing prescription from file, and I also asked: "${userText}". Please validate my prescription and answer my question.`
-                : `I have selected my prescription from file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
+            const meds = existingRxToUse.medications || [];
+            const medsString = meds.length > 0
+                ? meds.map(m => `${m.name || m.medicine} (Qty: ${m.quantity || '1'}, Dosage: ${m.dosage || 'not specified'})`).join(', ')
+                : "unknown medicines";
 
-            await processSend(agentTriggerMessage);
+            const agentTriggerMessage = userText
+                ? `I have selected my existing prescription from file, and I also asked: "${userText}". The prescription contains: ${medsString}. Please validate it and assist me in ordering.`
+                : `I have selected my existing prescription from file. It contains: ${medsString}. Please help me order these and validate them using the check_prescription_on_file tool.`;
+
+            // skip local display because we manually added a cleaner UI message above
+            await processSend(agentTriggerMessage, false, previewToUse, true);
 
         } else if (fileToUpload) {
             setAttachedFile(null);
@@ -391,7 +399,7 @@ const InputArea = () => {
 
                     // Still send the user's text to the AI if they typed something
                     if (userText) {
-                        await processSend(userText);
+                        await processSend(userText, false, result.imageUrl, true); // True = skip local display, just DB
                     }
                     return;
                 }
@@ -415,12 +423,17 @@ const InputArea = () => {
                     },
                 });
 
+                const medsString = meds.length > 0
+                    ? meds.map(m => `${m.medi_name || m.name || m.medicine} (Qty: ${m.total_quantity || m.quantity || '1'}, Dosage: ${m.dosage || 'not specified'})`).join(', ')
+                    : "unknown medicines";
+
                 // Send the AI trigger, merging the user's custom query if they typed one
                 const agentTriggerMessage = userText
-                    ? `I have uploaded my prescription to my file, and I also asked: "${userText}". Please validate my prescription and answer my question.`
-                    : `I have just uploaded my prescription to my file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
+                    ? `I have uploaded my prescription to my file, and I also asked: "${userText}". The OCR extracted these medicines: ${medsString}. Please validate the prescription and help me order them.`
+                    : `I have just uploaded my prescription to my file. The OCR extracted the following medicines: ${medsString}. Please help me order them and validate the prescription using check_prescription_on_file tool.`;
 
-                await processSend(agentTriggerMessage);
+                // skip local display because we manually added the preview UI message line 368
+                await processSend(agentTriggerMessage, false, result.imageUrl, true);
 
             } catch (err) {
                 setTyping(false);
@@ -725,8 +738,11 @@ const InputArea = () => {
                             recordId: result.recordId,
                         },
                     });
+                    const medsString = meds.length > 0
+                        ? meds.map(m => `${m.medi_name || m.name || m.medicine} (Qty: ${m.total_quantity || m.quantity || '1'}, Dosage: ${m.dosage || 'not specified'})`).join(', ')
+                        : "unknown medicines";
 
-                    const agentMessage = `I have just captured and uploaded my prescription to my file. Please validate it against my current order by triggering the check_prescription_on_file tool.`;
+                    const agentMessage = `I have just captured and uploaded my prescription to my file. The OCR extracted these medicines: ${medsString}. Please help me order them and validate the prescription using check_prescription_on_file tool.`;
                     processSend(agentMessage);
                 }}
             />

@@ -4,6 +4,7 @@ const messageSchema = new mongoose.Schema(
   {
     role: { type: String, enum: ['user', 'ai'], required: true },
     content: { type: String, required: true },
+    imageUrl: { type: String, default: null },
   },
   { _id: false }
 );

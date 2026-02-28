@@ -41,6 +41,7 @@ const ChatSidebar = ({ onClose }) => {
                     id: i,
                     role: msg.role,
                     text: msg.content,
+                    imagePreview: msg.imageUrl || null,
                     tools: [],
                     structured: msg.role === 'ai' ? parseStructuredOutput(msg.content) : null,
                 }));
