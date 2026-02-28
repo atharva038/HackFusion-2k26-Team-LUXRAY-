@@ -30,7 +30,7 @@ const medicineSchema = new mongoose.Schema(
 
     unitType: {
       type: String,
-      enum: ["tablet", "strip", "bottle", "injection"],
+      enum: ["tablet", "strip", "bottle", "injection", "tube", "box", "capsule"],
       required: true,
     },
 
