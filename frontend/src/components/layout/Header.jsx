@@ -1,10 +1,13 @@
 import React from 'react';
-import { Stethoscope, Menu } from 'lucide-react';
+import { Stethoscope, Menu, Sun, Moon, Monitor } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LanguageSelector from '../chat/LanguageSelector';
 import UserDropdown from '../shared/UserDropdown';
+import useAppStore from '../../store/useAppStore';
 
 const Header = ({ onOpenAllergies, onToggleSidebar }) => {
+    const { theme, toggleTheme } = useAppStore();
+
     return (
         <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
             <div className="flex items-center gap-3">
@@ -38,7 +41,18 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
+                <Link to="/showcase" className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd] hover:bg-[#e0f2fe] rounded-full transition-colors whitespace-nowrap">
+                    Technical Showcase
+                </Link>
+                <button
+                    onClick={toggleTheme}
+                    className="p-1.5 sm:p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-muted hover:text-text shrink-0"
+                    aria-label="Toggle Theme"
+                    title={`Current theme: ${theme}`}
+                >
+                    {theme === 'dark' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : theme === 'light' ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />}
+                </button>
                 <LanguageSelector />
                 <UserDropdown onOpenAllergies={onOpenAllergies} />
             </div>

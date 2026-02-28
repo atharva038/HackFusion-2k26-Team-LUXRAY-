@@ -5,6 +5,7 @@ import { appendSessionMessages } from "../services/cache.service.js";
 import { sendPaymentInvoice } from "../services/whatsapp.service.js";
 import { sendInvoiceWithPdf } from "../agent/service/email.service.agent.js";
 import { isSocketInitialized, getIO, emitToUser } from "../config/socket.js";
+import { triggerWarehouseFulfillment } from "../services/warehouse.fulfillment.service.js";
 
 /** Emit payment-confirmed socket events to both the customer and all admins */
 function emitPaymentConfirmed(order) {
@@ -75,6 +76,12 @@ export const handleRazorpayWebhook = async (req, res) => {
                 emitPaymentConfirmed(order);
 
                 console.log(`[Webhook] Payment successful for order ${order._id}, Invoice: ${invoiceId}`);
+
+                // ─── Auto Warehouse Fulfillment (fire-and-forget) ────────────
+                // Triggers mock webhook → auto-dispatch → stock deduction → email
+                triggerWarehouseFulfillment(order).catch(err =>
+                    console.error('[Webhook] Warehouse fulfillment error:', err.message)
+                );
 
                 // ─── Send WhatsApp invoice with PDF ─────────────────────────
                 const userPhone = order.user?.phone;
@@ -245,6 +252,12 @@ export const verifyPayment = async (req, res) => {
         emitPaymentConfirmed(order);
 
         console.log(`[Verify] Payment confirmed for order ${order._id}, Invoice: ${invoiceId}`);
+
+        // ─── Auto Warehouse Fulfillment (fire-and-forget) ────────────────────
+        // Triggers mock webhook → auto-dispatch → stock deduction → email
+        triggerWarehouseFulfillment(order).catch(err =>
+            console.error('[Verify] Warehouse fulfillment error:', err.message)
+        );
 
         const medicineNames = order.items?.length
             ? order.items.map(i => i.medicine?.name || 'Medicine').join(', ')

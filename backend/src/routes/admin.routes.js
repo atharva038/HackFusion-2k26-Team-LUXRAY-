@@ -22,6 +22,12 @@ router.get('/stats', adminController.getDashboardStats);
 /** GET  /api/admin/inventory — List all medicines */
 router.get('/inventory', adminController.getInventory);
 
+/** POST /api/admin/medicines — Add a brand-new medicine */
+router.post('/medicines', adminController.addMedicine);
+
+/** DELETE /api/admin/medicines/:id — Remove a medicine permanently */
+router.delete('/medicines/:id', adminController.deleteMedicine);
+
 /** PUT  /api/admin/inventory/:id — Update medicine fields */
 router.put('/inventory/:id', adminController.updateInventory);
 
