@@ -7,7 +7,6 @@ import UserDropdown from '../shared/UserDropdown';
 const Header = ({ onOpenAllergies, onToggleSidebar }) => {
     return (
         <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
-            {/* Left Box: Menu Toggle & Logo */}
             <div className="flex items-center gap-3">
                 {onToggleSidebar && (
                     <button
@@ -19,11 +18,11 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
                     </button>
                 )}
                 <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-soft shrink-0">
-                        <Stethoscope className="w-5 h-5" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center shadow-soft shrink-0 overflow-hidden border border-black/5 dark:border-white/5">
+                        <img src="/logo.png" alt="MediSage Logo" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                        <h1 className="font-semibold text-lg leading-tight tracking-tight text-text">Cura AI</h1>
+                        <h1 className="font-semibold text-lg leading-tight tracking-tight text-text">MediSage</h1>
                         <p className="text-[10px] sm:text-xs text-text-muted hidden sm:block">Autonomous Pharmacy Assistant</p>
                     </div>
                 </Link>

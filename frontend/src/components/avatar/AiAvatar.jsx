@@ -53,11 +53,11 @@ const AiAvatar = () => {
                     />
 
                     {/* Core Orb */}
-                    <div className={`relative z-10 w-full h-full rounded-full flex items-center justify-center shadow-lg transition-colors duration-500 ${config.color}`}>
+                    <div className={`relative z-10 w-full h-full rounded-full flex items-center justify-center shadow-lg overflow-hidden transition-colors duration-500 ${config.color}`}>
                         {aiStatus === AI_STATUS.PROCESSING ? (
                             <div className="w-5 h-5 border-2 border-white/20 border-t-white/90 rounded-full animate-spin" />
                         ) : (
-                            <BrainCircuit className="w-5 h-5 text-white/90" />
+                            <img src="/avatar.png" alt="AI Avatar" className="w-full h-full object-cover scale-110" />
                         )}
                     </div>
 
@@ -84,23 +84,6 @@ const AiAvatar = () => {
 
             {/* Floating Subtitle / Transcript */}
             <div className="absolute top-20 max-w-md w-full px-4 pointer-events-none flex flex-col items-center">
-                <AnimatePresence mode="wait">
-                    {displayedSubtitle && (
-                        <motion.div
-                            key={displayedSubtitle}
-                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, filter: 'blur(4px)' }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-black/80 dark:bg-black/90 text-white/95 px-5 py-3 rounded-2xl w-full text-center font-medium shadow-lg border border-white/10"
-                        >
-                            <p className="text-[14px] leading-snug drop-shadow-md">
-                                {displayedSubtitle}
-                            </p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
                 <AnimatePresence>
                     {isListening && liveTranscript && !displayedSubtitle && (
                         <motion.div
