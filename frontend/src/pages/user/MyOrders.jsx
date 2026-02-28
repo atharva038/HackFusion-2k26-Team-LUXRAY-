@@ -13,13 +13,13 @@ import { downloadInvoicePdf } from '../../utils/generateInvoice';
 const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
         case 'paid':
-        case 'approved':   return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
+        case 'approved': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
         case 'dispatched': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
-        case 'rejected':   return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
+        case 'rejected': return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
         case 'awaiting_payment': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
         case 'awaiting_prescription': return 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20';
         case 'pending':
-        default:           return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
+        default: return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
     }
 };
 
@@ -28,7 +28,7 @@ const buildReorderQuery = (order) => {
     const itemLines = order.items
         .map((it) => {
             const name = it.medicine?.name || 'Unknown Medicine';
-            const qty  = it.quantity;
+            const qty = it.quantity;
             const dose = it.dosage ? `, dosage: "${it.dosage}"` : '';
             return `- ${name}, quantity: ${qty}${dose}`;
         })
@@ -178,18 +178,18 @@ const OrderCard = ({ order, reorderState, onReorder }) => {
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 const MyOrders = () => {
-    const [orders,     setOrders]     = useState([]);
+    const [orders, setOrders] = useState([]);
     const [pagination, setPagination] = useState(null);
-    const [loading,    setLoading]    = useState(true);
-    const [error,      setError]      = useState(null);
-    const [page,       setPage]       = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
 
     // { [orderId]: { status: 'idle'|'loading'|'success'|'error', message: string, razorpayOrderId?: string } }
     const [reorderStates, setReorderStates] = useState({});
 
-    const navigate   = useNavigate();
-    const sessionId  = useAppStore((s) => s.sessionId);
-    const LIMIT      = 10;
+    const navigate = useNavigate();
+    const sessionId = useAppStore((s) => s.sessionId);
+    const LIMIT = 10;
 
     const load = useCallback((p) => {
         setLoading(true);
@@ -208,13 +208,19 @@ const MyOrders = () => {
     // ── Core reorder: build query → send to chat agent → show result ──────
     const handleReorder = useCallback(async (order) => {
         const id = order._id;
+        const activeSessionId = useAppStore.getState().currentSessionId;
 
         // Mark as loading
         setReorderStates(prev => ({ ...prev, [id]: { status: 'loading', message: '' } }));
 
         try {
             const query = buildReorderQuery(order);
-            const resp  = await sendChatMessage(query, sessionId);
+            const resp = await sendChatMessage(query, activeSessionId);
+
+            // Update session if the backend generated a new one
+            if (resp && resp.sessionId && resp.sessionId !== activeSessionId) {
+                useAppStore.getState().setCurrentSessionId(resp.sessionId);
+            }
 
             // resp.text is the agent's final reply
             const replyText = resp?.text || resp?.message || 'Order placed successfully!';
@@ -252,33 +258,41 @@ const MyOrders = () => {
                     order_id: razorpayOrderId,
                     handler: async function (response) {
                         try {
-                            if (import.meta.env.DEV) {
-                                await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payment/webhook`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        event: "payment.captured",
-                                        payload: {
-                                            payment: {
-                                                entity: {
-                                                    order_id: razorpayOrderId,
-                                                    id: response.razorpay_payment_id || "pay_mock123",
-                                                    amount: order.totalAmount ? Math.round(order.totalAmount * 100) : 0
-                                                }
-                                            }
-                                        }
-                                    })
-                                });
+                            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                            const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+                            const token = localStorage.getItem('pharmacy_token');
+
+                            // Ensure synchronous backend verification works in Production without relying strictly on webhook transit time
+                            const verifyRes = await fetch(`${baseUrl}/api/payment/verify`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: razorpayOrderId,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    amount: order.totalAmount,
+                                }),
+                            });
+
+                            if (verifyRes.ok) {
+                                setReorderStates(prev => ({
+                                    ...prev,
+                                    [id]: { status: 'success', message: 'Payment Successful! Reorder placed and paid.' }
+                                }));
+                                setTimeout(() => window.location.reload(), 1500);
+                            } else {
+                                throw new Error(await verifyRes.text());
                             }
                         } catch (e) {
-                            console.error("Webhook sim failed", e);
+                            console.error("Payment verification failed", e);
+                            setReorderStates(prev => ({
+                                ...prev,
+                                [id]: { status: 'error', message: 'Payment captured but verification failed. Please check with support.' }
+                            }));
                         }
-                        
-                        setReorderStates(prev => ({
-                            ...prev,
-                            [id]: { status: 'success', message: 'Payment Successful! Reorder placed and paid.' }
-                        }));
-                        setTimeout(() => window.location.reload(), 1500);
                     },
                     modal: {
                         ondismiss: function () {
@@ -296,7 +310,7 @@ const MyOrders = () => {
                 setReorderStates(prev => ({
                     ...prev,
                     [id]: {
-                        status:  failed ? 'error' : 'success',
+                        status: failed ? 'error' : 'success',
                         message: replyText,
                         razorpayOrderId
                     },
@@ -306,7 +320,7 @@ const MyOrders = () => {
             setReorderStates(prev => ({
                 ...prev,
                 [id]: {
-                    status:  'error',
+                    status: 'error',
                     message: err.message || 'Failed to place reorder. Please try again.',
                 },
             }));
