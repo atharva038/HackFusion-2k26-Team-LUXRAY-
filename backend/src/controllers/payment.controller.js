@@ -163,3 +163,124 @@ export const checkPaymentStatus = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch status" });
     }
 };
+
+/**
+ * Client-side payment verification (called directly from frontend after Razorpay handler fires).
+ * This is the PRIMARY confirmation path in production where webhooks may not be configured.
+ * POST /api/payment/verify
+ * Body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+ */
+export const verifyPayment = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ error: "Missing payment verification fields" });
+        }
+
+        // Verify Razorpay signature: HMAC-SHA256 of "orderId|paymentId"
+        const secret = process.env.RAZORPAY_KEY_SECRET;
+        if (secret) {
+            const expectedSig = crypto
+                .createHmac("sha256", secret)
+                .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+                .digest("hex");
+
+            if (expectedSig !== razorpay_signature) {
+                return res.status(400).json({ error: "Payment verification failed — invalid signature" });
+            }
+        } else {
+            console.warn("[Verify] RAZORPAY_KEY_SECRET not set — skipping signature check");
+        }
+
+        // Find and update the order
+        const order = await Order.findOne({ razorpayOrderId: razorpay_order_id })
+            .populate('items.medicine')
+            .populate('user', 'phone name email');
+
+        if (!order) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        // Idempotent — skip if already paid
+        if (order.paymentStatus === "paid") {
+            return res.json({ success: true, invoiceId: order.invoiceId, alreadyPaid: true });
+        }
+
+        const invoiceId = `INV-${Math.floor(Date.now() / 1000).toString().substring(2)}${Math.floor(Math.random() * 1000)}`;
+
+        order.paymentStatus = "paid";
+        order.status = "paid";
+        order.razorpayPaymentId = razorpay_payment_id;
+        order.razorpaySignature = razorpay_signature;
+        order.invoiceId = invoiceId;
+        await order.save();
+
+        console.log(`[Verify] Payment confirmed for order ${order._id}, Invoice: ${invoiceId}`);
+
+        const medicineNames = order.items?.length
+            ? order.items.map(i => i.medicine?.name || 'Medicine').join(', ')
+            : 'your items';
+
+        const totalAmount = order.totalAmount || (parseInt(req.body.amount) / 100) || 0;
+
+        // Fire notifications (fire-and-forget)
+        const userPhone = order.user?.phone;
+        if (userPhone) {
+            sendPaymentInvoice(userPhone, {
+                invoiceId,
+                orderId: order._id.toString(),
+                customerName: order.user?.name || 'Customer',
+                customerEmail: order.user?.email || '',
+                medicines: medicineNames,
+                totalItems: order.totalItems || 1,
+                totalAmount,
+            }).catch(err => console.error('[Verify/WhatsApp]', err.message));
+        }
+
+        const userEmail = order.user?.email;
+        if (userEmail) {
+            sendInvoiceWithPdf(userEmail, {
+                invoiceId,
+                orderId: order._id.toString(),
+                customerName: order.user?.name || 'Customer',
+                customerEmail: userEmail,
+                medicines: medicineNames,
+                totalItems: order.totalItems || 1,
+                totalAmount,
+            }).catch(err => console.error('[Verify/Email]', err.message));
+        }
+
+        // Inject confirmation into chat session
+        try {
+            const latestSession = await ChatSession.findOne({ user: order.user }).sort({ updatedAt: -1 });
+            if (latestSession) {
+                const successMessage = {
+                    role: 'ai',
+                    content: `**Payment Confirmed!**\n\nYour payment has been successfully processed. Here is your invoice for this transaction.\n\nInvoice ID: ${invoiceId}\nOrder ID: ${order._id}\nAmount Paid: ₹${totalAmount}\nStatus: paid\nItems: ${medicineNames}`
+                };
+                appendSessionMessages(latestSession._id.toString(), [successMessage]);
+
+                const sessionDoc = await ChatSession.findById(latestSession._id);
+                if (sessionDoc) {
+                    for (let i = sessionDoc.messages.length - 1; i >= 0; i--) {
+                        const msg = sessionDoc.messages[i];
+                        if (msg.role === 'ai' && (msg.content.includes(order._id.toString()) || msg.content.includes(razorpay_order_id))) {
+                            msg.content = msg.content.replace(/Status:\s*awaiting_payment/gi, 'Status: paid');
+                            break;
+                        }
+                    }
+                    sessionDoc.messages.push(successMessage);
+                    await sessionDoc.save();
+                }
+            }
+        } catch (chatErr) {
+            console.error("[Verify] Failed to inject into chat:", chatErr.message);
+        }
+
+        return res.json({ success: true, invoiceId });
+    } catch (error) {
+        console.error("[Verify Error]:", error);
+        res.status(500).json({ error: "Payment verification failed" });
+    }
+};
