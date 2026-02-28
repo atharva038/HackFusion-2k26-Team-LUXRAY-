@@ -118,6 +118,55 @@ const ProjectShowcase = () => {
                 </div>
             </section>
 
+            {/* 2.5 Pharmacist AI Agent Showcase */}
+            <section className="py-20 px-6 bg-slate-900 border-y border-slate-800 text-white">
+                <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+                    {/* Video Player */}
+                    <div className="w-full lg:w-1/2 flex-shrink-0 relative rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl shadow-primary/20">
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none z-10" />
+                        <video
+                            src="https://res.cloudinary.com/dgqwcgjfy/video/upload/v1772255300/hackfusion/showcase/pharma_ai_agent_demo.mp4"
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                            className="w-full h-auto object-cover relative z-0"
+                        />
+                        <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                            <Bot className="w-4 h-4 text-emerald-400" />
+                            <span className="text-xs font-semibold text-white tracking-wide">Live Agent Demo</span>
+                        </div>
+                    </div>
+
+                    {/* Feature Description */}
+                    <div className="w-full lg:w-1/2 space-y-6">
+                        <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-widest uppercase mb-2">
+                            Admin Subsystem
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                            Autonomous Pharmacist Agent
+                        </h2>
+                        <p className="text-lg text-slate-300 leading-relaxed">
+                            The system is not just for customers. Administrators and pharmacists have access to their own dedicated AI agent capable of full backend manipulation via natural language.
+                        </p>
+
+                        <ul className="space-y-4 mt-8">
+                            {[
+                                "Accept or Reject pending orders instantly.",
+                                "View and filter pending user orders accurately.",
+                                "Manage Inventory: dynamically fill up or reduce stock levels.",
+                                "Order on behalf of the user when requested in an emergency."
+                            ].map((item, idx) => (
+                                <li key={idx} className="flex items-start gap-3">
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+                                    <span className="text-slate-200 font-medium">{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
             {/* 3. Architecture Overview & 9. Demo Flow Visualization */}
             <section className="py-20 px-6 max-w-6xl mx-auto">
                 <h2 className="text-3xl font-bold mb-8 text-center text-slate-900">System Architecture & Flow</h2>
