@@ -22,7 +22,7 @@ export async function addTransaction({
       return { error: "Invalid medicineId" };
     }
 
-    let status = "pending";
+    let status = "awaiting_payment";
 
     if (prescriptionRequired && !prescriptionProof) {
       status = "awaiting_prescription";

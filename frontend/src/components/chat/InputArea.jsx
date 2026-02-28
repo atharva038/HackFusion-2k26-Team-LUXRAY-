@@ -244,7 +244,9 @@ const InputArea = () => {
                     orderId: o.orderId || o._id || 'N/A',
                     medicine: o.medicine || o.items?.map(i => i.name || i.medicine).join(', ') || 'N/A',
                     status: o.status || 'Confirmed',
-                    eta: o.eta || 'Processing'
+                    eta: o.eta || 'Processing',
+                    razorpayOrderId: o.razorpayOrderId || result.razorpayOrderId,
+                    amount: o.totalAmount || o.amount || result.amount
                 };
             }
 

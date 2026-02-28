@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { generateInvoicePdf } from "../../services/invoicePdf.service.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -141,6 +142,77 @@ export const sendLowStockAlert = async (recipientEmails, medicines) => {
     return { success: true };
   } catch (error) {
     console.error("Low stock alert email error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Send a payment-confirmed email WITH a PDF invoice attached.
+ *
+ * @param {string} toEmail       - Recipient email
+ * @param {object} invoiceData   - Data for PDF generation
+ */
+export const sendInvoiceWithPdf = async (toEmail, invoiceData) => {
+  if (!toEmail) {
+    console.warn("[Email] sendInvoiceWithPdf: no recipient email.");
+    return { success: false, error: "No recipient email" };
+  }
+
+  let pdfBuffer;
+  try {
+    pdfBuffer = await generateInvoicePdf(invoiceData);
+  } catch (err) {
+    console.error("[Email] PDF generation failed:", err.message);
+    return { success: false, error: "PDF generation failed" };
+  }
+
+  const { invoiceId, orderId, customerName, medicines, totalAmount } = invoiceData;
+  const now = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+
+  const mailOptions = {
+    from: `"MediAI Pharmacy" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: `✅ Payment Confirmed — Invoice ${invoiceId}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 560px; margin: auto;">
+        <div style="background: #2563EB; padding: 24px 30px; border-radius: 8px 8px 0 0;">
+          <h2 style="color: #fff; margin: 0;">💊 MediAI Pharmacy</h2>
+          <p style="color: #BFDBFE; margin: 4px 0 0;">Payment Confirmation</p>
+        </div>
+        <div style="background: #F8FAFC; padding: 24px 30px; border: 1px solid #E2E8F0;">
+          <p>Dear <strong>${customerName || "Customer"}</strong>,</p>
+          <p>Your payment has been successfully received. Please find your invoice attached as a PDF.</p>
+
+          <table style="width:100%; border-collapse:collapse; margin: 16px 0;">
+            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Invoice ID</td><td style="font-weight:bold;">${invoiceId}</td></tr>
+            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Order ID</td><td>${orderId}</td></tr>
+            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Medicines</td><td>${medicines}</td></tr>
+            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Amount Paid</td><td style="font-weight:bold; color:#2563EB;">₹${totalAmount}</td></tr>
+            <tr><td style="padding:8px 0; color:#64748B; font-size:13px;">Date & Time</td><td>${now}</td></tr>
+          </table>
+
+          <p style="font-size:13px; color:#64748B;">Your order is now being processed. You will be notified when it is dispatched.</p>
+        </div>
+        <div style="padding: 14px 30px; background:#F1F5F9; border: 1px solid #E2E8F0; border-top:0; border-radius: 0 0 8px 8px; font-size:11px; color:#94A3B8;">
+          This is an automated email. Please do not reply. · MediAI Pharmacy · HackFusion 2k26
+        </div>
+      </div>
+    `,
+    attachments: [
+      {
+        filename: `Invoice-${invoiceId}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`[Email] ✅ Invoice email sent to ${toEmail} with PDF attachment`);
+    return { success: true };
+  } catch (error) {
+    console.error("[Email] ❌ Invoice email error:", error.message);
     return { success: false, error: error.message };
   }
 };

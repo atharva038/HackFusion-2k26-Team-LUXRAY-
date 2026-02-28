@@ -146,6 +146,9 @@ function detectOrderSummary(text) {
     const total = get('total') || get('amount');
     const customer = get('customer');
 
+    // Extracted razorpay fields if provided by agent 
+    const razorpayOrderId = get('razorpay id') || get('razorpayorderid') || get('payment id');
+
     if (!orderId) return null;
 
     return {
@@ -156,6 +159,8 @@ function detectOrderSummary(text) {
         items,
         total,
         customer,
+        razorpayOrderId,
+        amount: total ? parseFloat(total.replace(/[^0-9.]/g, '')) : 0
     };
 }
 
@@ -194,6 +199,38 @@ function detectRefillList(text) {
     };
 }
 
+/**
+ * Detect an invoice summary block.
+ * Matches patterns from the webhook injection like:
+ *   "Invoice ID: ... / Amount Paid: ... / Order ID: ..."
+ */
+function detectInvoiceSummary(text) {
+    const hasInvoiceId = /invoice id[:\s]/i.test(text);
+    const hasAmountPaid = /amount paid[:\s]/i.test(text);
+    const hasOrderId = /order id[:\s]/i.test(text) || /orderid[:\s]/i.test(text);
+
+    if (!hasInvoiceId || !hasAmountPaid || !hasOrderId) return null;
+
+    const get = (key) => {
+        const m = text.match(new RegExp(`${key}[:\\s]+([^\\n|,]+)`, 'i'));
+        return m ? m[1].trim() : '';
+    };
+
+    const invoiceId = get('invoice id');
+    const orderId = get('order id') || get('orderid');
+    const amountPaid = get('amount paid');
+    const items = get('items');
+
+    return {
+        type: 'invoice_summary',
+        title: 'Invoice',
+        invoiceId,
+        orderId,
+        amountPaid,
+        items
+    };
+}
+
 // ─── Main exported parser ────────────────────────────────────────────────────
 
 /**
@@ -206,6 +243,7 @@ export function parseStructuredOutput(text) {
     if (!text || typeof text !== 'string') return null;
 
     return (
+        detectInvoiceSummary(text) ||
         detectOrderList(text) ||
         detectOrderSummary(text) ||
         detectMedicineList(text) ||

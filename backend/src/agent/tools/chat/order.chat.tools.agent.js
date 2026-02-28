@@ -151,8 +151,8 @@ export const order = tool({
                       Array.isArray(labelResult[field])
                         ? labelResult[field]
                         : labelResult[field]
-                        ? [labelResult[field]]
-                        : []
+                          ? [labelResult[field]]
+                          : []
                     )
                     .join(" ")
                     .toLowerCase();
@@ -227,6 +227,7 @@ export const order = tool({
 
       return `✅ Order placed successfully
 
+Order ID: ${result.orderId}
 Medicine: ${medicine.name}
 Quantity: ${quantity}
 Total Price: €${totalPrice}
