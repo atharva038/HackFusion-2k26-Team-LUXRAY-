@@ -48,12 +48,16 @@ const Orders = () => {
 
         // Broadcast sent to all admins whenever ANY order status changes
         const handleAdminOrderUpdate = (data) => {
-            patchOrder(data.orderId, {
+            const patch = {
                 status: data.status,
                 rejectionReason: data.rejectionReason,
                 approvedBy: data.approvedBy,
                 totalAmount: data.totalAmount,
-            });
+            };
+            // Carry through payment fields when order is confirmed paid
+            if (data.paymentStatus) patch.paymentStatus = data.paymentStatus;
+            if (data.invoiceId)     patch.invoiceId     = data.invoiceId;
+            patchOrder(data.orderId, patch);
             // Clear any lingering spinner (e.g. from another admin's action)
             setUpdatingIds(prev => { const s = new Set(prev); s.delete(data.orderId); return s; });
         };
@@ -98,6 +102,7 @@ const Orders = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'paid':
             case 'approved':              return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
             case 'pending':
             case 'awaiting_prescription': return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
@@ -167,6 +172,7 @@ const Orders = () => {
                         <option value="pending">Pending</option>
                         <option value="awaiting_prescription">Awaiting Rx</option>
                         <option value="awaiting_payment">Awaiting Payment</option>
+                        <option value="paid">Paid</option>
                         <option value="approved">Approved</option>
                         <option value="dispatched">Dispatched</option>
                         <option value="rejected">Rejected</option>
@@ -238,7 +244,7 @@ const Orders = () => {
                                                     </button>
                                                 </>
                                             )}
-                                            {order.status === 'approved' && (
+                                            {(order.status === 'approved' || order.status === 'paid') && (
                                                 <button
                                                     onClick={() => triggerModal(order._id, 'dispatched')}
                                                     disabled={updatingIds.has(order._id)}

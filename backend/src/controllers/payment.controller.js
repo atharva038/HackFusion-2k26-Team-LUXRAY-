@@ -4,6 +4,28 @@ import ChatSession from "../models/chatSession.model.js";
 import { appendSessionMessages } from "../services/cache.service.js";
 import { sendPaymentInvoice } from "../services/whatsapp.service.js";
 import { sendInvoiceWithPdf } from "../agent/service/email.service.agent.js";
+import { isSocketInitialized, getIO, emitToUser } from "../config/socket.js";
+
+/** Emit payment-confirmed socket events to both the customer and all admins */
+function emitPaymentConfirmed(order) {
+    if (!isSocketInitialized()) return;
+    const orderId = order._id.toString();
+    const userId  = order.user?._id?.toString();
+    const payload = {
+        orderId,
+        status:        order.status,
+        paymentStatus: order.paymentStatus,
+        invoiceId:     order.invoiceId,
+        totalAmount:   order.totalAmount,
+    };
+    // Notify the customer so MyOrders updates immediately
+    if (userId) emitToUser(userId, 'order:status-updated', payload);
+    // Notify all admins so the Orders table updates
+    getIO().emit('order:admin-updated', {
+        ...payload,
+        userName: order.user?.name,
+    });
+}
 
 export const handleRazorpayWebhook = async (req, res) => {
     try {
@@ -48,6 +70,9 @@ export const handleRazorpayWebhook = async (req, res) => {
                 order.razorpaySignature = signature;
                 order.invoiceId = invoiceId;
                 await order.save();
+
+                // Real-time update for admin Orders table + customer MyOrders page
+                emitPaymentConfirmed(order);
 
                 console.log(`[Webhook] Payment successful for order ${order._id}, Invoice: ${invoiceId}`);
 
@@ -215,6 +240,9 @@ export const verifyPayment = async (req, res) => {
         order.razorpaySignature = razorpay_signature;
         order.invoiceId = invoiceId;
         await order.save();
+
+        // Real-time update for admin Orders table + customer MyOrders page
+        emitPaymentConfirmed(order);
 
         console.log(`[Verify] Payment confirmed for order ${order._id}, Invoice: ${invoiceId}`);
 
