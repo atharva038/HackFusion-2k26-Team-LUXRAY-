@@ -5,31 +5,7 @@ import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import useAuthStore, { STAFF_ROLES } from '../../store/useAuthStore';
 import LanguageSelector from '../chat/LanguageSelector';
 
-const AiStatusIndicator = () => {
-    const aiStatus = useAppStore(state => state.aiStatus);
 
-    let statusConfig = { text: 'Ready', dot: 'bg-green-400' };
-    switch (aiStatus) {
-        case AI_STATUS.LISTENING:
-            statusConfig = { text: 'Listening', dot: 'bg-blue-400 animate-pulse' };
-            break;
-        case AI_STATUS.PROCESSING:
-            statusConfig = { text: 'Processing', dot: 'bg-purple-400 animate-bounce' };
-            break;
-        case AI_STATUS.SPEAKING:
-            statusConfig = { text: 'Speaking', dot: 'bg-teal-400 animate-pulse' };
-            break;
-        default:
-            break;
-    }
-
-    return (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 mx-auto">
-            <div className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
-            <span className="text-xs font-medium opacity-80">{statusConfig.text}</span>
-        </div>
-    );
-};
 
 const Header = ({ onOpenAllergies }) => {
     const { theme, toggleTheme } = useAppStore();
@@ -56,8 +32,11 @@ const Header = ({ onOpenAllergies }) => {
                 </div>
             </Link>
 
-            {/* Customer Nav Links — hidden for admin/pharmacist */}
-            {user && !STAFF_ROLES.includes(user.role) && (
+            <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+                <Link to="/traces" className={`flex items-center gap-2 text-sm font-medium transition-colors ${location.pathname === '/traces' ? 'text-indigo-600 dark:text-indigo-400' : 'text-text-muted hover:text-text'}`}>
+                    <Monitor className="w-4 h-4" /> Agent Traces
+                </Link>
+                {user && !STAFF_ROLES.includes(user.role) && (
                 <div className="flex items-center gap-1">
                     <Link
                         to="/my-orders"
@@ -92,12 +71,9 @@ const Header = ({ onOpenAllergies }) => {
                     </button>
                 </div>
             )}
+            </nav>
 
-            {/* AI Status (Centered) */}
-            <div className="hidden md:flex flex-1 justify-center">
-                <AiStatusIndicator />
-            </div>
-
+        
             {/* Right Actions */}
             <div className="flex items-center gap-3">
                 <LanguageSelector />
