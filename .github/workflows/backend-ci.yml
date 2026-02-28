@@ -12,41 +12,16 @@ on:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
 
-defaults:
-  run:
-    working-directory: backend
-
 jobs:
   test:
-    name: Run Tests
+    name: Test (Node 20 / ubuntu-latest)
     runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -54,22 +29,23 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
+        working-directory: backend
         run: npm ci
 
       - name: Run Vitest
+        working-directory: backend
         run: npm test
         env:
           NODE_ENV: test
+          JWT_SECRET: ci-test-secret
           PORT: 5001
-          MONGO_URI: mongodb://localhost:27017/pharmacy_test
+          MONGO_URI: mongodb://localhost:27017/test
           REDIS_URL: redis://localhost:6379
-          JWT_SECRET: ci-test-secret-do-not-use-in-prod
-          # Stub remaining env vars so imports don't crash
-          OPENAI_API_KEY: sk-test-stub
-          CLOUDINARY_CLOUD_NAME: test
-          CLOUDINARY_API_KEY: test
-          CLOUDINARY_API_SECRET: test
-          RAZORPAY_KEY_ID: test
-          RAZORPAY_KEY_SECRET: test
+          OPENAI_API_KEY: sk-stub
+          CLOUDINARY_CLOUD_NAME: stub
+          CLOUDINARY_API_KEY: stub
+          CLOUDINARY_API_SECRET: stub
+          RAZORPAY_KEY_ID: stub
+          RAZORPAY_KEY_SECRET: stub
           EMAIL_USER: test@test.com
-          EMAIL_PASS: test
+          EMAIL_PASS: stub

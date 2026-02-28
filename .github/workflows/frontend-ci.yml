@@ -12,20 +12,16 @@ on:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
 
-defaults:
-  run:
-    working-directory: frontend
-
 jobs:
   lint-and-build:
-    name: Lint & Build
+    name: Lint & Build (Node 20 / ubuntu-latest)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -33,17 +29,19 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        working-directory: frontend
         run: npm ci
 
-      - name: Run ESLint
+      - name: Lint
+        working-directory: frontend
         run: npm run lint
 
-      - name: Build (Vite)
+      - name: Build
+        working-directory: frontend
         run: npm run build
         env:
-          # Provide stub env vars so Vite doesn't fail on missing variables
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:5000' }}
-          VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL || 'http://localhost:5000' }}
+          VITE_API_URL: http://localhost:5000
+          VITE_SOCKET_URL: http://localhost:5000
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
