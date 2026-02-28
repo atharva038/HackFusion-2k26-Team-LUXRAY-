@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import { Link } from 'react-router-dom';
+import useAppStore from '../../store/useAppStore';
 
 /**
  * MarkdownText — robust markdown renderer using ReactMarkdown.
@@ -75,7 +76,23 @@ const MarkdownText = ({ text }) => {
                     u: ({ ...props }) => <u className="underline decoration-primary/60 underline-offset-2 font-medium" {...props} />,
                     ins: ({ ...props }) => <ins className="underline decoration-primary/60 underline-offset-2 font-medium no-underline" {...props} />,
                     a: ({ href, children, ...props }) => {
-                        // If it's a local routing link (like /my-orders), render it as a styled interactive button using react-router
+                        // If it's a specific routing link to orders or prescriptions, use the Slide-Over to maintain chat context
+                        if (href === '/my-orders' || href === '/my-prescriptions') {
+                            const slideOverType = href.replace('/', '');
+                            return (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        useAppStore.getState().setActiveSlideOver(slideOverType);
+                                    }}
+                                    className="inline-flex items-center justify-center px-4 py-1.5 mt-2 bg-cyan-600 text-white text-[14px] font-medium rounded-xl shadow-soft hover:bg-cyan-500 active:scale-95 transition-all no-underline"
+                                >
+                                    {children} <span className="ml-1.5 opacity-80 text-[16px] leading-none">→</span>
+                                </button>
+                            );
+                        }
+
+                        // For other local routes
                         if (href && href.startsWith('/')) {
                             return (
                                 <Link

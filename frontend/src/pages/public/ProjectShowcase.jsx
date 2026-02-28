@@ -6,7 +6,208 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// ── Agent Flowchart (Digital) ─────────────────────────────────────────────────
+
+// Transparent tinted style — no gradients, no glow, pure digital
+const PIPE = {
+    entry:   { bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-300',  icon: 'bg-emerald-500/20 border-emerald-500/30' },
+    output:  { bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-300',  icon: 'bg-emerald-500/20 border-emerald-500/30' },
+    parent:  { bg: 'bg-blue-500/10',    border: 'border-blue-500/40',    text: 'text-blue-300',     icon: 'bg-blue-500/20 border-blue-500/30'        },
+    child:   { bg: 'bg-teal-500/10',    border: 'border-teal-500/35',    text: 'text-teal-300',     icon: 'bg-teal-500/20 border-teal-500/28'        },
+    guard:   { bg: 'bg-amber-500/10',   border: 'border-amber-500/40',   text: 'text-amber-200',    icon: 'bg-amber-500/20 border-amber-500/30'      },
+    blocked: { bg: 'bg-red-500/10',     border: 'border-red-500/35',     text: 'text-red-300',      icon: 'bg-red-500/20 border-red-500/28'          },
+    legacy:  { bg: 'bg-slate-400/[0.07]', border: 'border-slate-400/30', text: 'text-slate-300',    icon: 'bg-slate-400/15 border-slate-400/22'      },
+};
+
+const PNode = ({ emoji, title, sub, type }) => {
+    const p = PIPE[type];
+    return (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${p.bg} border ${p.border} max-w-[260px] w-full`}>
+            <div className={`w-8 h-8 rounded-lg ${p.icon} border flex items-center justify-center shrink-0`}>
+                <span className="text-sm leading-none">{emoji}</span>
+            </div>
+            <div className="min-w-0">
+                <p className={`font-bold text-[13px] leading-tight tracking-tight ${p.text}`}>{title}</p>
+                {sub && <p className="text-[10px] text-white/30 font-mono mt-0.5 truncate">{sub}</p>}
+            </div>
+        </div>
+    );
+};
+
+const PArrow = ({ label }) => (
+    <div className="flex flex-col items-center my-2 shrink-0">
+        <div className="w-px h-5 bg-white/10" />
+        {label && (
+            <div className="flex items-center gap-2 my-1.5">
+                <div className="h-px w-5 bg-white/8" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-400/80 border border-emerald-700/35 px-2.5 py-0.5 rounded-full">
+                    {label}
+                </span>
+                <div className="h-px w-5 bg-white/8" />
+            </div>
+        )}
+        <div className="w-px h-5 bg-white/10" />
+        <svg width="9" height="5" viewBox="0 0 9 5" fill="none" aria-hidden="true">
+            <path d="M4.5 5L0.602 0.5H8.398L4.5 5Z" fill="rgba(255,255,255,0.15)" />
+        </svg>
+    </div>
+);
+
+const ToolChip = ({ label }) => (
+    <div className="flex items-center gap-2 bg-violet-500/[0.08] border border-violet-500/25 hover:border-violet-400/40 rounded-lg px-2.5 py-1.5 transition-colors cursor-default">
+        <div className="w-1 h-1 rounded-full bg-violet-400/50 shrink-0" />
+        <span className="text-[10px] font-mono text-violet-300/80">{label}</span>
+    </div>
+);
+
+const ChildCard = ({ emoji, title, sub, tools }) => (
+    <div className="flex-1 min-w-0 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.07] flex flex-col gap-2">
+        <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg ${PIPE.child.bg} border ${PIPE.child.border}`}>
+            <div className={`w-7 h-7 rounded-md ${PIPE.child.icon} border flex items-center justify-center shrink-0`}>
+                <span className="text-xs leading-none">{emoji}</span>
+            </div>
+            <div className="min-w-0">
+                <p className={`font-bold text-[12px] leading-tight tracking-tight ${PIPE.child.text}`}>{title}</p>
+                {sub && <p className="text-[9px] text-white/28 font-mono mt-0.5 truncate">{sub}</p>}
+            </div>
+        </div>
+        <div className="flex flex-col gap-1">
+            <p className="text-[9px] text-white/18 uppercase font-bold tracking-widest pl-0.5 mb-0.5">Tools</p>
+            {tools.map(t => <ToolChip key={t} label={t} />)}
+        </div>
+    </div>
+);
+
+const BlockedBadge = () => (
+    <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-col items-center gap-1">
+            <div className="h-px w-8 bg-red-500/40" />
+            <svg width="7" height="4" viewBox="0 0 7 4" fill="none" aria-hidden="true">
+                <path d="M3.5 4L0 0H7L3.5 4Z" fill="rgba(239,68,68,0.4)" />
+            </svg>
+        </div>
+        <div className={`${PIPE.blocked.bg} border ${PIPE.blocked.border} rounded-xl px-3 py-2.5 shrink-0`}>
+            <p className={`font-bold text-xs ${PIPE.blocked.text}`}>🚫 Blocked</p>
+            <p className="text-[10px] text-red-400/45 font-mono mt-0.5">Malicious / Unsafe</p>
+        </div>
+    </div>
+);
+
+const GuardRow = ({ emoji, title, sub }) => (
+    <div className="flex items-center justify-center gap-4 w-full">
+        <PNode emoji={emoji} title={title} sub={sub} type="guard" />
+        <BlockedBadge />
+    </div>
+);
+
+const FlowDivider = ({ label }) => (
+    <div className="flex items-center gap-3 w-full my-4">
+        <div className="flex-1 h-px bg-white/[0.06]" />
+        <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest shrink-0">{label}</span>
+        <div className="flex-1 h-px bg-white/[0.06]" />
+    </div>
+);
+
+const CustomerChatFlow = () => (
+    <div className="flex flex-col items-center w-full">
+        <PNode emoji="👤" title="Customer Request" type="entry" />
+        <PArrow />
+        <GuardRow emoji="🛡️" title="Input Guard" sub="pharmacy_input_guardrail" />
+        <PArrow label="✅ Allowed" />
+        <PNode emoji="🧠" title="Parent Agent" sub="Routes by intent" type="parent" />
+        <PArrow />
+        <FlowDivider label="Delegates to child agent" />
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+            <ChildCard emoji="💬" title="Receptionist" sub="medicine_advisor_stock_reader" tools={['checkStock', 'searchMedByDescription', 'describeMed']} />
+            <ChildCard emoji="🛒" title="Order Maker" sub="order_maker" tools={['order_medicine', 'checkPrescriptionOnFile', 'create_payment']} />
+        </div>
+        <PArrow />
+        <GuardRow emoji="🛡️" title="Output Guard" sub="pharmacy_output_guardrail" />
+        <PArrow label="✅ Safe" />
+        <PNode emoji="📤" title="Response to Customer" type="output" />
+    </div>
+);
+
+const PharmacistFlow = () => (
+    <div className="flex flex-col items-center w-full">
+        <PNode emoji="💊" title="Pharmacist Request" type="entry" />
+        <PArrow />
+        <GuardRow emoji="🛡️" title="Pharmacist Input Guard" sub="pharmacistInputGuardrail" />
+        <PArrow label="✅ Allowed" />
+        <PNode emoji="🧠" title="Parent Pharmacist" sub="Routes by intent" type="parent" />
+        <PArrow />
+        <FlowDivider label="Delegates to child agent" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
+            {[
+                { emoji: '📦', title: 'Stock Add',       sub: 'stockAddAgent',           tools: ['addStockTool'] },
+                { emoji: '📉', title: 'Stock Reduce',    sub: 'stockReduceAgent',         tools: ['reduceStockTool'] },
+                { emoji: '🔄', title: 'Order Status',    sub: 'orderStatusChangeAgent',   tools: ['getOrdersTool', 'changeOrderStatusTool'] },
+                { emoji: '📊', title: 'Inv. Suggestion', sub: 'inventorySuggestionAgent', tools: ['getRecentTransactionsTool'] },
+                { emoji: '🏭', title: 'Place Order',     sub: 'placeOrderAgent',          tools: ['placeOrderTool'] },
+                { emoji: '➕', title: 'Add Medicine',    sub: 'addMedicineAgent',          tools: ['addMedicineTool'] },
+                { emoji: '➖', title: 'Remove Medicine', sub: 'removeMedicineAgent',       tools: ['removeMedicineTool'] },
+            ].map(c => (
+                <div key={c.title} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] flex flex-col gap-1.5">
+                    <div className={`flex items-center gap-2 px-2.5 py-2 rounded-lg ${PIPE.child.bg} border ${PIPE.child.border}`}>
+                        <span className="text-sm shrink-0">{c.emoji}</span>
+                        <div className="min-w-0">
+                            <p className={`font-bold text-[11px] leading-tight ${PIPE.child.text}`}>{c.title}</p>
+                            <p className="text-white/28 text-[9px] font-mono truncate">{c.sub}</p>
+                        </div>
+                    </div>
+                    {c.tools.map(t => <ToolChip key={t} label={t} />)}
+                </div>
+            ))}
+        </div>
+        <PArrow />
+        <GuardRow emoji="🛡️" title="Pharmacist Output Guard" sub="pharmacistOutputGuardrail" />
+        <PArrow label="✅ Safe" />
+        <PNode emoji="📤" title="Response to Pharmacist" type="output" />
+    </div>
+);
+
+const NotificationFlow = () => (
+    <div className="flex flex-col items-center w-full">
+        <PNode emoji="⏰" title="Scheduler / Cron Job" type="entry" />
+        <PArrow />
+        <PNode emoji="🧠" title="Notification Dispatcher" sub="Routes by task type" type="parent" />
+        <PArrow />
+        <FlowDivider label="Delegates to child agent" />
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+            <ChildCard emoji="💊" title="Medication Notifier" sub="medication_notifier" tools={['fetchDosesTool', 'sendEmailTool']} />
+            <ChildCard emoji="🔁" title="Refill Reminder" sub="refill_reminder_agent" tools={['fetchRefillsTool', 'sendEmailTool']} />
+        </div>
+        <div className="mt-6 w-full max-w-md bg-blue-500/[0.07] border border-blue-500/25 rounded-xl px-5 py-3 text-center">
+            <p className="text-sm text-blue-300/70">ℹ️ <strong className="text-blue-200/90">No Guardrails</strong> — Trusted internal cron jobs, not user-facing input.</p>
+        </div>
+    </div>
+);
+
+const LegacyFlow = () => (
+    <div className="flex flex-col items-center w-full">
+        <PNode emoji="👤" title="Customer Request" sub="via Legacy Route" type="entry" />
+        <PArrow />
+        <PNode emoji="🤖" title="Orchestrator Agent" sub="runOrchestrator · Agentic Loop · GPT-4o" type="legacy" />
+        <FlowDivider label="Bidirectional Tool Loop ⇄" />
+        <div className="flex flex-col gap-1.5 w-full max-w-xs">
+            {['check_inventory', 'validate_prescription', 'create_order', 'check_warehouse', 'check_refill_eligibility'].map(t => (
+                <div key={t} className="flex items-center gap-2">
+                    <span className="text-white/18 text-[10px] shrink-0 font-mono w-4">⇄</span>
+                    <ToolChip label={t} />
+                </div>
+            ))}
+        </div>
+        <div className="mt-6 w-full max-w-sm bg-amber-500/[0.07] border border-amber-500/25 rounded-xl px-5 py-3 text-center">
+            <p className="text-sm text-amber-300/70">⚠️ <strong className="text-amber-200/90">Deprecated</strong> — Replaced by the multi-pipeline SDK architecture above.</p>
+        </div>
+    </div>
+);
+
+// ── End Flowchart ─────────────────────────────────────────────────────────────
+
 const ProjectShowcase = () => {
+    const [activeTab, setActiveTab] = useState('customer');
+
     // Scroll to top on mount
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -59,6 +260,83 @@ const ProjectShowcase = () => {
                             <div key={idx} className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm text-sm font-semibold text-slate-700 hover:border-primary/30 transition-colors">
                                 <badge.icon className="w-4 h-4 text-primary" />
                                 {badge.label}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Multi-Agent Pipeline Flowchart ───────────────────────────────── */}
+            <section className="relative py-20 px-4 sm:px-6 overflow-hidden bg-[#060b17]">
+                {/* Fine dot grid — no bloom, pure structure */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.08) 1px, transparent 1px)', backgroundSize: '28px 28px' }}
+                />
+                {/* Very faint top edge line */}
+                <div className="absolute top-0 inset-x-0 h-px bg-white/[0.05]" />
+
+                <div className="max-w-5xl mx-auto relative z-10">
+                    {/* Header */}
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold tracking-widest uppercase mb-5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse inline-block" />
+                            Agent Architecture
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+                            Multi-Agent Pipeline Chain
+                        </h2>
+                        <p className="text-slate-400 max-w-2xl mx-auto text-sm leading-relaxed">
+                            Four independent AI pipelines — Customer Chat, Pharmacist Operations, Scheduled Notifications, and Legacy Orchestrator — each with safety guardrails, parent routers, and specialized child agents.
+                        </p>
+                    </div>
+
+                    {/* Tab selector */}
+                    <div className="flex justify-center gap-2 mb-8 flex-wrap">
+                        {[
+                            { id: 'customer',     label: '👤 Customer Chat' },
+                            { id: 'pharmacist',   label: '💊 Pharmacist' },
+                            { id: 'notification', label: '🔔 Notification' },
+                            { id: 'legacy',       label: '⚙️ Legacy' },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                                    activeTab === tab.id
+                                        ? 'bg-white/10 text-white shadow-lg ring-1 ring-white/15 scale-105'
+                                        : 'bg-white/5 text-slate-400 hover:bg-white/8 hover:text-slate-200 border border-white/[0.07]'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Flowchart panel */}
+                    <div className="bg-white/[0.025] rounded-2xl border border-white/[0.08] p-6 md:p-10 overflow-x-auto">
+                        <div className="min-w-[480px]">
+                            {activeTab === 'customer'     && <CustomerChatFlow />}
+                            {activeTab === 'pharmacist'   && <PharmacistFlow />}
+                            {activeTab === 'notification' && <NotificationFlow />}
+                            {activeTab === 'legacy'       && <LegacyFlow />}
+                        </div>
+                    </div>
+
+                    {/* Color legend */}
+                    <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2.5 justify-center">
+                        {[
+                            { dot: 'bg-emerald-500', label: 'Entry / Output' },
+                            { dot: 'bg-blue-500',    label: 'Parent Router' },
+                            { dot: 'bg-teal-500',    label: 'Child Specialist' },
+                            { dot: 'bg-amber-400',   label: 'Guardrail' },
+                            { dot: 'bg-violet-500',  label: 'Tool' },
+                            { dot: 'bg-red-500',     label: 'Blocked' },
+                            { dot: 'bg-slate-500',   label: 'Legacy' },
+                        ].map(item => (
+                            <div key={item.label} className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${item.dot}`} />
+                                <span className="text-xs text-slate-500">{item.label}</span>
                             </div>
                         ))}
                     </div>

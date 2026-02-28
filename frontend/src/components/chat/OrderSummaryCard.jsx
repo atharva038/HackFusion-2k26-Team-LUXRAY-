@@ -6,31 +6,31 @@ import useAppStore from '../../store/useAppStore';
 const STATUS_CONFIG = {
     approved: {
         icon: <CheckCircle2 className="w-4 h-4" />,
-        cls: 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/25',
+        cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.2)]',
     },
     paid: {
         icon: <CheckCircle2 className="w-4 h-4" />,
-        cls: 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/25',
+        cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.2)]',
     },
     pending: {
         icon: <Clock className="w-4 h-4" />,
-        cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25',
+        cls: 'bg-amber-500/15 text-amber-400 border-amber-500/25 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
     },
     rejected: {
         icon: <XCircle className="w-4 h-4" />,
-        cls: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25',
+        cls: 'bg-red-500/15 text-red-500 border-red-500/25 shadow-[0_0_10px_rgba(239,68,68,0.2)]',
     },
     dispatched: {
         icon: <Truck className="w-4 h-4" />,
-        cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/25',
+        cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25 shadow-[0_0_10px_rgba(6,182,212,0.2)]',
     },
     awaiting_payment: {
         icon: <Clock className="w-4 h-4" />,
-        cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25',
+        cls: 'bg-amber-500/15 text-amber-400 border-amber-500/25 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
     },
     awaiting_prescription: {
         icon: <FileText className="w-4 h-4" />,
-        cls: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/25',
+        cls: 'bg-purple-500/15 text-purple-400 border-purple-500/25 shadow-[0_0_10px_rgba(168,85,247,0.2)]',
     },
 };
 
@@ -131,15 +131,15 @@ const OrderSummaryCard = ({ messageId, orderId, status, items, total, customer, 
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: 'spring', damping: 22, stiffness: 180, delay: 0.1 }}
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 shadow-sm bg-card"
+            className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 shadow-[0_8px_32px_rgba(6,182,212,0.15)] bg-glass backdrop-blur-xl group"
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border-b border-black/8 dark:border-white/8">
-                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+            <div className="flex items-center justify-between px-5 py-4 bg-cyan-900/10 border-b border-white/10">
+                <div className="flex items-center gap-2 text-cyan-400 font-semibold text-xs tracking-widest uppercase">
                     <Package className="w-4 h-4" />
                     Order Summary
                 </div>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize border ${cfg.cls}`}>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold capitalize border transition-all duration-300 ${cfg.cls}`}>
                     {cfg.icon}
                     {norm.replace(/_/g, ' ')}
                 </span>

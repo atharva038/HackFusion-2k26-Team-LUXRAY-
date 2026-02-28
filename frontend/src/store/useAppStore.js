@@ -119,6 +119,10 @@ const useAppStore = create((set) => ({
   chatActions: null,
   setChatActions: (actions) => set({ chatActions: actions }),
 
+  // ── Contextual Slide Over State ─────────────────────────────────
+  activeSlideOver: null, // 'my-orders' | 'my-prescriptions' | null
+  setActiveSlideOver: (type) => set({ activeSlideOver: type }),
+
   // Example complex tool addition for the LAST AI message
   updateLastAiMessageTool: (toolUpdate) => set((state) => {
     const newMessages = [...state.messages];
