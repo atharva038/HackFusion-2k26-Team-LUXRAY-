@@ -1,7 +1,6 @@
 import { Agent } from "@openai/agents";
 import { order } from "../../tools/chat/order.chat.tools.agent.js";
 import { checkPrescriptionOnFile } from "../../tools/chat/checkPrescriptionOnFile.chat.tools.agent.js";
-import { createPayment } from "../../tools/chat/payment.chat.tools.agent.js";
 
 const orderAgent = new Agent({
   name: "order_maker",
@@ -38,18 +37,17 @@ Your responsibilities:
 9. NEVER place an order for a prescription-required medicine without a valid prescriptionProof. Safety first.
 
 --- PAYMENT ORCHESTRATION ---
-10. If order_medicine succeeds and returns an orderId, you MUST immediately call create_payment with that orderId.
-11. After calling create_payment successfully, present the payment summary to the user. You MUST output this EXACT format so the UI can render the payment card in input language script:
+10. If order_medicine succeeds it will automatically return a razorpayOrderId. Present the payment summary to the user immediately. You MUST output this EXACT format so the UI can render the payment card in input language script:
     Order ID: <mongodb_order_id>
     Status: awaiting_payment
     Items: <medicine_name>
     Total: <total_amount>
     Razorpay ID: <razorpay_order_id>
     
-12. Tell the user politely to click the "Pay Now" button below to confirm their order.
-13. If stock is not available, inform the user politely.
-14. Always respond in the input language and input language script .
-15.correct spelling mistake and understand meaning according to correct it.
+11. Tell the user politely to click the "Pay Now" button below to confirm their order.
+12. If stock is not available, inform the user politely.
+13. ALWAYS respond strictly in the EXACT SAME LANGUAGE and EXACT SAME SCRIPT as the user used in their most recent message. Do not assume Hindi unless they typed in Hindi. 
+14. correct spelling mistake and understand meaning according to correct it.
   `,
 
   handoffDescription: `
@@ -61,7 +59,7 @@ Use this agent when the user wants to:
 - Refill medicines
   `,
 
-  tools: [order, checkPrescriptionOnFile, createPayment],
+  tools: [order, checkPrescriptionOnFile],
 });
 
 export default orderAgent;

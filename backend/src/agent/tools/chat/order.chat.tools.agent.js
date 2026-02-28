@@ -3,6 +3,15 @@ import { z } from "zod";
 import Medicine from "../../../models/medicine.model.js";
 import { addTransaction } from "../../service/addTxn.service.agent.js";
 import User from "../../../models/user.model.js";
+import Order from "../../../models/order.model.js";
+import Razorpay from "razorpay";
+import dotenv from "dotenv";
+dotenv.config();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "test",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "test",
+});
 
 /**
  * A minimal single-purpose Agent that acts as a clinical pharmacist.
@@ -70,7 +79,8 @@ If there are no conflicts, return: { "conflicts": [] }`;
 export const order = tool({
   name: "order_medicine",
   description:
-    "Place a medicine order using MongoDB. Checks stock availability and records the transaction. Stock is deducted when the pharmacist dispatches the order. " +
+    "Place a medicine order using MongoDB and immediately generate a Razorpay payment link. " +
+    "Checks stock availability and records the transaction. Stock is deducted when the pharmacist dispatches the order. " +
     "IMPORTANT: If the medicine requires a prescription and no prescriptionProof is provided, the order is BLOCKED. " +
     "You must call check_prescription_on_file first to obtain a prescriptionProof ID, then retry this tool with that ID.",
 
@@ -224,13 +234,37 @@ export const order = tool({
         return `❌ ${result.error}`;
       }
 
-      return `✅ Order placed successfully
+      // 6. Automatically Generate Razorpay Payment Link
+      let razorpayOrderId = "N/A";
+      try {
+        const dbOrder = await Order.findById(result.orderId);
+        if (dbOrder && dbOrder.status === "awaiting_payment") {
+          const amountInPaise = Math.round(dbOrder.totalAmount * 100);
+          const options = {
+            amount: amountInPaise,
+            currency: "INR",
+            receipt: `receipt_order_${dbOrder._id}`,
+          };
+          const razorpayOrder = await razorpay.orders.create(options);
+          dbOrder.razorpayOrderId = razorpayOrder.id;
+          await dbOrder.save();
+          razorpayOrderId = razorpayOrder.id;
+        }
+      } catch (paymentErr) {
+        console.error("Razorpay generation failed during order_medicine:", paymentErr);
+        return `✅ Order placed in DB but payment generation failed. 
+Order ID: ${result.orderId}
+Error: ${paymentErr.message}`;
+      }
 
+      return `✅ Order placed successfully
+      
 Order ID: ${result.orderId}
 Medicine: ${medicine.name}
 Quantity: ${quantity}
 Total Price: ₹${totalPrice}
-Status: ${result.status}`;
+Status: ${result.status}
+Razorpay ID: ${razorpayOrderId}`;
     } catch (error) {
       return `❌ ${error.message}`;
     }
