@@ -13,7 +13,7 @@ router.delete('/:entryId', protect, imageExtractor.deletePrescription);
 router.post('/mail', protect, restrictTo('admin', 'pharmacist'), notifyCtrl.testEmail);
 
 // POST /api/prescription/testMail   → AI refill check (task: 'dose' | 'refill')
-router.post('/testMail', protect, restrictTo('admin', 'pharmacist'), notifyCtrl.testAgentSystem);
+router.post('/testMail',/* protect, restrictTo('admin', 'pharmacist'),*/ notifyCtrl.testAgentSystem);
 
 // POST /api/prescription/triggerLowStock → Direct DB low-stock alert to pharmacists/admins
 router.post('/triggerLowStock', protect, restrictTo('admin', 'pharmacist'), notifyCtrl.triggerLowStockAlert);

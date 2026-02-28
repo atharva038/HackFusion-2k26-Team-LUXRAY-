@@ -68,61 +68,78 @@ async function chatPharma(messages = []) {
   try {
     const result = await run(parentAgent, messages);
 
+    ///////////////////////
     //MONITOR PHASE
+    ///////////////////////
     // console.log("RAW TRACE ITEM 0:", JSON.stringify(result.state._generatedItems[0], null, 2));
     result.state._generatedItems.forEach((item, index) => {
       console.log(`\n--- DEBUGGING RAW ITEM [${index}] ---`);
       console.log("Type:", item.type || item.constructor.name);
       console.log("Full Object:", JSON.stringify(item, null, 2));
     });
-    //MONITOR PHASE
-    const monitorTraces = result.state._generatedItems.map((item) => {
+    // MONITOR PHASE
+    const traces = [];
+
+    // 1. CAPTURE INPUT GUARDRAILS
+    if (result.state._inputGuardrailResults?.length > 0) {
+      result.state._inputGuardrailResults.forEach((g) => {
+        traces.push({
+          agent: "Security",
+          action: g.passed ? "🛡️ Guardrail: Pass" : "🚨 Guardrail: Block",
+          data: `Input Check: ${g.guardrailName || 'Pharmacy Filter'}`
+        });
+      });
+    }
+
+    // 2. CAPTURE GENERATED ITEMS (Tools, Handoffs, etc.)
+    const generatedTraces = result.state._generatedItems.map((item) => {
       const actor = item.agent?.name || item.targetAgent?.name || "System";
       const itemType = item.type || item.constructor.name;
 
       let actionName = "AI Reasoning";
       let detailData = "Processing...";
 
-      // 1. TOOLS (Calls and Results/Failures)
       if (item.rawItem?.type === 'function_call' && !item.rawItem.name.includes('transfer_to')) {
         actionName = `⚙️ Tool: ${item.rawItem.name}`;
         detailData = item.rawItem.arguments || "Initiating...";
-      } 
+      }
       else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output') {
         const isError = item.rawItem.status === 'error' || !!item.rawItem.error;
         actionName = isError ? `❌ Fail: ${item.rawItem.name}` : `📦 Result: ${item.rawItem.name}`;
-        
-        // Capture Error message if failed, otherwise capture output text
         detailData = item.rawItem.error || item.rawItem.output?.text || item.rawItem.output || "No data returned";
       }
-
-      // 2. HANDOFFS (Parent -> Child)
       else if (item.rawItem?.name?.startsWith('transfer_to_')) {
         const target = item.rawItem.name.replace('transfer_to_', '');
         actionName = "🤝 Handoff";
         detailData = `Routing context to: ${target}`;
       }
-
-      // 3. MESSAGES (Final Answer from any agent)
       else if (itemType === 'message_output_item' || item.rawItem?.type === 'message') {
         actionName = "💬 Response";
         const messageText = item.rawItem?.content?.[0]?.text || item.content;
         detailData = typeof messageText === 'object' ? JSON.stringify(messageText) : messageText;
       }
-
-      // 4. SYSTEM / CONTEXT TRANSITIONS
       else if (itemType === 'handoff_output_item') {
         actionName = "🔄 System";
-        // Show the target agent in the data
         detailData = `Agent ${item.targetAgent?.name || 'Specialist'} activated.`;
       }
 
-      return {
-        agent: actor,
-        action: actionName,
-        data: detailData
-      };
+      return { agent: actor, action: actionName, data: detailData };
     }).filter(t => t.action !== "AI Reasoning");
+
+    traces.push(...generatedTraces);
+
+    // 3. CAPTURE OUTPUT GUARDRAILS
+    if (result.state._outputGuardrailResults?.length > 0) {
+      result.state._outputGuardrailResults.forEach((g) => {
+        traces.push({
+          agent: "Security",
+          action: g.passed ? "🛡️ Output: Safe" : "🚨 Output: Risky",
+          data: `Validation: ${g.guardrailName || 'Medical Safety'}`
+        });
+      });
+    }
+
+    const monitorTraces = traces;
 
     console.log("\n📍 --- EXECUTION TRACE ---");
     monitorTraces.forEach((t, i) => {
