@@ -45,8 +45,8 @@ const UserDropdown = ({ onOpenAllergies }) => {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-card border border-black/5 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden transform origin-top-right transition-all animate-in fade-in slide-in-from-top-2">
-                    <div className="p-4 border-b border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5">
+                <div className="absolute right-0 mt-2 w-56 bg-card/95 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden transform origin-top-right transition-all animate-in fade-in slide-in-from-top-2">
+                    <div className="p-4 border-b border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 backdrop-blur-md">
                         <p className="text-sm font-bold text-text truncate">{user.name}</p>
                         <p className="text-xs text-text-muted truncate">{user.email}</p>
                     </div>

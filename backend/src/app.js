@@ -19,6 +19,7 @@ import notifyRoutes from './routes/notification.routes.js';
 import ttsRoutes from './routes/tts.routes.js';
 import userRoutes from './routes/user.routes.js';
 import traceRoutes from './routes/trace.routes.js';
+import invoiceRoutes from './routes/invoice.routes.js';
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -114,6 +115,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/tts', ttsLimiter, ttsRoutes);
 app.use('/api/prescription', prescriptionLimiter, notifyRoutes);
 app.use('/api/traces', traceRoutes);
+app.use('/api/invoice', invoiceRoutes);
 
 // ─── Health Check ────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));

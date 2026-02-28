@@ -48,17 +48,11 @@ const buildReorderQuery = (order) => {
 const OrderCard = ({ order, reorderState, onReorder }) => {
     const rs = reorderState || {};
     const isPaid = order.paymentStatus === 'paid' || order.status === 'paid' || order.status === 'approved' || order.status === 'dispatched';
+    const token = useAuthStore(s => s.token);
 
     const handleDownloadInvoice = () => {
-        const medicineNames = order.items
-            .map(i => i.medicine?.name || 'Medicine')
-            .join(', ');
-        downloadInvoicePdf({
-            invoiceId: order.invoiceId || `INV-${order._id.slice(-6).toUpperCase()}`,
-            orderId: order._id,
-            amountPaid: order.totalAmount?.toFixed(2) || '0.00',
-            items: medicineNames,
-        });
+        const invoiceId = order.invoiceId || `INV-${order._id.slice(-6).toUpperCase()}`;
+        downloadInvoicePdf(invoiceId, token);
     };
 
     return (

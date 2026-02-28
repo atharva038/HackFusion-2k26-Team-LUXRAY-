@@ -81,8 +81,8 @@ export const updateRefillAlert = (id, status) =>
 export const fetchInventoryLogs = () => api.get('/admin/logs');
 
 // ─── Chat ─────────────────────────────────────────────────────
-export const sendChatMessage = (message, sessionId, language = 'en') =>
-  api.post('/chat', { message, sessionId, language });
+export const sendChatMessage = (message, sessionId, language = 'en', imageUrl = null) =>
+  api.post('/chat', { message, sessionId, language, ...(imageUrl ? { imageUrl } : {}) });
 
 export const fetchChatSessions = () => api.get('/chat/sessions');
 

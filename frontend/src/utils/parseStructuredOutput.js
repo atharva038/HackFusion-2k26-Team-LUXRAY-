@@ -138,7 +138,7 @@ function detectOrderSummary(text) {
 
     const get = (keyRegexes) => {
         // match any of the provided regex strings
-        const pattern = `(${keyRegexes.join('|')})[:\\s]+([^\\n|,]*)`;
+        const pattern = `(${keyRegexes.join('|')})[:\\s]+([^\\n|]*)`;
         const m = text.match(new RegExp(pattern, 'i'));
         return m ? m[2].trim() : '';
     };

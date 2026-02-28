@@ -3,8 +3,8 @@ import { AlertTriangle } from 'lucide-react';
 
 const LowStockTable = ({ data = [] }) => {
     return (
-        <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="px-6 py-5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+        <div className="bg-glass border border-black/5 dark:border-white/10 rounded-2xl shadow-xl backdrop-blur-md overflow-hidden h-full flex flex-col">
+            <div className="px-6 py-5 border-b border-black/5 dark:border-white/10 flex items-center justify-between pb-6">
                 <div>
                     <h2 className="font-semibold text-text flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -21,13 +21,13 @@ const LowStockTable = ({ data = [] }) => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-black/5 dark:bg-white/5 text-text-muted text-xs uppercase tracking-wider">
-                            <th className="px-6 py-3 font-semibold">Medicine</th>
-                            <th className="px-6 py-3 font-semibold">Current Stock</th>
-                            <th className="px-6 py-3 font-semibold">Min Threshold</th>
-                            <th className="px-6 py-3 font-semibold">Status</th>
+                            <th className="px-6 py-4 font-semibold">Medicine</th>
+                            <th className="px-6 py-4 font-semibold">Current Stock</th>
+                            <th className="px-6 py-4 font-semibold">Min Threshold</th>
+                            <th className="px-6 py-4 font-semibold">Status</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                    <tbody className="divide-y divide-black/5 dark:divide-white/10">
                         {data.map((item) => (
                             <tr key={item.id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
                                 <td className="px-6 py-4">
@@ -54,7 +54,7 @@ const LowStockTable = ({ data = [] }) => {
                 </table>
             </div>
             {data.length === 0 && (
-                <div className="p-8 text-center text-text-muted text-sm flex-grow flex items-center justify-center bg-card">
+                <div className="p-8 text-center text-text-muted text-sm flex-grow flex items-center justify-center bg-transparent">
                     All inventory levels are healthy.
                 </div>
             )}

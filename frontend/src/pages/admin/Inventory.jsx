@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Edit2, Loader2, Search, Filter, Package, AlertTriangle, TrendingUp, Plus, X, Trash2 } from 'lucide-react';
 import { fetchInventory, restockMedicine, addMedicine, deleteMedicine } from '../../services/api';
 import InventoryStockModal from '../../components/ui/InventoryStockModal';
@@ -66,13 +67,13 @@ const Inventory = () => {
         on('inventory:medicine-updated', handleMedicineUpdated);
         on('inventory:medicine-restocked', handleMedicineRestocked);
         on('inventory:low-stock-alert', handleLowStockAlert);
-        on('inventory:low-stock-manual-alert', () => {});
+        on('inventory:low-stock-manual-alert', () => { });
 
         return () => {
             off('inventory:medicine-updated', handleMedicineUpdated);
             off('inventory:medicine-restocked', handleMedicineRestocked);
             off('inventory:low-stock-alert', handleLowStockAlert);
-            off('inventory:low-stock-manual-alert', () => {});
+            off('inventory:low-stock-manual-alert', () => { });
         };
     }, [on, off]);
 
@@ -159,12 +160,12 @@ const Inventory = () => {
         <div className="space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-text">Inventory Control</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-text bg-gradient-to-r from-text to-text-muted bg-clip-text text-transparent">Inventory Control</h1>
                     <p className="text-text-muted text-sm mt-1">Manage medicine stock levels and configuration.</p>
                 </div>
                 <button
                     onClick={() => setAddModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-blue-600 transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:-translate-y-0.5"
                 >
                     <Plus className="w-4 h-4" />
                     Add Medicine
@@ -172,36 +173,38 @@ const Inventory = () => {
             </div>
 
             {/* ── Real-time Stats Bar ── */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                        <Package className="w-5 h-5 text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card/40 backdrop-blur-xl border border-white/5 dark:border-white/10 rounded-2xl p-5 flex items-center gap-4 shadow-lg">
+                    <div className="p-3 rounded-xl bg-primary/20 ring-1 ring-primary/30 shadow-[inset_0_0_15px_rgba(59,130,246,0.3)]">
+                        <Package className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
                     </div>
                     <div>
-                        <p className="text-xs text-text-muted uppercase tracking-wide font-medium">Total Medicines</p>
-                        <p className="text-xl font-bold text-text">{totalMedicines}</p>
+                        <p className="text-[11px] text-text-muted uppercase tracking-widest font-semibold">Total Medicines</p>
+                        <p className="text-2xl font-bold text-text mt-0.5">{totalMedicines}</p>
                     </div>
-                </div>
-                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${lowStockCount > 0 ? 'bg-amber-500/10' : 'bg-green-500/10'}`}>
-                        <AlertTriangle className={`w-5 h-5 ${lowStockCount > 0 ? 'text-amber-500' : 'text-green-500'}`} />
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card/40 backdrop-blur-xl border border-white/5 dark:border-white/10 rounded-2xl p-5 flex items-center gap-4 shadow-lg">
+                    <div className={`p-3 rounded-xl ring-1 ${lowStockCount > 0 ? 'bg-amber-500/20 ring-amber-500/30 shadow-[inset_0_0_15px_rgba(245,158,11,0.3)]' : 'bg-green-500/20 ring-green-500/30'}`}>
+                        <AlertTriangle className={`w-6 h-6 ${lowStockCount > 0 ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]'}`} />
                     </div>
                     <div>
-                        <p className="text-xs text-text-muted uppercase tracking-wide font-medium">Low Stock</p>
-                        <p className={`text-xl font-bold ${lowStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                        <p className="text-[11px] text-text-muted uppercase tracking-widest font-semibold">Low Stock</p>
+                        <p className={`text-2xl font-bold mt-0.5 ${lowStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
                             {lowStockCount}
                         </p>
                     </div>
-                </div>
-                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-500/10">
-                        <TrendingUp className="w-5 h-5 text-green-500" />
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-card/40 backdrop-blur-xl border border-white/5 dark:border-white/10 rounded-2xl p-5 flex items-center gap-4 shadow-lg">
+                    <div className="p-3 rounded-xl bg-emerald-500/20 ring-1 ring-emerald-500/30 shadow-[inset_0_0_15px_rgba(16,185,129,0.3)]">
+                        <TrendingUp className="w-6 h-6 text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                     </div>
                     <div>
-                        <p className="text-xs text-text-muted uppercase tracking-wide font-medium">Total Value</p>
-                        <p className="text-xl font-bold text-text">₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                        <p className="text-[11px] text-text-muted uppercase tracking-widest font-semibold">Total Value</p>
+                        <p className="text-2xl font-bold text-text mt-0.5">₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* Custom Control Bar */}
@@ -215,7 +218,7 @@ const Inventory = () => {
                         placeholder="Search by Medicine Name or PZN..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                        className="pl-10 pr-4 py-2 w-full bg-card/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text shadow-sm transition-all focus:bg-card/90"
                     />
                 </div>
                 <div className="relative min-w-45">
@@ -225,7 +228,7 @@ const Inventory = () => {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="pl-10 pr-8 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text"
+                        className="pl-10 pr-8 py-2 w-full bg-card/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-text shadow-sm"
                     >
                         <option value="all">All Inventory</option>
                         <option value="low">Low Stock Alerts</option>
@@ -234,11 +237,11 @@ const Inventory = () => {
                 </div>
             </div>
 
-            <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-card/40 backdrop-blur-3xl border border-white/5 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-200">
                         <thead>
-                            <tr className="bg-black/5 dark:bg-white/5 text-text-muted text-xs uppercase tracking-wider">
+                            <tr className="bg-black/5 dark:bg-black/40 text-text-muted text-[11px] uppercase tracking-wider">
                                 <th className="px-6 py-4 font-semibold">Medicine</th>
                                 <th className="px-6 py-4 font-semibold">PZN</th>
                                 <th className="px-6 py-4 font-semibold">Price (₹)</th>
@@ -249,42 +252,54 @@ const Inventory = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
-                            {filteredInventory.length > 0 ? filteredInventory.map((item) => (
-                                <tr key={item._id} className="hover:bg-black/2 dark:hover:bg-white/2 transition-colors text-[14px]">
-                                    <td className="px-6 py-4 font-medium text-text">{item.name}</td>
-                                    <td className="px-6 py-4 font-mono text-xs text-text-muted">{item.pzn}</td>
-                                    <td className="px-6 py-4 text-text-muted">₹{item.price}</td>
-                                    <td className={`px-6 py-4 ${getStockStatusColor(item.stock, item.lowStockThreshold)}`}>
-                                        {item.stock} {item.unitType}s
-                                    </td>
-                                    <td className="px-6 py-4 text-text-muted">{item.lowStockThreshold}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${item.prescriptionRequired ? 'bg-primary/10 text-primary' : 'bg-black/5 text-text-muted'}`}>
-                                            {item.prescriptionRequired ? 'Yes' : 'No'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <button onClick={() => triggerModal(item)} className="p-1.5 rounded-md hover:bg-primary/10 text-text-muted hover:text-primary transition-colors" title="Adjust Stock">
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={() => setConfirmDelete({ id: item._id, name: item.name })} className="p-1.5 rounded-md hover:bg-red-500/10 text-text-muted hover:text-red-500 transition-colors" title="Remove Medicine">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="7" className="px-6 py-8 text-center text-text-muted text-sm">
-                                        No inventory matching your criteria.
-                                    </td>
-                                </tr>
-                            )}
+                            <AnimatePresence>
+                                {filteredInventory.length > 0 ? filteredInventory.map((item, index) => (
+                                    <motion.tr
+                                        key={item._id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3) }}
+                                        className="hover:bg-white/40 dark:hover:bg-black/20 transition-colors text-[14px] group"
+                                    >
+                                        <td className="px-6 py-4 font-semibold text-text">{item.name}</td>
+                                        <td className="px-6 py-4 font-mono text-[13px] text-text-muted/80">{item.pzn}</td>
+                                        <td className="px-6 py-4 text-text-muted font-medium">₹{item.price}</td>
+                                        <td className={`px-6 py-4 ${getStockStatusColor(item.stock, item.lowStockThreshold)}`}>
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border ${item.stock <= item.lowStockThreshold ? 'bg-amber-500/10 border-amber-500/20' : 'bg-green-500/10 border-green-500/20'}`}>
+                                                {item.stock} {item.unitType}s
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-text-muted tabular-nums">{item.lowStockThreshold}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex px-2 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${item.prescriptionRequired ? 'bg-primary/20 text-primary border border-primary/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-black/5 text-text-muted'}`}>
+                                                {item.prescriptionRequired ? 'Yes' : 'No'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2 transition-opacity">
+                                                <button onClick={() => triggerModal(item)} className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-primary/20 text-text-muted hover:text-primary transition-all md:hover:scale-105" title="Adjust Stock">
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => setConfirmDelete({ id: item._id, name: item.name })} className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-red-500/20 text-text-muted hover:text-red-500 transition-all md:hover:scale-105" title="Remove Medicine">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </motion.tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-12 text-center text-text-muted text-sm">
+                                            <Package className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                                            No inventory matching your criteria.
+                                        </td>
+                                    </tr>
+                                )}
+                            </AnimatePresence>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </motion.div>
 
             <InventoryStockModal
                 isOpen={modalConfig.isOpen}
@@ -355,7 +370,7 @@ const Inventory = () => {
                                 <div>
                                     <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wide">Unit Type *</label>
                                     <select required value={addForm.unitType} onChange={e => setAddForm(f => ({ ...f, unitType: e.target.value }))} className={fieldCls}>
-                                        {['tablet','strip','bottle','injection','tube','box','capsule'].map(u => (
+                                        {['tablet', 'strip', 'bottle', 'injection', 'tube', 'box', 'capsule'].map(u => (
                                             <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
                                         ))}
                                     </select>

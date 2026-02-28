@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ReceiptCent, CheckCircle2, Download } from 'lucide-react';
+import useAuthStore from '../../store/useAuthStore';
 
 import { downloadInvoicePdf } from '../../utils/generateInvoice';
 
@@ -9,6 +10,8 @@ import { downloadInvoicePdf } from '../../utils/generateInvoice';
  * Displays a clean invoice view after payment succeeds
  */
 const InvoiceSummaryCard = ({ invoiceId, orderId, amountPaid, items }) => {
+    const token = useAuthStore((state) => state.token);
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
@@ -49,7 +52,7 @@ const InvoiceSummaryCard = ({ invoiceId, orderId, amountPaid, items }) => {
                 <div className="pt-3 mt-3 border-t border-black/5 dark:border-white/5">
                     <button
                         className="w-full py-2.5 flex items-center justify-center gap-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl font-medium text-[13px] transition-colors"
-                        onClick={() => downloadInvoicePdf({ invoiceId, orderId, amountPaid, items })}
+                        onClick={() => downloadInvoicePdf(invoiceId, token)}
                     >
                         <Download className="w-4 h-4" />
                         Download Receipt

@@ -9,7 +9,7 @@ const doctorSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    license_id: {   
+    license_id: {
         type: String,
         required: true,
         unique: true,

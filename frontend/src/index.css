@@ -29,12 +29,12 @@
 .dark {
   /* Auroral Health Dark Mode */
   --bg: #0B1120;
-  --card: rgba(30, 41, 59, 0.4);
+  --card: rgba(15, 23, 42, 0.85); /* Darkened and made less transparent */
   --text: #f8fafc;
   --text-muted: #94a3b8;
   --primary: #06b6d4; /* Cyan */
   --secondary: #10b981; /* Emerald */
-  --glass: rgba(15, 23, 42, 0.6);
+  --glass: rgba(11, 17, 32, 0.85); /* Reduced transparency for better contrast against aurora bg */
 }
 
 @utility bg-aurora {

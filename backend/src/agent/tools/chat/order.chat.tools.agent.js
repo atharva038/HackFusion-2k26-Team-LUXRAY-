@@ -36,6 +36,36 @@ const allergyCheckerAgent = new Agent({
 });
 
 /**
+ * Levenshtein distance for fuzzy medicine name matching.
+ */
+function levenshteinDistance(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) =>
+      i === 0 ? j : j === 0 ? i : 0
+    )
+  );
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function isFuzzyMatch(a, b) {
+  const na = a.toLowerCase().trim();
+  const nb = b.toLowerCase().trim();
+  if (na.includes(nb) || nb.includes(na)) return true;
+  const maxLen = Math.max(na.length, nb.length);
+  if (maxLen === 0) return true;
+  const similarity = 1 - levenshteinDistance(na, nb) / maxLen;
+  return similarity >= 0.7; // 70% match
+}
+
+/**
  * Uses GPT to logically determine whether any of the user's known allergens
  * conflict with the FDA drug label warnings for a given medicine.
  *
@@ -88,9 +118,11 @@ export const order = tool({
     patientId: z.string(),
     age: z.number().describe("The age of the patient in years"),
     gender: z.string().describe("The gender of the patient"),
-    productName: z.string(),
-    quantity: z.number().min(1),
-    dosageFrequency: z.string(),
+    items: z.array(z.object({
+      productName: z.string(),
+      quantity: z.number().min(1),
+      dosageFrequency: z.string(),
+    })).describe("List of medicines to order"),
     prescriptionProof: z
       .string()
       .describe(
@@ -102,132 +134,178 @@ export const order = tool({
     patientId,
     age,
     gender,
-    productName,
-    quantity,
-    dosageFrequency,
+    items,
     prescriptionProof = "",
   }) => {
     try {
-      // 1. Find medicine from MongoDB
-      const medicine = await Medicine.findOne({
-        name: { $regex: productName, $options: "i" },
-      });
+      const processedItems = [];
+      let totalOrderPrice = 0;
+      let blocks = [];
+      let user = null;
+      try {
+        user = await User.findById(patientId).select("allergies");
+      } catch (e) { }
 
-      if (!medicine) {
-        return "❌ Medicine not found.";
-      }
+      for (const item of items) {
+        const { productName, quantity, dosageFrequency } = item;
 
-      const prescriptionFlag = medicine.prescriptionRequired || false;
+        // 1. Find medicine from MongoDB
+        // First try exact regex match
+        let medicine = await Medicine.findOne({
+          name: { $regex: productName, $options: "i" },
+        });
 
-      // 2. PRESCRIPTION GATE — never allow a controlled medicine without validated proof
-      if (prescriptionFlag && !prescriptionProof) {
-        return JSON.stringify({
-          blocked: true,
-          prescriptionRequired: true,
-          medicine: medicine.name,
-          message:
-            `⚠️ "${medicine.name}" requires a valid prescription. ` +
-            `Call check_prescription_on_file with the patient's patientId and medicineName to check their record. ` +
-            `If a prescription is found, retry order_medicine with the returned prescriptionId as prescriptionProof. ` +
-            `If not found, ask the user to upload their prescription using the upload button, then check again after they confirm.`,
+        if (!medicine) {
+          // Fallback: fetch all and fuzzy match
+          // Extract the base medicine name (e.g. "Amlodipine 5 mg" -> "Amlodipine")
+          const baseName = productName.split(" ")[0];
+
+          let possibleMatches = await Medicine.find({
+            name: { $regex: baseName, $options: "i" }
+          });
+
+          if (possibleMatches.length > 0) {
+            medicine = possibleMatches[0];
+          } else {
+            // Last resort: complete fuzzy match on all medicines
+            const allMedicines = await Medicine.find({});
+            for (const med of allMedicines) {
+              if (isFuzzyMatch(med.name, productName)) {
+                medicine = med;
+                break;
+              }
+            }
+          }
+        }
+
+        if (!medicine) {
+          blocks.push(`❌ Medicine "${productName}" not found.`);
+          continue;
+        }
+
+        const prescriptionFlag = medicine.prescriptionRequired || false;
+
+        // 2. PRESCRIPTION GATE — never allow a controlled medicine without validated proof
+        if (prescriptionFlag && !prescriptionProof) {
+          return JSON.stringify({
+            blocked: true,
+            prescriptionRequired: true,
+            medicine: medicine.name,
+            message:
+              `⚠️ "${medicine.name}" requires a valid prescription. ` +
+              `Call check_prescription_on_file with the patient's patientId and medicineName to check their record. ` +
+              `If a prescription is found, retry order_medicine with the returned prescriptionId as prescriptionProof. ` +
+              `If not found, ask the user to upload their prescription using the upload button, then check again after they confirm.`,
+          });
+        }
+
+        // 2.5. FDA ALLERGY SAFETY GATE
+        // Fetch the patient's stored allergies and compare against FDA drug label warnings.
+        try {
+          const user = await User.findById(patientId).select("allergies");
+
+          if (user && user.allergies && user.allergies.length > 0) {
+            let warningText = "";
+            for (const searchField of ["openfda.brand_name", "openfda.generic_name"]) {
+              const fdaUrl = `https://api.fda.gov/drug/label.json?search=${searchField}:"${encodeURIComponent(medicine.name)}"&limit=1`;
+              try {
+                const fdaResponse = await fetch(fdaUrl);
+                if (fdaResponse.ok) {
+                  const fdaData = await fdaResponse.json();
+                  const labelResult = fdaData?.results?.[0];
+                  if (labelResult) {
+                    const warningFields = [
+                      "warnings",
+                      "warnings_and_cautions",
+                      "contraindications",
+                      "stop_use",
+                      "do_not_use",
+                    ];
+                    warningText = warningFields
+                      .flatMap((field) =>
+                        Array.isArray(labelResult[field])
+                          ? labelResult[field]
+                          : labelResult[field]
+                            ? [labelResult[field]]
+                            : []
+                      )
+                      .join(" ")
+                      .toLowerCase();
+                    break; // found a label — stop trying other fields
+                  }
+                }
+              } catch {
+                // ignore per-field fetch errors and try next
+              }
+            }
+
+            // Always run LLM check — FDA text is additive context;
+            // if no label was found, the agent uses its own pharmacological knowledge.
+            const conflicts = await checkAllergyConflictWithLLM(
+              medicine.name,
+              warningText,
+              user.allergies
+            );
+
+            if (conflicts.length > 0) {
+              const conflictLines = conflicts
+                .map((c) => `• ${c.allergen}: ${c.reason}`)
+                .join("\n");
+
+              return JSON.stringify({
+                blocked: true,
+                allergyConflict: true,
+                medicine: medicine.name,
+                conflictingAllergens: conflicts.map((c) => c.allergen),
+                message:
+                  `🚫 Order BLOCKED — Allergy Risk Detected.\n\n` +
+                  `"${medicine.name}" is unsafe for you based on your registered allergies:\n` +
+                  `${conflictLines}\n\n` +
+                  `Please consult your doctor or pharmacist before proceeding. ` +
+                  `Your safety is our priority.`,
+              });
+            }
+          }
+        } catch (allergyCheckError) {
+          // Non-fatal: log but do not block the order if the allergy check itself errors
+          console.warn(
+            "[AllergyGate] FDA allergy check failed, proceeding with order:",
+            allergyCheckError.message
+          );
+        }
+
+        // 3. Check stock availability (stock is deducted at dispatch by admin, not here)
+        if (medicine.stock < quantity) {
+          blocks.push(`❌ Insufficient stock for ${medicine.name}. Available: ${medicine.stock}`);
+          continue;
+        }
+
+        // 4. Calculate price
+        const itemPrice = medicine.price * quantity;
+        totalOrderPrice += itemPrice;
+
+        processedItems.push({
+          medicineId: medicine._id.toString(),
+          medicineName: medicine.name,
+          quantity,
+          dosageFrequency,
+          totalPrice: itemPrice,
+          prescriptionRequired: prescriptionFlag,
+          prescriptionProof
         });
       }
 
-      // 2.5. FDA ALLERGY SAFETY GATE
-      // Fetch the patient's stored allergies and compare against FDA drug label warnings.
-      try {
-        const user = await User.findById(patientId).select("allergies");
-
-        if (user && user.allergies && user.allergies.length > 0) {
-          let warningText = "";
-          for (const searchField of ["openfda.brand_name", "openfda.generic_name"]) {
-            const fdaUrl = `https://api.fda.gov/drug/label.json?search=${searchField}:"${encodeURIComponent(medicine.name)}"&limit=1`;
-            try {
-              const fdaResponse = await fetch(fdaUrl);
-              if (fdaResponse.ok) {
-                const fdaData = await fdaResponse.json();
-                const labelResult = fdaData?.results?.[0];
-                if (labelResult) {
-                  const warningFields = [
-                    "warnings",
-                    "warnings_and_cautions",
-                    "contraindications",
-                    "stop_use",
-                    "do_not_use",
-                  ];
-                  warningText = warningFields
-                    .flatMap((field) =>
-                      Array.isArray(labelResult[field])
-                        ? labelResult[field]
-                        : labelResult[field]
-                          ? [labelResult[field]]
-                          : []
-                    )
-                    .join(" ")
-                    .toLowerCase();
-                  break; // found a label — stop trying other fields
-                }
-              }
-            } catch {
-              // ignore per-field fetch errors and try next
-            }
-          }
-
-          // Always run LLM check — FDA text is additive context;
-          // if no label was found, the agent uses its own pharmacological knowledge.
-          const conflicts = await checkAllergyConflictWithLLM(
-            medicine.name,
-            warningText,
-            user.allergies
-          );
-
-          if (conflicts.length > 0) {
-            const conflictLines = conflicts
-              .map((c) => `• ${c.allergen}: ${c.reason}`)
-              .join("\n");
-
-            return JSON.stringify({
-              blocked: true,
-              allergyConflict: true,
-              medicine: medicine.name,
-              conflictingAllergens: conflicts.map((c) => c.allergen),
-              message:
-                `🚫 Order BLOCKED — Allergy Risk Detected.\n\n` +
-                `"${medicine.name}" is unsafe for you based on your registered allergies:\n` +
-                `${conflictLines}\n\n` +
-                `Please consult your doctor or pharmacist before proceeding. ` +
-                `Your safety is our priority.`,
-            });
-          }
-        }
-      } catch (allergyCheckError) {
-        // Non-fatal: log but do not block the order if the allergy check itself errors
-        console.warn(
-          "[AllergyGate] FDA allergy check failed, proceeding with order:",
-          allergyCheckError.message
-        );
+      if (blocks.length > 0 && processedItems.length === 0) {
+        return blocks.join("\n");
       }
-
-      // 3. Check stock availability (stock is deducted at dispatch by admin, not here)
-      if (medicine.stock < quantity) {
-        return `❌ Insufficient stock. Available: ${medicine.stock}`;
-      }
-
-      // 4. Calculate price
-      const totalPrice = medicine.price * quantity;
 
       // 5. Save order
       const result = await addTransaction({
         patientId,
-        medicineId: medicine._id.toString(),
+        items: processedItems,
         age,
         gender,
         purchaseDate: new Date(),
-        quantity,
-        totalPrice,
-        dosageFrequency,
-        prescriptionRequired: prescriptionFlag,
-        prescriptionProof,
       });
 
       if (result.error) {
@@ -257,12 +335,13 @@ Order ID: ${result.orderId}
 Error: ${paymentErr.message}`;
       }
 
+      const itemsList = processedItems.map(i => `${i.medicineName} (x${i.quantity})`).join(", ");
+
       return `✅ Order placed successfully
       
 Order ID: ${result.orderId}
-Medicine: ${medicine.name}
-Quantity: ${quantity}
-Total Price: ₹${totalPrice}
+Items: ${itemsList}
+Total Price: ₹${totalOrderPrice}
 Status: ${result.status}
 Razorpay ID: ${razorpayOrderId}`;
     } catch (error) {
