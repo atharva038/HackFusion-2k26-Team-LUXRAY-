@@ -34,8 +34,10 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   const { theme } = useAppStore();
-  const { hydrate } = useAuthStore();
-  
+  const { hydrate, user } = useAuthStore();
+  const [allergyModalOpen, setAllergyModalOpen] = useState(false);
+  const [isFirstTimeAllergy, setIsFirstTimeAllergy] = useState(false);
+
   useEffect(() => {
     const applyTheme = () => {
       const root = document.documentElement;
@@ -62,15 +64,27 @@ function App() {
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-
   }, [theme]);
 
   // Restore session from stored JWT on app load
-  useEffect(() => { hydrate(); }, []);
+  useEffect(() => { hydrate(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Check for first-time allergy setup for customers
+  useEffect(() => {
+    if (!user || user.role !== 'customer') return;
+    fetchUserAllergies()
+      .then((data) => {
+        if (!data || data.length === 0) {
+          setIsFirstTimeAllergy(true);
+          setAllergyModalOpen(true);
+        }
+      })
+      .catch(() => {}); // non-critical
+  }, [user]);
 
   return (
     <SocketProvider>
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
@@ -81,15 +95,25 @@ function App() {
         }}
       />
       <Router>
+        {/* Allergy Setup Modal (global, accessible from Header) */}
+        <AllergySetupModal
+          isOpen={allergyModalOpen}
+          onClose={() => { setAllergyModalOpen(false); setIsFirstTimeAllergy(false); }}
+          isFirstTime={isFirstTimeAllergy}
+        />
+
         <Routes>
           {/* Auth Routes (public) */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
+          {/* Trace Monitor (public) */}
+          <Route path="/traces" element={<AgentTraces />} />
+
           {/* Customer Chat Route (protected) */}
           <Route path="/" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'pharmacist']}>
-              <ChatPage />
+              <ChatPage onOpenAllergies={() => { setIsFirstTimeAllergy(false); setAllergyModalOpen(true); }} />
             </ProtectedRoute>
           } />
 
@@ -119,6 +143,7 @@ function App() {
             <Route path="inventory" element={<Inventory />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="logs" element={<Logs />} />
+            <Route path="agent" element={<PharmacistAgent />} />
             <Route path="settings" element={<div className="p-4 text-text">Settings Content</div>} />
           </Route>
 
@@ -127,63 +152,6 @@ function App() {
         </Routes>
       </Router>
     </SocketProvider>
-    <Router>
-      {/* Allergy Setup Modal (global, accessible from Header) */}
-      <AllergySetupModal
-        isOpen={allergyModalOpen}
-        onClose={() => { setAllergyModalOpen(false); setIsFirstTimeAllergy(false); }}
-        isFirstTime={isFirstTimeAllergy}
-      />
-
-      <Routes>
-        {/* Auth Routes (public) */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        
-        {/* Trace Monitor (public) */}
-        <Route path="/traces" element={<AgentTraces />} />
-
-        {/* Customer Chat Route (protected) */}
-        <Route path="/" element={
-          <ProtectedRoute allowedRoles={['customer', 'admin', 'pharmacist']}>
-            <ChatPage onOpenAllergies={() => { setIsFirstTimeAllergy(false); setAllergyModalOpen(true); }} />
-          </ProtectedRoute>
-        } />
-
-        {/* User: My Orders (customer only) */}
-        <Route path="/my-orders" element={
-          <ProtectedRoute allowedRoles={['customer']}>
-            <MyOrders />
-          </ProtectedRoute>
-        } />
-
-        {/* User: My Prescriptions (customer only) */}
-        <Route path="/my-prescriptions" element={
-          <ProtectedRoute allowedRoles={['customer']}>
-            <MyPrescriptions />
-          </ProtectedRoute>
-        } />
-
-        {/* Admin Dashboard Routes (pharmacist/admin only) */}
-        <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={['admin', 'pharmacist']}>
-            <AdminLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Overview />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="prescriptions" element={<PrescriptionReview />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="logs" element={<Logs />} />
-          <Route path="agent" element={<PharmacistAgent />} />
-          <Route path="settings" element={<div className="p-4 text-text">Settings Content</div>} />
-        </Route>
-
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
   );
 }
 

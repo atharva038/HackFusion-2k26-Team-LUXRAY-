@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, X, Truck, Loader2, Search, Filter } from 'lucide-react';
+import { Check, X, Truck, Loader2, Search, Filter, Wifi, WifiOff } from 'lucide-react';
 import { fetchOrders, updateOrderStatus } from '../../services/api';
 import ActionModal from '../../components/ui/ActionModal';
 import { useSocket } from '../../context/SocketContext';
@@ -13,14 +13,13 @@ const Orders = () => {
     const [updatingIds, setUpdatingIds] = useState(new Set());
     const [newOrderIds, setNewOrderIds] = useState(new Set());
 
-    const { on, off } = useSocket();
+    const { on, off, isConnected } = useSocket();
 
     const load = useCallback(() => {
         setLoading(true);
         fetchOrders().then(setOrders).catch(console.error).finally(() => setLoading(false));
     }, []);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     // Shared helper to patch a single order in state
@@ -41,73 +40,50 @@ const Orders = () => {
     }, []);
 
     useEffect(() => {
+        // New order placed by a customer — prepend to list with highlight
         const handleNewOrder = (order) => {
             setOrders(prev => prev.some(o => o._id === order._id) ? prev : [order, ...prev]);
             flashNew(order._id);
         };
 
-        const handleOrderStatusUpdate = (data) => {
+        // Broadcast sent to all admins whenever ANY order status changes
+        const handleAdminOrderUpdate = (data) => {
             patchOrder(data.orderId, {
                 status: data.status,
-                rejectionReason: data.rejectionReason || undefined,
-                approvedBy: data.approvedBy || undefined,
-                totalAmount: data.totalAmount || undefined,
+                rejectionReason: data.rejectionReason,
+                approvedBy: data.approvedBy,
+                totalAmount: data.totalAmount,
             });
-            setUpdatingIds(prev => { const s = new Set(prev); s.delete(data.orderId); return s; });
-        };
-
-        const handleOrderDispatched = (data) => {
-            patchOrder(data.orderId, { status: 'dispatched' });
-            setUpdatingIds(prev => { const s = new Set(prev); s.delete(data.orderId); return s; });
-        };
-
-        const handleOrderRejected = (data) => {
-            patchOrder(data.orderId, { status: 'rejected', rejectionReason: data.reason });
-            setUpdatingIds(prev => { const s = new Set(prev); s.delete(data.orderId); return s; });
-        };
-
-        const handleAdminOrderUpdate = (data) => {
-            setOrders(prev => {
-                const idx = prev.findIndex(o => o._id === data.orderId);
-                if (idx === -1) return prev;
-                const next = [...prev];
-                next[idx] = { ...next[idx], status: data.status, rejectionReason: data.rejectionReason, approvedBy: data.approvedBy, totalAmount: data.totalAmount };
-                return next;
-            });
+            // Clear any lingering spinner (e.g. from another admin's action)
             setUpdatingIds(prev => { const s = new Set(prev); s.delete(data.orderId); return s; });
         };
 
         on('order:new', handleNewOrder);
-        on('order:status-updated', handleOrderStatusUpdate);
-        on('order:dispatched', handleOrderDispatched);
-        on('order:rejected', handleOrderRejected);
         on('order:admin-updated', handleAdminOrderUpdate);
 
         return () => {
             off('order:new', handleNewOrder);
-            off('order:status-updated', handleOrderStatusUpdate);
-            off('order:dispatched', handleOrderDispatched);
-            off('order:rejected', handleOrderRejected);
             off('order:admin-updated', handleAdminOrderUpdate);
         };
     }, [on, off, patchOrder, flashNew]);
 
-    // ✅ Optimistic update — no load() refetch needed; WebSocket confirms the real state
     const handleActionConfirm = async () => {
         const { id, status } = modalConfig;
         setModalConfig(prev => ({ ...prev, isOpen: false }));
-        setUpdatingIds(prev => new Set(prev).add(id)); // show spinner on that row
+        setUpdatingIds(prev => new Set(prev).add(id));
 
         // Optimistically update UI immediately
         patchOrder(id, { status });
 
         try {
             await updateOrderStatus(id, status, status === 'rejected' ? 'Rejected by pharmacist.' : '');
-            // WebSocket event will fire and confirm/correct the state
+            // Socket event (order:admin-updated) will propagate the change to other admins
         } catch (err) {
             console.error(err);
-            // ✅ Rollback on failure — refetch only on error
-            load();
+            load(); // Rollback on failure
+        } finally {
+            // Always clear spinner after API responds — don't rely solely on socket for this
+            setUpdatingIds(prev => { const s = new Set(prev); s.delete(id); return s; });
         }
     };
 
@@ -125,6 +101,7 @@ const Orders = () => {
             case 'approved':              return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
             case 'pending':
             case 'awaiting_prescription': return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
+            case 'awaiting_payment':      return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
             case 'dispatched':            return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
             case 'rejected':              return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
             default:                      return 'bg-black/5 text-text-muted border-black/10';
@@ -146,9 +123,22 @@ const Orders = () => {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-text">Orders Management</h1>
-                <p className="text-text-muted text-sm mt-1">Review and process all incoming pharmacy orders.</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-text">Orders Management</h1>
+                    <p className="text-text-muted text-sm mt-1">Review and process all incoming pharmacy orders.</p>
+                </div>
+                {/* Real-time connection badge */}
+                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
+                    isConnected
+                        ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
+                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+                }`}>
+                    {isConnected
+                        ? <><Wifi className="w-3 h-3" /> Live</>
+                        : <><WifiOff className="w-3 h-3" /> Offline</>
+                    }
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -176,6 +166,7 @@ const Orders = () => {
                         <option value="all">All Statuses</option>
                         <option value="pending">Pending</option>
                         <option value="awaiting_prescription">Awaiting Rx</option>
+                        <option value="awaiting_payment">Awaiting Payment</option>
                         <option value="approved">Approved</option>
                         <option value="dispatched">Dispatched</option>
                         <option value="rejected">Rejected</option>
@@ -200,12 +191,6 @@ const Orders = () => {
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
                             {filteredOrders.length > 0 ? filteredOrders.map((order) => (
                                 <tr key={order._id} className={`transition-colors text-[14px] ${newOrderIds.has(order._id) ? 'bg-green-500/10 dark:bg-green-500/10' : 'hover:bg-black/2 dark:hover:bg-white/2'}`}>
-                                    <td className="px-6 py-4 font-mono text-text text-xs">{order._id.slice(-6).toUpperCase()}</td>
-                                    <td className="px-6 py-4 text-text-muted">{order.user?.name || 'N/A'}</td>
-                                    <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">
-                                        {order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}
-                                    </td>
-                                <tr key={order._id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
                                     <td className="px-6 py-4 font-mono text-text text-xs">{order._id}</td>
                                     <td className="px-6 py-4">{order.user?.name
                                         ? (
@@ -219,12 +204,11 @@ const Orders = () => {
                                         : <span className="italic text-text-muted/60 text-xs">Unknown user</span>}</td>
                                     <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">{order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}</td>
                                     <td className="px-6 py-4">
-                                        {/* ✅ Show spinner on updating rows */}
                                         {updatingIds.has(order._id) ? (
                                             <Loader2 className="w-4 h-4 animate-spin text-primary" />
                                         ) : (
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
-                                                {order.status.replace('_', ' ')}
+                                                {order.status?.replace(/_/g, ' ')}
                                             </span>
                                         )}
                                     </td>
@@ -234,8 +218,7 @@ const Orders = () => {
                                     <td className="px-6 py-4 text-text-muted text-[13px]">{new Date(order.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            {/* ✅ Disable action buttons while row is updating */}
-                                            {(order.status === 'pending' || order.status === 'awaiting_prescription') && (
+                                            {(order.status === 'pending' || order.status === 'awaiting_prescription' || order.status === 'awaiting_payment') && (
                                                 <>
                                                     <button
                                                         onClick={() => triggerModal(order._id, 'approved')}

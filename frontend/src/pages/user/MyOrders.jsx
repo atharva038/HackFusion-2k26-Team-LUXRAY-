@@ -8,6 +8,7 @@ import {
 import Header from '../../components/layout/Header';
 import { fetchUserOrders, sendChatMessage } from '../../services/api';
 import useAppStore from '../../store/useAppStore';
+import useAuthStore from '../../store/useAuthStore';
 import { useSocket } from '../../context/SocketContext';
 import { downloadInvoicePdf } from '../../utils/generateInvoice';
 
@@ -191,6 +192,7 @@ const MyOrders = () => {
     const navigate = useNavigate();
     const { on, off } = useSocket();
     const sessionId = useAppStore((s) => s.sessionId);
+    const currentUserId = useAuthStore((s) => s.user?.id);
     const LIMIT = 10;
 
     const load = useCallback((p) => {
@@ -209,6 +211,14 @@ const MyOrders = () => {
 
     // WebSocket listeners for real-time order updates
     useEffect(() => {
+        // Prepend a new order only if it belongs to the current user and we're on page 1
+        const handleNewOrder = (order) => {
+            const orderUserId = order.user?._id?.toString() ?? order.user?.toString();
+            if (orderUserId !== currentUserId) return;
+            if (page !== 1) return;
+            setOrders(prev => prev.some(o => o._id === order._id) ? prev : [order, ...prev]);
+        };
+
         const handleOrderStatusUpdate = (data) => {
             console.log('[MyOrders] Order status updated:', data);
             
@@ -257,26 +267,20 @@ const MyOrders = () => {
         };
 
         // Register event listeners
+        on('order:new', handleNewOrder);
         on('order:status-updated', handleOrderStatusUpdate);
         on('order:dispatched', handleOrderDispatched);
         on('order:rejected', handleOrderRejected);
 
         // Cleanup listeners on unmount
         return () => {
+            off('order:new', handleNewOrder);
             off('order:status-updated', handleOrderStatusUpdate);
             off('order:dispatched', handleOrderDispatched);
             off('order:rejected', handleOrderRejected);
         };
-    }, [on, off]);
+    }, [on, off, currentUserId, page]);
 
-    const handleReorder = (order) => {
-        const medList = order.items
-            .map(i => `${i.medicine?.name || 'Unknown'} (qty: ${i.quantity})`)
-            .join(', ');
-        const msg = `I'd like to reorder my previous order (ID: ...${order._id.slice(-6).toUpperCase()}). The medicines were: ${medList}. Please help me place this order again.`;
-        useAppStore.getState().setPendingChatMessage(msg);
-        navigate('/');
-    };
     // ── Core reorder: build query → send to chat agent → show result ──────
     const handleReorder = useCallback(async (order) => {
         const id = order._id;
