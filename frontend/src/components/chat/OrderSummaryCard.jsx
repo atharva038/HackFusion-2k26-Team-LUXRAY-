@@ -191,34 +191,60 @@ const OrderSummaryCard = ({ messageId, orderId, status, items, total, customer, 
                                     description: `Order ${orderId}`,
                                     order_id: razorpayOrderId,
                                     handler: async function (response) {
-                                        // The backend webhook handles the actual confirmation.
-                                        // IN DEVELOPMENT: Simulate the webhook because Razorpay cannot reach localhost
-                                        if (import.meta.env.DEV) {
-                                            try {
-                                                const wApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-                                                const wBase = wApiUrl.replace(/\/api\/?$/, '');
-                                                await fetch(`${wBase}/api/payment/webhook`, {
+                                        // ─── PRIMARY confirmation path: verify directly with backend ───
+                                        // This works in BOTH production AND dev regardless of webhook setup
+                                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                                        const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+                                        const token = localStorage.getItem('pharmacy_token');
 
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({
-                                                        event: "payment.captured",
-                                                        payload: {
-                                                            payment: {
-                                                                entity: {
-                                                                    order_id: razorpayOrderId,
-                                                                    id: response.razorpay_payment_id || "pay_mock123",
-                                                                    amount: amount * 100
-                                                                }
+                                        try {
+                                            const verifyRes = await fetch(`${baseUrl}/api/payment/verify`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                                },
+                                                body: JSON.stringify({
+                                                    razorpay_order_id: razorpayOrderId,
+                                                    razorpay_payment_id: response.razorpay_payment_id,
+                                                    razorpay_signature: response.razorpay_signature,
+                                                    amount: amount,
+                                                }),
+                                            });
+
+                                            if (verifyRes.ok) {
+                                                // Payment confirmed — update UI immediately
+                                                if (messageId && updateMessageStructuredData) {
+                                                    updateMessageStructuredData(messageId, { status: 'paid' });
+                                                }
+
+                                                // Reload chat messages to show invoice in chat
+                                                if (currentSessionId && setMessages) {
+                                                    try {
+                                                        const chatRes = await fetch(`${baseUrl}/api/chat/history/${currentSessionId}`, {
+                                                            headers: { 'Authorization': `Bearer ${token}` }
+                                                        });
+                                                        if (chatRes.ok) {
+                                                            const chatData = await chatRes.json();
+                                                            if (chatData.history) {
+                                                                const { parseStructuredOutput } = await import('../../utils/parseStructuredOutput.js');
+                                                                const formatted = chatData.history.map((msg, i) => ({
+                                                                    id: i, role: msg.role, text: msg.content,
+                                                                    tools: [], structured: msg.role === 'ai' ? parseStructuredOutput(msg.content) : null
+                                                                }));
+                                                                setMessages(formatted);
                                                             }
                                                         }
-                                                    })
-                                                });
-                                            } catch (e) {
-                                                console.error("Local webhook simulation failed", e);
+                                                    } catch (chatErr) {
+                                                        console.error('Failed to refresh chat after payment:', chatErr);
+                                                    }
+                                                }
+                                            } else {
+                                                console.error('Payment verify failed:', await verifyRes.text());
                                             }
+                                        } catch (verifyErr) {
+                                            console.error('Payment verify request failed:', verifyErr);
                                         }
-                                        // Poller will automatically hide the button when the webhook processes it.
                                     },
                                     theme: {
                                         color: '#3b82f6', // primary blue
