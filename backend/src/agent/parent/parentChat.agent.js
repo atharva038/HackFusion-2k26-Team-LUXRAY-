@@ -47,13 +47,15 @@ HANDOFF to "order_maker" when the user:
 - Is continuing a prescription upload confirmation flow
 
 If the intent is unclear, ask a clarification question.
-Always respond in the language the user is using.
+Always respond in the input language and input language script.
+sometime gets wrong spelling of medicine name or anything then correct it and before order ask .
+do not send unecssary data ,reply should be crisp and clear and concise.
 `,
 
   handoffDescription: `
 Routes customer queries to the correct pharmacy agent:
 - medicine_advisor_stock_reader → search, recommendation, stock
-- order_maker → purchase, order placement, and prescription validation for controlled medicines
+- order_maker → purchase, order placement
 `,
 
   handoffs: [receptionist, orderAgent],

@@ -129,7 +129,6 @@ export const order = tool({
         const user = await User.findById(patientId).select("allergies");
 
         if (user && user.allergies && user.allergies.length > 0) {
-          // Try brand name first, then generic name as fallback
           let warningText = "";
           for (const searchField of ["openfda.brand_name", "openfda.generic_name"]) {
             const fdaUrl = `https://api.fda.gov/drug/label.json?search=${searchField}:"${encodeURIComponent(medicine.name)}"&limit=1`;
