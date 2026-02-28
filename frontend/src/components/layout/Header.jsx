@@ -5,31 +5,7 @@ import useAppStore, { AI_STATUS } from '../../store/useAppStore';
 import useAuthStore, { STAFF_ROLES } from '../../store/useAuthStore';
 import LanguageSelector from '../chat/LanguageSelector';
 
-const AiStatusIndicator = () => {
-    const aiStatus = useAppStore(state => state.aiStatus);
 
-    let statusConfig = { text: 'Ready', dot: 'bg-green-400' };
-    switch (aiStatus) {
-        case AI_STATUS.LISTENING:
-            statusConfig = { text: 'Listening', dot: 'bg-blue-400 animate-pulse' };
-            break;
-        case AI_STATUS.PROCESSING:
-            statusConfig = { text: 'Processing', dot: 'bg-purple-400 animate-bounce' };
-            break;
-        case AI_STATUS.SPEAKING:
-            statusConfig = { text: 'Speaking', dot: 'bg-teal-400 animate-pulse' };
-            break;
-        default:
-            break;
-    }
-
-    return (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 mx-auto">
-            <div className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
-            <span className="text-xs font-medium opacity-80">{statusConfig.text}</span>
-        </div>
-    );
-};
 
 const Header = ({ onOpenAllergies }) => {
     const { theme, toggleTheme } = useAppStore();
@@ -97,11 +73,7 @@ const Header = ({ onOpenAllergies }) => {
             )}
             </nav>
 
-            {/* AI Status (Centered) */}
-            <div className="hidden md:flex flex-1 justify-center">
-                <AiStatusIndicator />
-            </div>
-
+        
             {/* Right Actions */}
             <div className="flex items-center gap-3">
                 <LanguageSelector />
