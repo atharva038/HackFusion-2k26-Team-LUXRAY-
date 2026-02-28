@@ -73,6 +73,7 @@ async function chatPharma(messages = []) {
       console.log("Type:", item.type || item.constructor.name);
       console.log("Full Object:", JSON.stringify(item, null, 2));
     });
+    //MONITOR PHASE
     const monitorTraces = result.state._generatedItems.map((item) => {
       const actor = item.agent?.name || item.targetAgent?.name || "System";
       const itemType = item.type || item.constructor.name;
@@ -80,33 +81,38 @@ async function chatPharma(messages = []) {
       let actionName = "AI Reasoning";
       let detailData = "Processing...";
 
-      // 1. PRIORITIZE TOOLS (This catches order_medicine)
-      if (item.rawItem?.name && !item.rawItem.name.includes('transfer_to')) {
-        const isResult = item.rawItem.type === 'function_call_result';
-        actionName = isResult ? `📦 Result: ${item.rawItem.name}` : `⚙️ Tool: ${item.rawItem.name}`;
-
-        // Extract clean text from the result or arguments
-        detailData = item.rawItem.output?.text || item.rawItem.output || item.rawItem.arguments || "Done.";
+      // 1. TOOLS (Calls and Results/Failures)
+      if (item.rawItem?.type === 'function_call' && !item.rawItem.name.includes('transfer_to')) {
+        actionName = `⚙️ Tool: ${item.rawItem.name}`;
+        detailData = item.rawItem.arguments || "Initiating...";
+      } 
+      else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output') {
+        const isError = item.rawItem.status === 'error' || !!item.rawItem.error;
+        actionName = isError ? `❌ Fail: ${item.rawItem.name}` : `📦 Result: ${item.rawItem.name}`;
+        
+        // Capture Error message if failed, otherwise capture output text
+        detailData = item.rawItem.error || item.rawItem.output?.text || item.rawItem.output || "No data returned";
       }
 
       // 2. HANDOFFS (Parent -> Child)
       else if (item.rawItem?.name?.startsWith('transfer_to_')) {
         const target = item.rawItem.name.replace('transfer_to_', '');
         actionName = "🤝 Handoff";
-        detailData = `Routing to ${target}`;
+        detailData = `Routing context to: ${target}`;
       }
 
-      // 3. MESSAGES (Final Answer)
+      // 3. MESSAGES (Final Answer from any agent)
       else if (itemType === 'message_output_item' || item.rawItem?.type === 'message') {
         actionName = "💬 Response";
-        const content = item.rawItem?.content?.[0]?.text || item.content;
-        detailData = typeof content === 'object' ? JSON.stringify(content) : content;
+        const messageText = item.rawItem?.content?.[0]?.text || item.content;
+        detailData = typeof messageText === 'object' ? JSON.stringify(messageText) : messageText;
       }
 
-      // 4. CATCH-ALL (For anything else)
+      // 4. SYSTEM / CONTEXT TRANSITIONS
       else if (itemType === 'handoff_output_item') {
         actionName = "🔄 System";
-        detailData = "Switching agent context...";
+        // Show the target agent in the data
+        detailData = `Agent ${item.targetAgent?.name || 'Specialist'} activated.`;
       }
 
       return {
@@ -114,18 +120,16 @@ async function chatPharma(messages = []) {
         action: actionName,
         data: detailData
       };
-    }).filter(t => t.action !== "AI Reasoning"); // 🚀 REMOVE THE "GLITCHY" EMPTY STEPS
-
+    }).filter(t => t.action !== "AI Reasoning");
 
     console.log("\n📍 --- EXECUTION TRACE ---");
-    monitorTraces.forEach((t) => {
-      // Keep it short for the terminal
+    monitorTraces.forEach((t, i) => {
       const shortData = typeof t.data === 'string'
-        ? (t.data.substring(0, 60) + (t.data.length > 60 ? "..." : ""))
+        ? (t.data.substring(0, 80) + (t.data.length > 80 ? "..." : ""))
         : JSON.stringify(t.data);
 
-      console.log(`${t.agent} ➔ ${t.action}`);
-      console.log(`   Data: ${shortData}`);
+      console.log(`[${i}] ${t.agent.padEnd(15)} ➔ ${t.action}`);
+      console.log(`    └─ Result: ${shortData}`);
     });
     console.log("--------------------------\n");
 
