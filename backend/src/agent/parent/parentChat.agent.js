@@ -131,13 +131,13 @@ async function chatPharma(messages = []) {
 
 
     console.log(result.finalOutput);
-    return result.finalOutput;
+    return { output: result.finalOutput, traces: monitorTraces };
   } catch (err) {
     if (err instanceof InputGuardrailTripwireTriggered) {
-      return "Please ask only safe medicine or pharmacy related questions.";
+      return { output: "Please ask only safe medicine or pharmacy related questions.", traces: [] };
     }
     if (err instanceof OutputGuardrailTripwireTriggered) {
-      return "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.";
+      return { output: "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.", traces: [] };
     }
 
     throw err;

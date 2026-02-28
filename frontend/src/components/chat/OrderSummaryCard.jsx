@@ -253,14 +253,21 @@ const OrderSummaryCard = ({ messageId, orderId, status, items, total, customer, 
                                 const rzp = new window.Razorpay(options);
                                 rzp.open();
                             }}
-                            className={`w-full py-2.5 text-white rounded-xl font-medium text-[13px] transition-colors shadow-sm ${isChecking
+                            className={`w-full py-3 text-white rounded-[1.25rem] font-semibold text-[14px] transition-all duration-300 shadow-md flex items-center justify-center gap-2 ${isChecking
                                 ? 'bg-amber-400 cursor-not-allowed opacity-70'
-                                : 'bg-amber-500 hover:bg-amber-600'
+                                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:-translate-y-0.5'
                                 }`}
                         >
-                            {isChecking ? 'Verifying...' : `Pay Now ${amount ? `(₹${amount})` : ''}`}
+                            {isChecking ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Verifying...
+                                </span>
+                            ) : (
+                                `Pay Now ${amount ? `(₹${amount})` : ''}`
+                            )}
                         </button>
-                        <p className="text-[10px] text-text-muted text-center opacity-70">
+                        <p className="text-[10px] text-text-muted text-center opacity-70 mt-1">
                             Secure payment powered by Razorpay
                         </p>
                     </div>

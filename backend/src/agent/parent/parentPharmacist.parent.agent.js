@@ -135,10 +135,7 @@ Your job is routing and delegation — not execution.
 async function chatPharmacist(messages = []) {
   console.log("[Pharmacist] chatPharmacist called with", messages.length, "messages");
   try {
-    console.log("hi i am here")
-    const result = await run(parentPharamcist, messages);
-    console.log("[Pharmacist] finalOutput:", result.finalOutput);
-    console.log("RAW TRACE ITEM 0:", JSON.stringify(result.state._generatedItems[0], null, 2));
+    const result = await run(parentPharamcist, messages); 
     return result.finalOutput;
   } catch (err) {
     if (err instanceof InputGuardrailTripwireTriggered) {

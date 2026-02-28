@@ -8,6 +8,7 @@ import { closeRedis } from './config/redis.js';
 import { createRedisRateLimiter } from './middleware/redisRateLimiter.js';
 import { initScheduler } from './scheduler/refill.scheduler.js';
 import { initNotificationScheduler } from './scheduler/notification.schedule.js';
+import { initializeSocket } from './config/socket.js';
 
 import chatRoutes from './routes/chat.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -17,6 +18,7 @@ import paymentRoutes from './routes/payment.routes.js';
 import notifyRoutes from './routes/notification.routes.js';
 import ttsRoutes from './routes/tts.routes.js';
 import userRoutes from './routes/user.routes.js';
+import traceRoutes from './routes/trace.routes.js';
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -38,6 +40,8 @@ app.use(cors({
       'http://localhost:3000',
       'https://hack-fusion-2k26-team-luxray.vercel.app',
       'https://coral-app-neg9t.ondigitalocean.app',
+      'https://www.medisage.me',
+      'https://medisage.me',
     ];
 
     // Allow all Vercel preview deployments for this project
@@ -109,6 +113,7 @@ app.use('/api/webhook', webhookRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/tts', ttsLimiter, ttsRoutes);
 app.use('/api/prescription', prescriptionLimiter, notifyRoutes);
+app.use('/api/traces', traceRoutes);
 
 // ─── Health Check ────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
@@ -129,6 +134,9 @@ async function start() {
   const server = app.listen(PORT, () =>
     console.log(`🚀 Backend running on http://localhost:${PORT} [${isProduction ? 'PRODUCTION' : 'DEV'}]`)
   );
+
+  // Initialize Socket.IO — must be attached to the HTTP server, not the Express app
+  initializeSocket(server);
 
   // ─── Graceful Shutdown ──────────────────────────────────────────
   // On SIGTERM/SIGINT: stop accepting new requests, drain existing ones,

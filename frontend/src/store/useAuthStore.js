@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { loginUser, registerUser, fetchCurrentUser } from '../services/api';
+import socketService from '../services/socket';
 
 // Roles that belong to the admin dashboard
 export const STAFF_ROLES = ['admin', 'pharmacist'];
@@ -7,7 +8,7 @@ export const STAFF_ROLES = ['admin', 'pharmacist'];
 /** Returns the correct home route for a given role */
 export const roleHome = (role) => STAFF_ROLES.includes(role) ? '/admin' : '/';
 
-const useAuthStore = create((set, get) => ({
+const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem('pharmacy_token') || null,
   isLoading: false,
@@ -53,6 +54,8 @@ const useAuthStore = create((set, get) => ({
   },
 
   logout: () => {
+    // Full teardown: disconnect socket AND clear all buffered listeners
+    socketService.reset();
     localStorage.removeItem('pharmacy_token');
     set({ user: null, token: null, error: null });
   },

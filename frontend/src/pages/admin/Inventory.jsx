@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Edit2, Loader2, Search, Filter } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Edit2, Loader2, Search, Filter, Package, AlertTriangle, TrendingUp } from 'lucide-react';
 import { fetchInventory, restockMedicine } from '../../services/api';
 import InventoryStockModal from '../../components/ui/InventoryStockModal';
+import { useSocket } from '../../context/SocketContext';
 
 const Inventory = () => {
     const [inventory, setInventory] = useState([]);
@@ -10,17 +11,67 @@ const Inventory = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [modalConfig, setModalConfig] = useState({ isOpen: false, item: null });
 
-    const load = () => {
+    const { on, off } = useSocket();
+
+    const load = useCallback(() => {
         setLoading(true);
         fetchInventory().then(setInventory).catch(console.error).finally(() => setLoading(false));
-    };
+    }, []);
 
-    useEffect(load, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    useEffect(() => { load(); }, [load]);
 
+    // WebSocket listeners for real-time inventory updates
+    useEffect(() => {
+        const handleMedicineUpdated = (data) => {
+            setInventory(prev =>
+                prev.map(item =>
+                    item._id === data.medicine._id
+                        ? { ...item, ...data.medicine }
+                        : item
+                )
+            );
+        };
+
+        const handleMedicineRestocked = (data) => {
+            // Handles both restocks (positive qty) and dispatch deductions (negative qty)
+            setInventory(prev =>
+                prev.map(item =>
+                    item._id === data.medicine._id
+                        ? { ...item, stock: data.medicine.newStock }
+                        : item
+                )
+            );
+        };
+
+        const handleLowStockAlert = (data) => {
+            setInventory(prev =>
+                prev.map(item =>
+                    item._id === data.medicine._id
+                        ? { ...item, stock: data.medicine.stock }
+                        : item
+                )
+            );
+        };
+
+        on('inventory:medicine-updated', handleMedicineUpdated);
+        on('inventory:medicine-restocked', handleMedicineRestocked);
+        on('inventory:low-stock-alert', handleLowStockAlert);
+        on('inventory:low-stock-manual-alert', () => {});
+
+        return () => {
+            off('inventory:medicine-updated', handleMedicineUpdated);
+            off('inventory:medicine-restocked', handleMedicineRestocked);
+            off('inventory:low-stock-alert', handleLowStockAlert);
+            off('inventory:low-stock-manual-alert', () => {});
+        };
+    }, [on, off]);
+
+    // ── Restock — no load() needed; socket event updates the row in real-time ──
     const handleRestockConfirm = async (qtyDelta) => {
         try {
             await restockMedicine(modalConfig.item._id, qtyDelta);
-            load();
+            // Socket event 'inventory:medicine-restocked' will update state
         } catch (err) { console.error(err); }
     };
 
@@ -46,6 +97,11 @@ const Inventory = () => {
         return matchesSearch && matchesFilter;
     });
 
+    // ── Live computed stats (update automatically on every socket event) ──
+    const totalMedicines = inventory.length;
+    const lowStockCount = inventory.filter(i => i.stock <= i.lowStockThreshold).length;
+    const totalValue = inventory.reduce((sum, i) => sum + (i.stock * (i.price || 0)), 0);
+
     if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
     return (
@@ -55,9 +111,42 @@ const Inventory = () => {
                 <p className="text-text-muted text-sm mt-1">Manage medicine stock levels and configuration.</p>
             </div>
 
+            {/* ── Real-time Stats Bar ── */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                        <Package className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-text-muted uppercase tracking-wide font-medium">Total Medicines</p>
+                        <p className="text-xl font-bold text-text">{totalMedicines}</p>
+                    </div>
+                </div>
+                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${lowStockCount > 0 ? 'bg-amber-500/10' : 'bg-green-500/10'}`}>
+                        <AlertTriangle className={`w-5 h-5 ${lowStockCount > 0 ? 'text-amber-500' : 'text-green-500'}`} />
+                    </div>
+                    <div>
+                        <p className="text-xs text-text-muted uppercase tracking-wide font-medium">Low Stock</p>
+                        <p className={`text-xl font-bold ${lowStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                            {lowStockCount}
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                        <TrendingUp className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-text-muted uppercase tracking-wide font-medium">Total Value</p>
+                        <p className="text-xl font-bold text-text">₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                    </div>
+                </div>
+            </div>
+
             {/* Custom Control Bar */}
             <div className="flex flex-col sm:flex-row gap-4 mb-2">
-                <div className="relative flex-grow">
+                <div className="relative grow">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-text-muted" />
                     </div>
@@ -69,7 +158,7 @@ const Inventory = () => {
                         className="pl-10 pr-4 py-2 w-full bg-card border border-black/10 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
                     />
                 </div>
-                <div className="relative min-w-[180px]">
+                <div className="relative min-w-45">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Filter className="h-4 w-4 text-text-muted" />
                     </div>
@@ -87,7 +176,7 @@ const Inventory = () => {
 
             <div className="bg-card border border-black/5 dark:border-white/5 rounded-xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-200">
                         <thead>
                             <tr className="bg-black/5 dark:bg-white/5 text-text-muted text-xs uppercase tracking-wider">
                                 <th className="px-6 py-4 font-semibold">Medicine</th>
@@ -101,7 +190,7 @@ const Inventory = () => {
                         </thead>
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
                             {filteredInventory.length > 0 ? filteredInventory.map((item) => (
-                                <tr key={item._id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
+                                <tr key={item._id} className="hover:bg-black/2 dark:hover:bg-white/2 transition-colors text-[14px]">
                                     <td className="px-6 py-4 font-medium text-text">{item.name}</td>
                                     <td className="px-6 py-4 font-mono text-xs text-text-muted">{item.pzn}</td>
                                     <td className="px-6 py-4 text-text-muted">₹{item.price}</td>
