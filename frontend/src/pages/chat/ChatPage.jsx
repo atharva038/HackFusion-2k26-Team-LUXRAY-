@@ -28,11 +28,13 @@ const ChatPage = ({ onOpenAllergies }) => {
                 {/* Left Sidebar: Navigation & History */}
                 <div className={`
                     absolute md:relative inset-y-0 left-0 z-50
-                    transform transition-transform duration-300 ease-in-out
-                    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                    md:translate-x-0 h-full shadow-2xl md:shadow-none
+                    transform transition-all duration-300 ease-in-out
+                    ${sidebarOpen ? 'translate-x-0 md:w-80' : '-translate-x-full md:w-0 md:opacity-0 md:overflow-hidden'}
+                    h-full shadow-2xl md:shadow-none bg-bg
                 `}>
-                    <ChatSidebar />
+                    <div className="w-80 h-full">
+                        <ChatSidebar />
+                    </div>
                 </div>
 
                 {/* Right Area: Main Chat Experience */}

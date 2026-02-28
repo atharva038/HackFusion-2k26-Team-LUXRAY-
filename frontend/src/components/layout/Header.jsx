@@ -7,12 +7,12 @@ import UserDropdown from '../shared/UserDropdown';
 const Header = ({ onOpenAllergies, onToggleSidebar }) => {
     return (
         <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-glass backdrop-blur-md border-b border-black/5 dark:border-white/5 z-50 sticky top-0 transition-colors duration-500">
-            {/* Left Box: Menu Toggle (Mobile) & Logo */}
+            {/* Left Box: Menu Toggle & Logo */}
             <div className="flex items-center gap-3">
                 {onToggleSidebar && (
                     <button
                         onClick={onToggleSidebar}
-                        className="md:hidden p-2 -ml-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text"
+                        className="p-2 -ml-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text"
                         aria-label="Toggle Menu"
                     >
                         <Menu className="w-5 h-5" />

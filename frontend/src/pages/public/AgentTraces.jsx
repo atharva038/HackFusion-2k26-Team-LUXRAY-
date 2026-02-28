@@ -53,8 +53,8 @@ export default function AgentTraces() {
         return (
             <div className="min-h-screen bg-bg text-text p-8 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <Activity className="w-8 h-8 text-indigo-500 animate-spin" />
-                    <p className="text-text-muted font-medium">Connecting to AI Neural Link...</p>
+                    <Activity className="w-8 h-8 text-primary animate-spin" />
+                    <p className="text-text-muted font-medium">Connecting to system logs...</p>
                 </div>
             </div>
         );
@@ -77,55 +77,49 @@ export default function AgentTraces() {
     }
 
     return (
-        <div className="min-h-screen bg-bg text-text font-sans selection:bg-indigo-500/30 relative overflow-hidden">
-            {/* Ambient Background Glows */}
-            <div className="absolute top-[-5%] left-[20%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse"></div>
-            <div className="absolute top-[10%] right-[15%] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" style={{ animationDelay: '2s' }}></div>
-
+        <div className="min-h-screen bg-bg text-text font-sans selection:bg-primary/30">
             <Header />
-            <div className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto flex-1 relative z-10">
+            <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto flex-1 z-10">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 mb-10 relative">
-                    {/* Decorative bottom line */}
-                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-black/10 dark:via-white/10 to-transparent"></div>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 mb-8 border-b border-black/5 dark:border-white/5">
 
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-inner">
-                                <Terminal className="w-7 h-7 text-indigo-500" />
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
+                                <Terminal className="w-6 h-6 text-primary" />
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-500 dark:from-indigo-400 dark:to-purple-400">
-                                System Trace Monitor
+                            <h1 className="text-3xl font-bold tracking-tight text-text">
+                                Agent Traces
                             </h1>
                         </div>
-                        <p className="text-text-muted max-w-2xl text-base md:text-lg pl-1 font-medium opacity-90">
-                            Real-time observability into the multi-agent neural network's cognition, tool orchestration, and routing decisions.
+                        <p className="text-text-muted text-base max-w-2xl pl-1">
+                            Real-time observability into the conversational reasoning, tool execution, and orchestration.
                         </p>
                     </div>
 
                     <button
                         onClick={fetchTraces}
                         disabled={isRefreshing}
-                        className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-card border border-black/10 dark:border-white/10 hover:border-indigo-500/50 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 rounded-xl text-sm font-semibold transition-all duration-300 w-fit disabled:opacity-50 shadow-sm hover:shadow-md text-indigo-600 dark:text-indigo-400"
+                        className="flex items-center gap-2 px-4 py-2 bg-card border border-black/10 dark:border-white/10 hover:border-primary/30 hover:bg-primary/5 rounded-xl text-sm font-medium transition-all duration-200 w-fit disabled:opacity-50 text-text shadow-sm"
                     >
-                        <Repeat className={`w-4.5 h-4.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        {isRefreshing ? 'Syncing...' : 'Live Sync'}
+                        <Repeat className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        {isRefreshing ? 'Syncing...' : 'Refresh'}
                     </button>
                 </div>
 
                 {/* Logs Feed */}
-                <div className="space-y-8">
+                <div className="space-y-6">
                     <AnimatePresence>
                         {logs.length === 0 ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="text-center py-20 text-text-muted border border-dashed border-indigo-500/30 bg-indigo-500/5 backdrop-blur-sm rounded-3xl"
+                                className="text-center py-16 text-text-muted bg-card border border-black/5 dark:border-white/5 rounded-2xl shadow-soft"
                             >
-                                <BrainCircuit className="w-12 h-12 mx-auto mb-4 text-indigo-500 opacity-50 animate-pulse" />
-                                <p className="text-lg font-medium">No agent traces found in the database.</p>
-                                <p className="text-sm opacity-70 mt-2">Interact with the AI to generate cognitive traces.</p>
+                                <Terminal className="w-10 h-10 mx-auto mb-3 text-primary/40" />
+                                <p className="text-base font-medium text-text">No system traces found.</p>
+                                <p className="text-sm">Interact with the assistant to generate logs.</p>
                             </motion.div>
                         ) : (
                             logs.map((log) => (
@@ -142,45 +136,45 @@ export default function AgentTraces() {
 const TraceCard = ({ log }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // Determine overall status color and glow
+    // Determine overall status color
     const statusColor =
-        log.status === 'success' ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' :
-            log.status === 'blocked' ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]' : 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]';
+        log.status === 'success' ? 'bg-green-500' :
+            log.status === 'blocked' ? 'bg-amber-500' : 'bg-red-500';
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-            className="group rounded-2xl border border-black/5 dark:border-white/10 bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="group rounded-xl border border-black/5 dark:border-white/5 bg-card overflow-hidden shadow-soft transition-all duration-300 hover:shadow-md"
         >
             {/* Run Header (Clickable to toggle) */}
             <div
-                className={`px-6 md:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 cursor-pointer transition-colors duration-300 ${isExpanded ? 'bg-indigo-500/5' : 'bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent hover:bg-black/5 dark:hover:bg-white/5'} border-b border-black/5 dark:border-white/5`}
+                className={`px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-colors duration-200 ${isExpanded ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'hover:bg-black/[0.01] dark:hover:bg-white/[0.01]'} border-b border-black/5 dark:border-white/5`}
                 onClick={() => setIsExpanded(!isExpanded)}
             >
-                <div className="space-y-2.5">
-                    <div className="flex items-center gap-3">
-                        <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${statusColor}`}></span>
-                        <h3 className="font-bold text-text tracking-widest uppercase text-[12px] opacity-90">
-                            {log.sessionId === 'prescription_upload' ? 'OCR Extraction Pipeline' : 'Chat Intelligence Routing'}
+                <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
+                        <h3 className="font-semibold text-text text-sm uppercase tracking-wider">
+                            {log.sessionId === 'prescription_upload' ? 'Prescription OCR' : 'Chat Interaction'}
                         </h3>
                     </div>
-                    <p className="text-[14px] md:text-[15px] font-medium text-text bg-black/5 dark:bg-white/5 w-fit px-3 py-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-500/10 transition-colors border border-black/5 dark:border-white/5 italic">
+                    <p className="text-[15px] text-text font-medium truncate w-full">
                         "{log.userMessage}"
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 text-[13px] font-mono text-text-muted mt-2 sm:mt-0">
-                    <span className="flex items-center gap-2 shrink-0 bg-white dark:bg-black/20 px-3 py-1.5 rounded-lg border border-black/5 dark:border-white/5 shadow-sm">
-                        <Activity className="w-4 h-4 text-indigo-400" />
+                <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-text-muted mt-1 sm:mt-0">
+                    <span className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-md border border-black/5 dark:border-white/5">
+                        <Activity className="w-3.5 h-3.5" />
                         {log.durationMs}ms
                     </span>
-                    <span className="flex items-center gap-2 shrink-0 bg-white dark:bg-black/20 px-3 py-1.5 rounded-lg border border-black/5 dark:border-white/5 shadow-sm">
-                        <Clock className="w-4 h-4 text-purple-400" />
+                    <span className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-md border border-black/5 dark:border-white/5">
+                        <Clock className="w-3.5 h-3.5" />
                         {new Date(log.createdAt).toLocaleTimeString()}
                     </span>
-                    <div className={`ml-2 w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-black/20 border border-black/5 dark:border-white/5 shadow-sm transition-all duration-300 ${isExpanded ? 'bg-indigo-500 text-white border-indigo-500' : 'group-hover:bg-indigo-500/10 group-hover:text-indigo-500'}`}>
+                    <div className="ml-1 text-text-muted">
                         {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </div>
                 </div>
@@ -193,41 +187,35 @@ const TraceCard = ({ log }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                        className="overflow-hidden bg-black/[0.02] dark:bg-black/20"
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden bg-bg"
                     >
-                        <div className="p-6 md:p-8 font-mono text-[13px]">
-                            <div className="relative pl-6 space-y-8 before:absolute before:inset-y-3 before:left-[11px] before:w-[2px] before:bg-gradient-to-b before:from-indigo-500/30 before:via-purple-500/30 before:to-transparent rounded">
+                        <div className="p-5 md:p-6 text-[13px]">
+                            <div className="relative pl-5 space-y-6 before:absolute before:inset-y-2 before:left-[9px] before:w-[2px] before:bg-black/10 dark:before:bg-white/10 rounded">
                                 {log.traces.map((trace, idx) => {
                                     const icon = ACTION_ICONS[trace.action] || ACTION_ICONS[trace.action.replace(/:.*/, ':')] || ACTION_ICONS['default'];
 
                                     return (
-                                        <motion.div
-                                            key={idx}
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: idx * 0.05 + 0.1 }}
-                                            className="relative"
-                                        >
+                                        <div key={idx} className="relative">
                                             {/* Timeline Dot */}
-                                            <div className="absolute -left-[35px] mt-[2px] bg-card p-1.5 rounded-full border border-black/10 dark:border-white/10 z-10 shadow-sm ring-4 ring-bg">
+                                            <div className="absolute -left-[29px] mt-[2px] bg-card p-1 rounded-full border border-black/5 dark:border-white/5 z-10 ring-4 ring-bg">
                                                 {icon}
                                             </div>
 
-                                            <div className="space-y-2.5 w-full overflow-hidden">
-                                                <div className="flex flex-wrap items-center gap-2.5 text-text opacity-90 text-[14px]">
-                                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/20 shadow-sm">{trace.agent}</span>
-                                                    <span className="text-text-muted/40 font-sans">→</span>
-                                                    <span className="font-bold text-purple-600 dark:text-purple-400 bg-purple-500/5 px-2.5 py-0.5 rounded-md border border-purple-500/10">
+                                            <div className="space-y-2 w-full min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2 text-[13px]">
+                                                    <span className="font-semibold text-text">{trace.agent}</span>
+                                                    <span className="text-text-muted">→</span>
+                                                    <span className="font-medium text-text-muted">
                                                         {trace.action}
                                                     </span>
                                                 </div>
 
-                                                <div className="bg-white dark:bg-[#111111] rounded-xl p-4 md:p-5 text-text-muted shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] border border-black/5 dark:border-white/5 whitespace-pre-wrap break-words max-h-72 overflow-y-auto w-full custom-scrollbar leading-relaxed">
+                                                <div className="bg-card rounded-lg p-3.5 text-text-muted border border-black/5 dark:border-white/5 whitespace-pre-wrap break-words max-h-64 overflow-y-auto w-full custom-scrollbar leading-relaxed font-mono text-[12px]">
                                                     {formatData(trace.data)}
                                                 </div>
                                             </div>
-                                        </motion.div>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -238,12 +226,11 @@ const TraceCard = ({ log }) => {
 
             {/* Final Answer Footer */}
             {log.agentResponse && log.sessionId !== 'prescription_upload' && (
-                <div className="px-6 md:px-8 py-5 border-t border-black/5 dark:border-white/5 bg-gradient-to-r from-emerald-500/5 to-transparent relative overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600"></div>
-                    <h4 className="text-[12px] font-bold tracking-widest mb-2.5 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 uppercase">
-                        <CheckCircle2Icon status={log.status} /> Final Dispatch
+                <div className="px-5 py-4 border-t border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
+                    <h4 className="text-[12px] font-semibold tracking-wide mb-1.5 flex items-center gap-1.5 text-text">
+                        <CheckCircle2Icon status={log.status} /> Final Response
                     </h4>
-                    <p className="text-[15px] leading-relaxed text-text font-sans opacity-95">
+                    <p className="text-[14px] text-text-muted leading-relaxed">
                         {log.agentResponse}
                     </p>
                 </div>
