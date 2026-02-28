@@ -43,7 +43,7 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
             {/* Right Actions */}
             <div className="flex items-center gap-1.5 sm:gap-3">
                 <Link to="/showcase" className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd] hover:bg-[#e0f2fe] rounded-full transition-colors whitespace-nowrap">
-                    Technical Showcase
+                    Showcase
                 </Link>
                 <button
                     onClick={toggleTheme}
@@ -51,6 +51,7 @@ const Header = ({ onOpenAllergies, onToggleSidebar }) => {
                     aria-label="Toggle Theme"
                     title={`Current theme: ${theme}`}
                 >
+                    
                     {theme === 'dark' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : theme === 'light' ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
                 <LanguageSelector />
