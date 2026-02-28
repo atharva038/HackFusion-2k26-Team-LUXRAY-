@@ -129,8 +129,8 @@ const ProjectShowcase = () => {
             </section>
 
             {/* 2.5 Pharmacist AI Agent Showcase */}
-            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-slate-900 border-y border-slate-800 text-white">
-                <div className="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-12">
+            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-slate-900 border-y border-slate-800 text-white overflow-hidden">
+                <div className="max-w-6xl mx-auto flex flex-col-reverse lg:flex-row-reverse items-center gap-12">
                     {/* Feature Description */}
                     <div className="w-full lg:w-1/2 space-y-6">
                         <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-widest uppercase mb-2">
@@ -178,8 +178,8 @@ const ProjectShowcase = () => {
             </section>
 
             {/* 2.6 Prescription OCR Engine Showcase */}
-            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-indigo-50/50 border-y border-indigo-100 text-slate-800">
-                <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-indigo-50/50 border-y border-indigo-100 text-slate-800 overflow-hidden">
+                <div className="max-w-6xl mx-auto flex flex-col-reverse lg:flex-row items-center gap-12">
                     {/* Feature Description */}
                     <div className="w-full lg:w-1/2 space-y-6">
                         <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 text-xs font-bold tracking-widest uppercase mb-2">
@@ -310,8 +310,8 @@ const ProjectShowcase = () => {
             </section>
 
             {/* 2.7 Multilingual Voice AI Showcase */}
-            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-slate-900 border-y border-slate-800 text-white">
-                <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-slate-900 border-y border-slate-800 text-white overflow-hidden">
+                <div className="max-w-6xl mx-auto flex flex-col-reverse lg:flex-row items-center gap-12">
                     {/* Feature Description */}
                     <div className="w-full lg:w-1/2 space-y-6">
                         <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">
@@ -359,8 +359,8 @@ const ProjectShowcase = () => {
             </section>
 
             {/* 2.8 Redis Performance Layer Showcase */}
-            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-orange-50/50 border-y border-orange-100 text-slate-800">
-                <div className="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-12">
+            <section className="py-16 lg:py-20 px-4 sm:px-6 bg-orange-50/50 border-y border-orange-100 text-slate-800 overflow-hidden">
+                <div className="max-w-6xl mx-auto flex flex-col-reverse lg:flex-row-reverse items-center gap-12">
                     {/* Feature Description */}
                     <div className="w-full lg:w-1/2 space-y-6">
                         <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 text-xs font-bold tracking-widest uppercase mb-2">

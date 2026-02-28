@@ -1,0 +1,85 @@
+name: Feature Request
+description: Propose a new feature or improvement for the pharmacy system
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to improve HackFusion? Fill out the form below with as much detail as possible.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature Area
+      description: Which part of the system does this feature belong to?
+      options:
+        - Frontend (React UI / UX)
+        - Backend API (Express / Routes)
+        - AI Agent / Chat Intelligence
+        - Prescription Management
+        - Order & Inventory System
+        - Payment Flow (Razorpay)
+        - Admin Panel / Analytics
+        - Real-time / Socket.IO
+        - Notifications (Email / WhatsApp)
+        - Security / Auth
+        - Performance / Caching
+        - Developer Experience / CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Motivation
+      description: What problem does this feature solve? What is the current pain point?
+      placeholder: "As a [user/pharmacist/admin], I struggle with... because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like to see. Be as specific as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other solutions or workarounds have you considered?
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical (blocks core functionality)
+        - High (significant improvement to UX / reliability)
+        - Medium (nice to have)
+        - Low (minor polish)
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any mockups, diagrams, API references, or other context.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: This feature aligns with the project's medical/pharmacy domain.
+          required: true

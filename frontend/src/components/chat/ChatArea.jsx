@@ -21,7 +21,7 @@ const ChatArea = () => {
             <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-bg to-transparent z-10 pointer-events-none" />
 
             {/* Messages List Area */}
-            <div className="flex-1 overflow-y-auto pt-6 pb-32 space-y-6 scrollbar-hide z-0">
+            <div className="flex-1 overflow-y-auto pt-6 pb-36 space-y-6 scrollbar-hide z-0">
                 {messages.map((msg, idx) => (
                     <MessageBubble key={idx} message={msg} />
                 ))}

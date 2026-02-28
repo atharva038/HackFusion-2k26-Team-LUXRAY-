@@ -10,32 +10,32 @@ const ChatPage = ({ onOpenAllergies }) => {
     const isChatEmpty = useAppStore((state) => state.messages.length === 0);
 
     return (
-        <div className="flex flex-col h-screen w-full overflow-hidden bg-bg text-text transition-colors duration-500">
+        <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-bg text-text transition-colors duration-500">
             {/* Minimal Header */}
             <Header
                 onOpenAllergies={onOpenAllergies}
                 onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             />
 
-            <main className="flex-1 flex w-full h-[calc(100vh-4rem)] max-w-[1600px] mx-auto overflow-hidden relative bg-bg">
+            <main className="flex-1 flex w-full h-[calc(100dvh-4rem)] max-w-[1600px] mx-auto overflow-hidden relative bg-bg">
 
                 {/* Sidebar Overlay (Mobile) */}
                 {sidebarOpen && (
                     <div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden transition-opacity"
                         onClick={() => setSidebarOpen(false)}
                     />
                 )}
 
                 {/* Left Sidebar: Navigation & History */}
                 <div className={`
-                    absolute md:relative inset-y-0 left-0 z-50
+                    fixed md:relative top-0 md:top-auto bottom-0 left-0 z-[100] md:z-50
                     transform transition-all duration-300 ease-in-out
-                    ${sidebarOpen ? 'translate-x-0 md:w-80' : '-translate-x-full md:w-0 md:opacity-0 md:overflow-hidden'}
-                    h-full shadow-2xl md:shadow-none bg-bg
+                    ${sidebarOpen ? 'translate-x-0 w-[75vw] sm:w-[300px] md:w-80' : '-translate-x-full w-[75vw] sm:w-[300px] md:w-0 md:opacity-0 md:overflow-hidden'}
+                    h-[100dvh] md:h-full shadow-2xl md:shadow-none bg-bg
                 `}>
-                    <div className="w-80 h-full">
-                        <ChatSidebar />
+                    <div className="w-full h-full pt-4 md:pt-0">
+                        <ChatSidebar onClose={() => setSidebarOpen(false)} />
                     </div>
                 </div>
 

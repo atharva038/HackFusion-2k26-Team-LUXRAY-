@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BellRing, Check, MessageSquare, Loader2, Search, Filter } from 'lucide-react';
 import { fetchRefillAlerts, updateRefillAlert } from '../../services/api';
 import ActionModal from '../../components/ui/ActionModal';
+import { useSocket } from '../../context/SocketContext';
 
 const Alerts = () => {
     const [alerts, setAlerts] = useState([]);
@@ -10,12 +11,21 @@ const Alerts = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [modalConfig, setModalConfig] = useState({ isOpen: false, id: null, status: null, type: 'warning' });
 
+    const { on, off } = useSocket();
+
     const load = () => {
         setLoading(true);
         fetchRefillAlerts().then(setAlerts).catch(console.error).finally(() => setLoading(false));
     };
 
     useEffect(load, []);
+
+    // Reload whenever a refill alert is updated by any admin
+    useEffect(() => {
+        const refresh = () => load();
+        on('refill:admin-updated', refresh);
+        return () => off('refill:admin-updated', refresh);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleActionConfirm = async () => {
         try {

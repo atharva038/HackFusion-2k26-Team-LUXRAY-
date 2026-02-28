@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { fetchPrescriptions, updatePrescription } from '../../services/api';
 import ActionModal from '../../components/ui/ActionModal';
+import { useSocket } from '../../context/SocketContext';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -165,6 +166,8 @@ const PrescriptionReview = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [modalConfig, setModalConfig] = useState({ isOpen: false });
 
+    const { on, off } = useSocket();
+
     const load = () => {
         setLoading(true);
         fetchPrescriptions()
@@ -178,6 +181,17 @@ const PrescriptionReview = () => {
     };
 
     useEffect(load, []);
+
+    // Reload list whenever a new prescription is submitted or an admin updates one
+    useEffect(() => {
+        const refresh = () => load();
+        on('prescription:submitted', refresh);
+        on('prescription:admin-updated', refresh);
+        return () => {
+            off('prescription:submitted', refresh);
+            off('prescription:admin-updated', refresh);
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleActionConfirm = async () => {
         try {
