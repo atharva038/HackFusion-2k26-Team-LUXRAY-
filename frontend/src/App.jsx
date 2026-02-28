@@ -26,8 +26,9 @@ import RegisterPage from './pages/auth/RegisterPage';
 import MyOrders from './pages/user/MyOrders';
 import MyPrescriptions from './pages/user/MyPrescriptions';
 
-// Public Monitor
+// Public Monitor & Showcase
 import AgentTraces from './pages/public/AgentTraces';
+import ProjectShowcase from './pages/public/ProjectShowcase';
 
 // Auth Guard
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -79,7 +80,7 @@ function App() {
           setAllergyModalOpen(true);
         }
       })
-      .catch(() => {}); // non-critical
+      .catch(() => { }); // non-critical
   }, [user]);
 
   return (
@@ -109,6 +110,9 @@ function App() {
 
           {/* Trace Monitor (public) */}
           <Route path="/traces" element={<AgentTraces />} />
+
+          {/* Technical Showcase (public) */}
+          <Route path="/showcase" element={<ProjectShowcase />} />
 
           {/* Customer Chat Route (protected) */}
           <Route path="/" element={
