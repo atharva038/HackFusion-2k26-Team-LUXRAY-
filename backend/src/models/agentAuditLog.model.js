@@ -57,6 +57,16 @@ const agentAuditLogSchema = new mongoose.Schema(
     },
     inputTokens: Number,
     outputTokens: Number,
+    traces: {
+      type: [
+        {
+          agent: String,
+          action: String,
+          data: mongoose.Schema.Types.Mixed,
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

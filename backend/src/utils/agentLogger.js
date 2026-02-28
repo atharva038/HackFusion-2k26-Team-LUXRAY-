@@ -53,6 +53,7 @@ export async function logAgentRun({
   status = 'success',
   errorMessage,
   injectionDetected = false,
+  traces = [],
 }) {
   try {
     await AgentAuditLog.create({
@@ -66,6 +67,7 @@ export async function logAgentRun({
       status,
       errorMessage,
       injectionDetected,
+      traces,
       model: process.env.OPENAI_MODEL || 'gpt-4o',
     });
   } catch (err) {

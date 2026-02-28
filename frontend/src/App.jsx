@@ -24,6 +24,9 @@ import RegisterPage from './pages/auth/RegisterPage';
 import MyOrders from './pages/user/MyOrders';
 import MyPrescriptions from './pages/user/MyPrescriptions';
 
+// Public Monitor
+import AgentTraces from './pages/public/AgentTraces';
+
 // Auth Guard
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
@@ -93,6 +96,9 @@ function App() {
         {/* Auth Routes (public) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        
+        {/* Trace Monitor (public) */}
+        <Route path="/traces" element={<AgentTraces />} />
 
         {/* Customer Chat Route (protected) */}
         <Route path="/" element={

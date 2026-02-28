@@ -56,8 +56,11 @@ const Header = ({ onOpenAllergies }) => {
                 </div>
             </Link>
 
-            {/* Customer Nav Links — hidden for admin/pharmacist */}
-            {user && !STAFF_ROLES.includes(user.role) && (
+            <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+                <Link to="/traces" className={`flex items-center gap-2 text-sm font-medium transition-colors ${location.pathname === '/traces' ? 'text-indigo-600 dark:text-indigo-400' : 'text-text-muted hover:text-text'}`}>
+                    <Monitor className="w-4 h-4" /> Agent Traces
+                </Link>
+                {user && !STAFF_ROLES.includes(user.role) && (
                 <div className="flex items-center gap-1">
                     <Link
                         to="/my-orders"
@@ -92,6 +95,7 @@ const Header = ({ onOpenAllergies }) => {
                     </button>
                 </div>
             )}
+            </nav>
 
             {/* AI Status (Centered) */}
             <div className="hidden md:flex flex-1 justify-center">

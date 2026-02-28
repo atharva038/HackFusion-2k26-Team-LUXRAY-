@@ -3,6 +3,7 @@ import { runImageExtraction } from '../agent/child/notify/img_data_extractor.not
 import User from '../models/user.model.js'; // Ensure correct casing for your imports
 import Prescription from '../models/prescription.model.js';
 import { v2 as cloudinary } from 'cloudinary';
+import { logAgentRun } from '../utils/agentLogger.js';
 
 export const handlePrescriptionUpload = async (req, res) => {
     try {
@@ -74,6 +75,18 @@ export const handlePrescriptionUpload = async (req, res) => {
         });
         // console.log("the json data for monitor: ", agentData.state._currentStep.output);
         console.log("monitor data: ", monitorTraces);
+        
+        // Log to AgentAuditLog for tracing UI
+        await logAgentRun({
+            userId: req.user.id,
+            sessionId: "prescription_upload", // Special session ID to denote this is not a normal chat
+            userMessage: `Uploaded image for prescription processing: ${imageUrl}`,
+            agentResponse: JSON.stringify(extractedContent),
+            agentChain: ["image_data_extraction"],
+            status: extractedContent.isPrescription ? 'success' : 'blocked',
+            durationMs: 0, // In this controller we don't have a strict start timer,
+            traces: monitorTraces
+        });
 
         if (!extractedContent.isPrescription) {
             return res.status(200).json({
