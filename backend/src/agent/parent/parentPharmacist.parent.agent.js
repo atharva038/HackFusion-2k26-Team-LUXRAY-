@@ -6,6 +6,8 @@ import { inventorySuggestionAgent } from "../child/pharamcist/suggestion.pharmci
 import { stockAddAgent } from "../child/pharamcist/stockAdd.pharamcist.child.agent.js";
 import { stockReduceAgent } from "../child/pharamcist/stockReduce.pharamcist.child.agent.js";
 import { placeOrderAgent } from "../child/pharamcist/placeOrder.pharamcist.child.agent.js";
+import { addMedicineAgent } from "../child/pharamcist/addMedicine.pharamcist.child.agent.js";
+import { removeMedicineAgent } from "../child/pharamcist/removeMedicine.pharamcist.child.agent.js";
 import {
   InputGuardrailTripwireTriggered,
   OutputGuardrailTripwireTriggered,
@@ -109,6 +111,38 @@ IMPORTANT for order placement:
 
 ------------------------------------------------
 
+6️⃣ ADD A NEW MEDICINE → Handoff to: addMedicineAgent
+Trigger when user (pharmacist):
+- Wants to add a completely new medicine to the system
+- Medicine does not exist yet in inventory
+- Registering a new drug / product
+- Says "add new medicine", "create medicine", "register drug"
+
+Examples:
+- "Add a new medicine called Azithromycin 500mg"
+- "Register PZN 99999: Vitamin D3 drops, price 120, stock 50, type bottle"
+- "Create a new entry for Montelukast 10mg"
+
+Do NOT use this for restocking an existing medicine — use stockAddAgent for that.
+
+------------------------------------------------
+
+7️⃣ REMOVE / DELETE A MEDICINE → Handoff to: removeMedicineAgent
+Trigger when user (pharmacist):
+- Wants to permanently delete/remove a medicine from the system
+- Medicine is discontinued, recalled, or was added by mistake
+- Says "remove medicine", "delete medicine", "discontinue", "recall"
+
+Examples:
+- "Remove Paracetamol 500mg from inventory"
+- "Delete medicine PZN 12345"
+- "Discontinue Aspirin tablets"
+- "Medicine was recalled, remove it"
+
+Do NOT use this to reduce stock — use stockReduceAgent for that.
+
+------------------------------------------------
+
 LANGUAGE RULE:
 - Detect user's language.
 - Reply ONLY in the same input language.
@@ -127,7 +161,7 @@ CRITICAL BEHAVIOR:
 Your job is routing and delegation — not execution.
 `,
 
-  handoffs: [stockAddAgent, stockReduceAgent, inventorySuggestionAgent, orderStatusChangeAgent, placeOrderAgent],
+  handoffs: [stockAddAgent, stockReduceAgent, inventorySuggestionAgent, orderStatusChangeAgent, placeOrderAgent, addMedicineAgent, removeMedicineAgent],
   inputGuardrails: [pharmacistInputGuardrail],
   outputGuardrails: [pharmacistOutputGuardrail],
 });

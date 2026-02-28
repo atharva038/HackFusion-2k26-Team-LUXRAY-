@@ -47,6 +47,43 @@ export const getInventory = async (req, res) => {
   }
 };
 
+export const addMedicine = async (req, res) => {
+  try {
+    const { name, pzn, price, stock, unitType, description, prescriptionRequired, lowStockThreshold } = req.body;
+    if (!name || !pzn || price === undefined || stock === undefined || !unitType) {
+      return res.status(400).json({ error: 'name, pzn, price, stock, and unitType are required' });
+    }
+    const existing = await Medicine.findOne({ pzn: pzn.trim() });
+    if (existing) return res.status(409).json({ error: `Medicine with PZN "${pzn}" already exists: ${existing.name}` });
+
+    const medicine = await Medicine.create({
+      name: name.trim(), pzn: pzn.trim(), price, stock,
+      unitType, description: description || '',
+      prescriptionRequired: prescriptionRequired ?? false,
+      lowStockThreshold: lowStockThreshold ?? 10,
+    });
+    logger.info(`[Admin] New medicine added: ${medicine.name} (PZN: ${medicine.pzn}) by ${req.user?.id}`);
+    res.status(201).json(medicine);
+  } catch (err) {
+    logger.error('Add medicine error:', err);
+    res.status(500).json({ error: 'Failed to add medicine' });
+  }
+};
+
+export const deleteMedicine = async (req, res) => {
+  try {
+    const medicine = await Medicine.findByIdAndDelete(req.params.id);
+    if (!medicine) return res.status(404).json({ error: 'Medicine not found' });
+    logger.info(`[Admin] Medicine removed: ${medicine.name} (PZN: ${medicine.pzn}) by ${req.user?.id}`);
+    res.json({ message: `"${medicine.name}" removed from inventory.`, id: req.params.id });
+  } catch (err) {
+    logger.error('Delete medicine error:', err);
+    res.status(500).json({ error: 'Failed to delete medicine' });
+  }
+};
+
+
+
 export const updateInventory = async (req, res) => {
   try {
     // Only allow specific fields to be updated — never let req.body pass through directly

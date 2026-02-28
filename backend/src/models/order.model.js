@@ -81,6 +81,10 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
+    // ─── Warehouse Fulfillment ────────────────────────────────────────────────
+    warehouseRef: String,       // Reference ID returned by the warehouse webhook
+    dispatchedAt: Date,         // Timestamp of automatic dispatch
   },
   { timestamps: true },
 );
