@@ -146,33 +146,85 @@ export const handlePharmacistStream = async (req, res) => {
         }
       }
 
-      //MONITOR TRACES
-      const monitorTraces = result.state._generatedItems.map((item) => {
+      // MONITOR TRACES 
+      const traces = [];
+
+      // 1. CAPTURE INPUT GUARDRAILS
+      if (result.state._inputGuardrailResults?.length > 0) {
+        result.state._inputGuardrailResults.forEach((g) => {
+          traces.push({
+            agent: "Security",
+            action: g.passed ? "🛡️ Input: Pass" : "🚨 Input: Block",
+            data: `Guardrail: ${g.guardrailName || 'Pharmacist Filter'}`
+          });
+        });
+      }
+
+      // 2. CAPTURE GENERATED ITEMS (Tools, Handoffs, etc.)
+      const generatedTraces = result.state._generatedItems.map((item) => {
         const actor = item.agent?.name || item.targetAgent?.name || "System";
         const itemType = item.type || item.constructor.name;
 
         let actionName = "AI Reasoning";
         let detailData = "Processing...";
 
-        if (item.rawItem?.type === 'function_call') {
-          actionName = item.rawItem.name.includes('transfer') ? "🤝 Handoff" : `⚙️ Tool: ${item.rawItem.name}`;
-          detailData = item.rawItem.arguments;
-        }
+        // Tool Calls
+        if (item.rawItem?.type === 'function_call' && !item.rawItem.name.includes('transfer_to')) {
+          actionName = `⚙️ Tool: ${item.rawItem.name}`;
+          detailData = item.rawItem.arguments || "Initiating...";
+        } 
+        // Tool Results/Failures
         else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output') {
-          actionName = `✅ Result: ${item.rawItem.name}`;
-          detailData = item.rawItem.output?.text || item.rawItem.output || "Success";
+          const isError = item.rawItem.status === 'error' || !!item.rawItem.error;
+          actionName = isError ? `❌ Fail: ${item.rawItem.name}` : `📦 Result: ${item.rawItem.name}`;
+          detailData = item.rawItem.error || item.rawItem.output?.text || item.rawItem.output || "No data returned";
         }
+        // Handoffs
+        else if (item.rawItem?.name?.startsWith('transfer_to_')) {
+          const target = item.rawItem.name.replace('transfer_to_', '');
+          actionName = "🤝 Handoff";
+          detailData = `Routing context to: ${target}`;
+        }
+        // Final Response Messages
         else if (itemType === 'message_output_item' || item.rawItem?.type === 'message') {
           actionName = "💬 Response";
-          detailData = item.rawItem?.content?.[0]?.text || item.content || "...";
+          const messageText = item.rawItem?.content?.[0]?.text || item.content;
+          detailData = typeof messageText === 'object' ? JSON.stringify(messageText) : messageText;
+        }
+        // System Transitions
+        else if (itemType === 'handoff_output_item') {
+          actionName = "🔄 System";
+          detailData = `Agent ${item.targetAgent?.name || 'Specialist'} activated.`;
         }
 
         return { agent: actor, action: actionName, data: detailData };
       }).filter(t => t.action !== "AI Reasoning");
 
-      console.log("\n📍 --- STREAMING TRACE ---");
-      monitorTraces.forEach(t => console.log(`${t.agent} ➔ ${t.action}`));
-      console.log("--------------------------\n");
+      traces.push(...generatedTraces);
+
+      // 3. CAPTURE OUTPUT GUARDRAILS
+      if (result.state._outputGuardrailResults?.length > 0) {
+        result.state._outputGuardrailResults.forEach((g) => {
+          traces.push({
+            agent: "Security",
+            action: g.passed ? "🛡️ Output: Safe" : "🚨 Output: Risky",
+            data: `Guardrail: ${g.guardrailName || 'Ops Safety'}`
+          });
+        });
+      }
+
+      const monitorTraces = traces;
+
+      console.log("\n📍 --- STREAMING EXECUTION TRACE ---");
+      monitorTraces.forEach((t, i) => {
+        const shortData = typeof t.data === 'string'
+          ? (t.data.substring(0, 80) + (t.data.length > 80 ? "..." : ""))
+          : JSON.stringify(t.data);
+
+        console.log(`[${i}] ${t.agent.padEnd(15)} ➔ ${t.action}`);
+        console.log(`    └─ Result: ${shortData}`);
+      });
+      console.log("------------------------------------\n");
 
       // Use authoritative finalOutput (not accumulated chunks which may differ)
       const finalOutput = result.finalOutput || accumulatedText;
