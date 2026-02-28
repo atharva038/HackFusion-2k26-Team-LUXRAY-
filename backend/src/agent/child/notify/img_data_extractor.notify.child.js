@@ -36,7 +36,6 @@ export const imgAgent = new Agent({
 });
 
 export async function runImageExtraction(cloudinaryUrl) {
-    // We send just the URL to the agent, keeping the context window tiny.
     const result = await run(imgAgent, `Extract data from this link: ${cloudinaryUrl}`);
-    return result.finalOutput;
+    return result;
 }

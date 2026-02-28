@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
@@ -30,27 +30,46 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['customer', 'admin', 'pharmacist'],
-      default: 'customer',
+      enum: ["customer", "admin", "pharmacist"],
+      default: "customer",
     },
 
-    age: {  
+    age: {
       type: Number,
-      min: [0, 'Age cannot be negative'],
-      max: [150, 'Age seems unrealistic'],
+      min: [0, "Age cannot be negative"],
+      max: [150, "Age seems unrealistic"],
     },
 
     gender: {
       type: String,
-      enum: ['male', 'female', 'other'],
+      enum: ["male", "female", "other"],
     },
+    allergies: [
+      {
+        allergen: {
+          type: String,
+          required: true,
+          trim: true,
+          lowercase: true, // Standardize for easier matching
+        },
+        severity: {
+          type: String,
+          enum: ["low", "medium", "high", "critical"],
+          default: "medium",
+        },
+        reaction: {
+          type: String, // e.g., "Hives", "Shortness of breath"
+          trim: true,
+        },
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
@@ -62,4 +81,4 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export default mongoose.model('User', userSchema);
+export default mongoose.model("User", userSchema);

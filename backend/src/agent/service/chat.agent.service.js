@@ -52,11 +52,14 @@ export async function runChatAgent({ userId, sessionId, message, history = [] })
   const messages = [...mappedHistory, { role: 'user', content: enhancedMessage }];
 
   let reply = '';
+  let traces = [];
   let status = 'success';
   let errorMessage;
 
   try {
-    reply = await chatPharma(messages);
+    const agentOutcome = await chatPharma(messages);
+    reply = agentOutcome.output;
+    traces = agentOutcome.traces || [];
   } catch (err) {
     status = 'error';
     errorMessage = err.message;
@@ -72,6 +75,7 @@ export async function runChatAgent({ userId, sessionId, message, history = [] })
       status,
       errorMessage,
       durationMs,
+      traces,
     });
   }
 

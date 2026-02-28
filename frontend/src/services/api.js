@@ -197,3 +197,94 @@ export const fetchUserPrescriptions = () =>
 
 export const deleteUserPrescription = (entryId) =>
   api.delete(`/prescription/${entryId}`);
+
+export const fetchUserAllergies = () =>
+  api.get('/user/allergies');
+
+export const updateUserAllergies = (allergies) =>
+  api.put('/user/allergies', { allergies });
+
+// ─── Pharmacist AI Agent ──────────────────────────────────────
+/**
+ * sendPharmacistAgentMessage — sync POST to /api/admin/agent/chat.
+ * Returns { text, blocked, sessionId }.
+ */
+export const sendPharmacistAgentMessage = (message, sessionId) =>
+  api.post('/admin/agent/chat', { message, ...(sessionId ? { sessionId } : {}) });
+
+/**
+ * streamPharmacistAgentMessage — fetch-based SSE streaming to /api/admin/agent/chat/stream.
+ * Uses fetch (not EventSource) so we can POST with a JSON body + Authorization header.
+ *
+ * @param {string} message
+ * @param {string|null} sessionId
+ * @param {{ onChunk, onDone, onError }} handlers
+ * @returns {AbortController} — call .abort() to cancel
+ */
+export const streamPharmacistAgentMessage = (message, sessionId, { onChunk, onDone, onError }) => {
+  const controller = new AbortController();
+  const token = localStorage.getItem('pharmacy_token');
+
+  (async () => {
+    try {
+      const res = await fetch(`${BASE}/admin/agent/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message, ...(sessionId ? { sessionId } : {}) }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        onError?.(err.error || `Request failed: ${res.status}`);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.error) {
+              onError?.(data.error);
+            } else if (data.isCompleted) {
+              onDone?.(data.blocked || false, data.sessionId, data.value);
+            } else if (data.value) {
+              onChunk?.(data.value);
+            }
+          } catch {
+            // Ignore malformed SSE lines
+          }
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        onError?.(err.message || 'Stream connection failed.');
+      }
+    }
+  })();
+
+  return controller;
+};
+
+export const fetchPharmacistAgentSessions = () => api.get('/admin/agent/sessions');
+
+export const fetchPharmacistAgentHistory = (sessionId) =>
+  api.get(`/admin/agent/history/${sessionId}`);
+
+export const deletePharmacistAgentSession = (sessionId) =>
+  api.delete(`/admin/agent/sessions/${sessionId}`);

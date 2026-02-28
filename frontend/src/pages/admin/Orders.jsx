@@ -205,6 +205,19 @@ const Orders = () => {
                                     <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">
                                         {order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}
                                     </td>
+                                <tr key={order._id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-[14px]">
+                                    <td className="px-6 py-4 font-mono text-text text-xs">{order._id}</td>
+                                    <td className="px-6 py-4">{order.user?.name
+                                        ? (
+                                            <span className="font-medium text-text">
+                                                {order.user.name}
+                                                {order.user.email && (
+                                                    <span className="block text-xs text-text-muted font-normal">{order.user.email}</span>
+                                                )}
+                                            </span>
+                                        )
+                                        : <span className="italic text-text-muted/60 text-xs">Unknown user</span>}</td>
+                                    <td className="px-6 py-4 text-text-muted truncate max-w-[200px]">{order.items.map(i => `${i.medicine?.name || 'Item'} (x${i.quantity || 1})`).join(', ')}</td>
                                     <td className="px-6 py-4">
                                         {/* ✅ Show spinner on updating rows */}
                                         {updatingIds.has(order._id) ? (
