@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Package,
@@ -48,6 +48,7 @@ const AdminLayout = () => {
     const { user, logout } = useAuthStore();
     const { isConnected } = useSocket();
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Responsive sidebar states
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -180,26 +181,27 @@ const AdminLayout = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-full overflow-hidden bg-bg relative min-w-0">
-                {/* Mobile Header (visible only on small screens) */}
-                <header className="md:hidden h-16 bg-card border-b border-black/5 dark:border-white/5 flex items-center px-4 justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => setIsMobileOpen(true)} className="p-2 -ml-2 text-text hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors">
-                            <Menu className="w-6 h-6" />
-                        </button>
-                        <div className="flex items-center gap-2">
-                            <Stethoscope className="w-5 h-5 text-primary" />
-                            <span className="font-semibold text-text">Admin</span>
+                {/* Mobile Header — hidden on agent page (it has its own header) */}
+                {location.pathname !== '/admin/agent' && (
+                    <header className="md:hidden h-16 bg-card border-b border-black/5 dark:border-white/5 flex items-center px-4 justify-between shrink-0">
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => setIsMobileOpen(true)} className="p-2 -ml-2 text-text hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors">
+                                <Menu className="w-6 h-6" />
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <Stethoscope className="w-5 h-5 text-primary" />
+                                <span className="font-semibold text-text">Admin</span>
+                            </div>
                         </div>
-                    </div>
-                    {/* Simplified mobile menu toggle or theme toggle for now */}
-                    <button onClick={toggleTheme} className="p-2 text-text-muted rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                        {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'light' ? <Sun className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-                    </button>
-                </header>
+                        <button onClick={toggleTheme} className="p-2 text-text-muted rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                            {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'light' ? <Sun className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
+                        </button>
+                    </header>
+                )}
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 scrollbar-hide">
-                    <div className="max-w-6xl mx-auto w-full">
-                        <Outlet />
+                <div className={`flex-1 overflow-y-auto ${location.pathname === '/admin/agent' ? 'p-0 sm:p-0 lg:p-0 h-full overflow-hidden' : 'p-4 sm:p-6 lg:p-10 scrollbar-hide'}`}>
+                    <div className={`${location.pathname === '/admin/agent' ? 'w-full h-full max-w-none' : 'max-w-6xl mx-auto w-full'}`}>
+                        <Outlet context={{ openAdminNav: () => setIsMobileOpen(true) }} />
                     </div>
                 </div>
             </main>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Bot, Send, Loader2, Plus, Trash2, MessageSquare,
-    ChevronRight, Zap, Package, BarChart3, ShieldCheck, X, AlertCircle
+    ChevronRight, Zap, Package, BarChart3, ShieldCheck, X, AlertCircle, Activity, Menu, Stethoscope
 } from 'lucide-react';
 import {
     streamPharmacistAgentMessage,
@@ -43,10 +44,10 @@ const AgentMessageBubble = ({ message }) => {
                             <Bot className="w-4 h-4 text-primary" />
                         </div>
                     )}
-                    <div className={`max-w-[78%] px-4 py-3 text-[14.5px] leading-relaxed rounded-2xl
+                    <div className={`max-w-[85%] lg:max-w-[75%] px-5 py-4 text-[15px] leading-relaxed rounded-3xl shadow-sm
                         ${isAi
-                            ? 'bg-card text-text border border-black/5 dark:border-white/5 shadow-sm rounded-tl-sm'
-                            : 'bg-primary text-white font-medium rounded-tr-sm shadow-sm whitespace-pre-wrap'
+                            ? 'bg-card text-text border border-black/5 dark:border-white/5 rounded-tl-sm'
+                            : 'bg-primary text-white font-medium rounded-tr-sm shadow-md whitespace-pre-wrap'
                         }`}
                     >
                         {message.isStreaming ? (
@@ -126,6 +127,8 @@ const SessionItem = ({ session, isActive, onClick, onDelete }) => (
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const PharmacistAgent = () => {
+    const { openAdminNav } = useOutletContext() || {};
+
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -133,6 +136,7 @@ const PharmacistAgent = () => {
     const [sessions, setSessions] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [streamController, setStreamController] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -152,6 +156,7 @@ const PharmacistAgent = () => {
 
     // ── Load a session's history ────────────────────────────────────────────
     const loadSession = useCallback(async (sid) => {
+        setIsSidebarOpen(false);
         if (sid === sessionId) return;
         setLoadingHistory(true);
         setMessages([]);
@@ -188,6 +193,7 @@ const PharmacistAgent = () => {
 
     // ── Start a new session ─────────────────────────────────────────────────
     const startNewSession = useCallback(() => {
+        setIsSidebarOpen(false);
         if (abortRef.current) abortRef.current.abort();
         setSessionId(null);
         setMessages([]);
@@ -268,17 +274,32 @@ const PharmacistAgent = () => {
     const isEmptyState = messages.length === 0 && !loadingHistory;
 
     return (
-        <div className="flex h-[calc(100vh-9rem)] gap-0 overflow-hidden rounded-2xl border border-black/5 dark:border-white/5 shadow-sm bg-card">
+        <div className="flex h-full w-full gap-0 overflow-hidden bg-bg/50 relative">
+
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="absolute md:hidden inset-0 bg-black/50 backdrop-blur-sm z-30"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
 
             {/* ── Left: Session sidebar ─────────────────────────────────────── */}
-            <aside className="w-56 shrink-0 border-r border-black/5 dark:border-white/5 flex flex-col bg-bg/50">
-                <div className="p-3 border-b border-black/5 dark:border-white/5">
+            <aside className={`absolute md:relative inset-y-0 left-0 z-40 w-64 shrink-0 border-r border-black/5 dark:border-white/5 flex flex-col bg-card/95 md:bg-card/50 backdrop-blur-xl transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+                <div className="p-4 border-b border-black/5 dark:border-white/5 space-y-3">
                     <button
                         onClick={startNewSession}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-blue-600 transition-colors shadow-lg shadow-primary/20"
                     >
                         <Plus className="w-4 h-4" />
                         New Chat
+                    </button>
+                    <button
+                        onClick={() => window.open('/traces', '_blank')}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all text-sm font-semibold"
+                    >
+                        <Activity className="w-4 h-4" />
+                        View Live Traces
                     </button>
                 </div>
 
@@ -302,17 +323,35 @@ const PharmacistAgent = () => {
             </aside>
 
             {/* ── Right: Chat area ──────────────────────────────────────────── */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 bg-bg relative">
 
                 {/* Header */}
-                <div className="h-14 px-5 border-b border-black/5 dark:border-white/5 flex items-center gap-3 shrink-0 bg-card">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Bot className="w-4 h-4 text-primary" />
+                <div className="h-16 px-4 md:px-6 border-b border-black/5 dark:border-white/5 flex items-center gap-2 shrink-0 bg-card/80 backdrop-blur-md z-20">
+                    {/* Admin nav — mobile only */}
+                    {openAdminNav && (
+                        <button
+                            onClick={openAdminNav}
+                            className="md:hidden p-2 -ml-2 rounded-xl text-text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                            title="Admin navigation"
+                        >
+                            <Stethoscope className="w-5 h-5" />
+                        </button>
+                    )}
+                    {/* Session sidebar — mobile only */}
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="md:hidden p-2 rounded-xl text-text hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        title="Chat history"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+                    <div className="hidden sm:flex w-10 h-10 rounded-xl bg-primary/10 items-center justify-center shrink-0">
+                        <Bot className="w-5 h-5 text-primary" />
                     </div>
-                    <div>
-                        <h2 className="text-[14px] font-semibold text-text leading-tight">Pharmacy AI Assistant</h2>
-                        <p className="text-[11px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                    <div className="min-w-0">
+                        <h2 className="text-[14px] md:text-[15px] font-bold text-text tracking-wide truncate">Pharmacy AI Assistant</h2>
+                        <p className="text-[11px] md:text-[12px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5 truncate">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0" />
                             Ready · Stock · Orders · Analytics
                         </p>
                     </div>
@@ -383,7 +422,7 @@ const PharmacistAgent = () => {
                 </div>
 
                 {/* Input area */}
-                <div className="p-4 border-t border-black/5 dark:border-white/5 bg-card shrink-0">
+                <div className="p-4 md:p-6 border-t border-black/5 dark:border-white/5 bg-card/80 backdrop-blur-md shrink-0 z-10">
                     <form
                         onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
                         className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-bg border border-black/5 dark:border-white/5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all"
