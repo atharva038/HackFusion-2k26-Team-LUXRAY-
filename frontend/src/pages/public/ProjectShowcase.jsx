@@ -513,28 +513,57 @@ const ProjectShowcase = () => {
                 </div>
             </div>
 
-            {/* 6. Performance & 7. Security */}
+            {/* 6. Performance, Security & Resilience (Expanded) */}
             <section className="py-16 lg:py-20 px-4 sm:px-6 bg-[#fdfbf7]">
-                <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="max-w-6xl mx-auto mb-12 text-center">
+                    <h2 className="text-3xl font-bold text-slate-900">Security & System Resilience</h2>
+                    <p className="text-slate-600 mt-4 max-w-2xl mx-auto">
+                        Enterprise-grade protections ensuring high availability, defending against prompt injections, and strictly managing state.
+                    </p>
+                </div>
+
+                <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                    {/* Performance / Rate Limiting */}
                     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-emerald-200 transition-colors">
-                        <Zap className="w-12 h-12 text-emerald-500 mb-6" />
-                        <h3 className="text-2xl font-bold text-slate-900 mb-4">Performance Optimizations</h3>
-                        <ul className="space-y-3 text-slate-600">
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Redis Cache-First Strategy for all hot paths</li>
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Reduced MongoDB reads via Session Context</li>
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Asynchronous Webhooks instead of polling</li>
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Structured Renderers eliminate Markdown parsing overhead</li>
+                        <Zap className="w-10 h-10 text-emerald-500 mb-6" />
+                        <h3 className="text-xl font-bold text-slate-900 mb-4">Traffic & Rate Limiting</h3>
+                        <ul className="space-y-3 text-sm text-slate-600">
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" /> <strong>Redis Rate Limiting:</strong> Dynamic TPS tracking to prevent DDoS & API abuse on TTS/Chat endpoints.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" /> <strong>Graceful Fallback:</strong> Reverts to IP tracking if the cache layer goes offline.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" /> <strong>Session Caching:</strong> Sub-10ms latency for conversational history via Redis Hashes.</li>
                         </ul>
                     </div>
 
+                    {/* Agent Security & Prompt Injection */}
+                    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-rose-200 transition-colors">
+                        <ShieldCheck className="w-10 h-10 text-rose-500 mb-6" />
+                        <h3 className="text-xl font-bold text-slate-900 mb-4">AI Guardrails</h3>
+                        <ul className="space-y-3 text-sm text-slate-600">
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" /> <strong>Prompt Injection Defense:</strong> Pre-flight regex validators intercept malicious "ignore instructions" jailbreaks before LLM processing.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" /> <strong>Strict Action Boundaries:</strong> Tool definitions prohibit AI from directly interacting with standard databases without service layer validation.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" /> <strong>Trace Logging:</strong> Every agent evaluation is permanently persisted for auditability.</li>
+                        </ul>
+                    </div>
+
+                    {/* Cryptography & Auth */}
                     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
-                        <ShieldCheck className="w-12 h-12 text-blue-500 mb-6" />
-                        <h3 className="text-2xl font-bold text-slate-900 mb-4">Security & Reliability</h3>
-                        <ul className="space-y-3 text-slate-600">
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500" /> HMAC Signature Verification on all Webhooks</li>
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Strict Role-Based Access Control (JWT + Middleware)</li>
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Sanitized AI execution boundaries (No DB access)</li>
-                            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Signed Cloudinary URLs & Secure Invoice PDF generation</li>
+                        <Lock className="w-10 h-10 text-blue-500 mb-6" />
+                        <h3 className="text-xl font-bold text-slate-900 mb-4">Cryptography & Access Control</h3>
+                        <ul className="space-y-3 text-sm text-slate-600">
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" /> <strong>JWT Authorization:</strong> Secured via HttpOnly cookies and strictly whitelisted CORS origins.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" /> <strong>Role-Based Access (RBAC):</strong> Discrete middleware prevents customer tokens from accessing the Admin/Pharmacist orchestrator.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" /> <strong>Data Sanitization:</strong> Bcrypt password hashing and Mongoose strict schema enforcement.</li>
+                        </ul>
+                    </div>
+
+                    {/* Webhooks & Asynchronous Processing */}
+                    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-purple-200 transition-colors">
+                        <Share2 className="w-10 h-10 text-purple-500 mb-6" />
+                        <h3 className="text-xl font-bold text-slate-900 mb-4">Webhook & Event Architecture</h3>
+                        <ul className="space-y-3 text-sm text-slate-600">
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" /> <strong>HMAC-SHA256 Signatures:</strong> All Razorpay webhooks are cryptographically verified to prevent payload spoofing.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" /> <strong>Idempotent Operations:</strong> Prevents double-charging or duplicate fulfillment if webhook retries occur.</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" /> <strong>Async Notifications:</strong> Offloads WhatsApp messaging, Email transmission, and PDF Invoice generation to non-blocking background threads.</li>
                         </ul>
                     </div>
                 </div>
