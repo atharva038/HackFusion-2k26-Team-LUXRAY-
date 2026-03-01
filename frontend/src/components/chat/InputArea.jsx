@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Send, Square, Loader2, Camera, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAppStore, { AI_STATUS, STT_CODES } from '../../store/useAppStore';
-import { sendChatMessage, fetchTTSAudio, splitIntoSentences, fetchTTSChunked } from '../../services/api';
+import { sendChatMessage, streamChatMessage, fetchTTSAudio, splitIntoSentences, fetchTTSChunked } from '../../services/api';
 import PrescriptionUpload from '../../features/prescription/PrescriptionUpload';
 import { uploadPrescription } from '../../features/prescription/uploadService';
 import { parseStructuredOutput } from '../../utils/parseStructuredOutput';
@@ -199,75 +199,116 @@ const InputArea = () => {
         if (!skipLocalDisplay) {
             addMessage({ id: Date.now(), role: 'user', text: userText, imagePreview: imageUrl });
         }
+
         setAiStatus(AI_STATUS.PROCESSING);
         setTyping(true);
 
-        try {
-            const result = await sendChatMessage(userText, currentSessionId, selectedLanguage, imageUrl);
-            setTyping(false);
+        const aiMsgId = Date.now() + 1;
+        const store = useAppStore.getState();
+        let bubbleCreated = false;
 
-            if (result.sessionId && result.sessionId !== currentSessionId) {
-                setCurrentSessionId(result.sessionId);
-            }
+        streamChatMessage(
+            userText,
+            currentSessionId,
+            {
+                onChunk: (chunk) => {
+                    if (!bubbleCreated) {
+                        setTyping(false); // Hide thinking dots when first byte arrives
+                        // Create the placeholder message exactly when streaming starts
+                        addMessage({
+                            id: aiMsgId,
+                            role: 'ai',
+                            text: '',
+                            tools: [],
+                            structured: null,
+                            isStreaming: true,
+                            isVoice: isVoiceInput,
+                            requiresPrescription: false
+                        });
+                        bubbleCreated = true;
+                    }
+                    store.updateStreamingMessage(aiMsgId, chunk);
+                },
+                onDone: (result) => {
+                    if (!bubbleCreated) {
+                        // Edge case: if stream finished immediately without chunks
+                        setTyping(false);
+                        addMessage({
+                            id: aiMsgId,
+                            role: 'ai',
+                            text: '',
+                            tools: [],
+                            structured: null,
+                            isStreaming: true,
+                            isVoice: isVoiceInput,
+                            requiresPrescription: false
+                        });
+                    }
 
-            let aiText = result.text || result.response || result.finalOutput || result.message || 'I processed your request.';
-            let requiresPrescription = false;
+                    if (result.sessionId && result.sessionId !== currentSessionId) {
+                        setCurrentSessionId(result.sessionId);
+                    }
 
-            // Intercept PRESCRIPTION REQUIRED action
-            const REQUIRE_ACTION = '[ACTION: REQUIRE_PRESCRIPTION]';
-            if (aiText.includes(REQUIRE_ACTION)) {
-                aiText = aiText.replace(REQUIRE_ACTION, '').trim();
-                requiresPrescription = true;
-            }
+                    // Grab the fully stitched text from the store to parse for actions/structure
+                    const finalState = useAppStore.getState();
+                    const finalMessageObj = finalState.messages.find(m => m.id === aiMsgId);
+                    let finalAiText = finalMessageObj ? finalMessageObj.text : '';
 
-            const tools = (result.toolCalls || result.steps || []).map(step => ({
-                icon: 'success',
-                text: step.name || step.toolName || step,
-                status: 'success'
-            }));
+                    let requiresPrescription = false;
+                    const REQUIRE_ACTION = '[ACTION: REQUIRE_PRESCRIPTION]';
+                    if (finalAiText.includes(REQUIRE_ACTION)) {
+                        finalAiText = finalAiText.replace(REQUIRE_ACTION, '').trim();
+                        requiresPrescription = true;
+                    }
 
-            // Parse structured output (lists, tables, summaries)
-            const structured = parseStructuredOutput(aiText);
+                    const tools = (result.toolCalls || []).map(step => ({
+                        icon: 'success',
+                        text: step.name || step.toolName || step,
+                        status: 'success'
+                    }));
 
-            const aiMessage = {
-                id: Date.now(),
-                role: 'ai',
-                text: aiText,
-                tools,
-                structured,
-                isStreaming: true,
-                isVoice: isVoiceInput, // Pass flag to determine initial delay in UI
-                requiresPrescription
-            };
+                    const structured = parseStructuredOutput(finalAiText);
 
-            if (result.order || result.orderCard) {
-                const o = result.order || result.orderCard;
-                aiMessage.orderCard = {
-                    orderId: o.orderId || o._id || 'N/A',
-                    medicine: o.medicine || o.items?.map(i => i.name || i.medicine).join(', ') || 'N/A',
-                    status: o.status || 'Confirmed',
-                    eta: o.eta || 'Processing',
-                    razorpayOrderId: o.razorpayOrderId || result.razorpayOrderId,
-                    amount: o.totalAmount || o.amount || result.amount
-                };
-            }
+                    let orderCard = undefined;
+                    if (result.order || result.orderCard) {
+                        const o = result.order || result.orderCard;
+                        orderCard = {
+                            orderId: o.orderId || o._id || 'N/A',
+                            medicine: o.medicine || o.items?.map(i => i.name || i.medicine).join(', ') || 'N/A',
+                            status: o.status || 'Confirmed',
+                            eta: o.eta || 'Processing',
+                            razorpayOrderId: o.razorpayOrderId || result.razorpayOrderId,
+                            amount: o.totalAmount || o.amount || result.amount
+                        };
+                    }
 
-            addMessage(aiMessage);
+                    // Finalize the message with any parsed tools, structural components, etc.
+                    store.finalizeStreamingMessage(aiMsgId, {
+                        text: finalAiText,
+                        tools,
+                        structured,
+                        requiresPrescription,
+                        ...(orderCard ? { orderCard } : {})
+                    });
 
-            // Only fire TTS if the user spoke to us
-            if (isVoiceInput) {
-                speakText(aiText);
-            } else {
-                // If it's a text input, we're done immediately
-                setAiStatus(AI_STATUS.READY);
-                // Auto-focus input for next message
-                setTimeout(() => inputRef.current?.focus(), 100);
-            }
-        } catch (err) {
-            setTyping(false);
-            setAiStatus(AI_STATUS.READY);
-            addMessage({ id: Date.now(), role: 'ai', text: 'Sorry, I encountered an error. Please try again.', tools: [] });
-        }
+                    if (isVoiceInput) {
+                        speakText(finalAiText);
+                    } else {
+                        setAiStatus(AI_STATUS.READY);
+                        setTimeout(() => inputRef.current?.focus(), 100);
+                    }
+                },
+                onError: (err) => {
+                    setTyping(false);
+                    setAiStatus(AI_STATUS.READY);
+                    store.finalizeStreamingMessage(aiMsgId, {
+                        text: 'Sorry, I encountered an error stream. Please try again.',
+                        tools: []
+                    });
+                }
+            },
+            selectedLanguage
+        );
     };
 
     // Keep ref up to date so the mount effect can call the latest processSend

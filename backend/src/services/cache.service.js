@@ -7,6 +7,14 @@ const TTL_TRANSLATION = 3600;      // 1 hour
 const TTL_TTS = 86400;     // 24 hours
 const TTL_SESSION = 1800;      // 30 minutes
 
+// ── Timeout Helper ────────────────────────────────────────────────────────────
+const withTimeout = (promise, ms, operationName) => {
+    const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Redis ${operationName} timed out after ${ms}ms`)), ms);
+    });
+    return Promise.race([promise, timeout]);
+};
+
 // ── Key helpers ───────────────────────────────────────────────────────────────
 const md5 = (text) => createHash('md5').update(text).digest('hex');
 
@@ -119,12 +127,13 @@ export async function getSessionHistory(sessionId) {
     const key = keys.session(sessionId);
     const start = Date.now();
     try {
-        const raw = await redisClient.lRange(key, 0, -1);
+        // 250ms aggressive timeout so tight cloud latency doesn't hang the critical path
+        const raw = await withTimeout(redisClient.lRange(key, 0, -1), 250, 'lRange');
         redisLog('GET', key, raw.length > 0, Date.now() - start);
         if (!raw || raw.length === 0) return null;
         return raw.map((msg) => JSON.parse(msg));
     } catch (err) {
-        logger.error(`[Redis] getSessionHistory error: ${err.message}`);
+        logger.warn(`[Redis] getSessionHistory failed/timeout, falling back to DB: ${err.message}`);
         return null;
     }
 }

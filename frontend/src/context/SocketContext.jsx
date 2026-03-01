@@ -284,7 +284,7 @@ export const SocketProvider = ({ children }) => {
       // disconnect() keeps page-level listeners buffered; reset() (on logout) clears them
       socketService.disconnect();
     };
-  }, [token, user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [token, user?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const markNotificationAsRead = useCallback((notificationId) => {
     setNotifications(prev =>

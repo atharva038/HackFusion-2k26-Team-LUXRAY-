@@ -14,8 +14,8 @@ const SAFE_FALLBACK =
 function validateMedicalOutput(text) {
   if (!text || typeof text !== "string" || text.trim().length === 0)
     return false;
-  // Detect raw tool JSON leakage
-  if (/^\s*\{[\s\S]*"type"\s*:/m.test(text)) return false;
+  // Detect raw tool JSON leakage (specifically OpenAI function formatting)
+  if (/^\s*\{[\s\S]*"type"\s*:\s*"function"/m.test(text)) return false;
   if (/^\s*\[[\s\S]*"tool_call"/m.test(text)) return false;
   return true;
 }
@@ -141,6 +141,6 @@ export async function* streamAgentResponse(messages, userId, sessionId) {
       status,
       errorMessage,
       durationMs,
-    }).catch(() => {});
+    }).catch(() => { });
   }
 }

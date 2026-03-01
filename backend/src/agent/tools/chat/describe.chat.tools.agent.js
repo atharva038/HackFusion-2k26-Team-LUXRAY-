@@ -4,14 +4,14 @@ import Medicine from "../../../models/medicine.model.js";
 
 // ── FDA field priority list ────────────────────────────────────────────────
 const FDA_FIELDS = [
-  { key: "indications_and_usage",     label: "Uses / Indications"     },
+  { key: "indications_and_usage", label: "Uses / Indications" },
   { key: "dosage_and_administration", label: "Dosage & Administration" },
-  { key: "adverse_reactions",         label: "Side Effects"            },
-  { key: "warnings",                  label: "Warnings"                },
-  { key: "warnings_and_cautions",     label: "Warnings & Cautions"     },
-  { key: "contraindications",         label: "Contraindications"       },
-  { key: "drug_interactions",         label: "Drug Interactions"       },
-  { key: "description",              label: "Clinical Description"    },
+  { key: "adverse_reactions", label: "Side Effects" },
+  { key: "warnings", label: "Warnings" },
+  { key: "warnings_and_cautions", label: "Warnings & Cautions" },
+  { key: "contraindications", label: "Contraindications" },
+  { key: "drug_interactions", label: "Drug Interactions" },
+  { key: "description", label: "Clinical Description" },
 ];
 
 /**
@@ -26,33 +26,32 @@ async function fetchFdaInfo(medicineName) {
     `openfda.substance_name:"${name}"`,
   ];
 
-  for (const search of searches) {
-    try {
-      const url = `https://api.fda.gov/drug/label.json?search=${search}&limit=1`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const label = data?.results?.[0];
-      if (!label) continue;
+  const promises = searches.map(async (search) => {
+    const url = `https://api.fda.gov/drug/label.json?search=${search}&limit=1`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) throw new Error("Not found or API error");
+    const data = await res.json();
+    const label = data?.results?.[0];
+    if (!label) throw new Error("No results array");
 
-      const extracted = {};
-      for (const { key, label: fieldLabel } of FDA_FIELDS) {
-        const val = label[key];
-        if (val) {
-          const text = Array.isArray(val) ? val.join(" ") : String(val);
-          // Trim to 600 chars per field to keep context concise
-          extracted[fieldLabel] = text.slice(0, 600).trim();
-        }
+    const extracted = {};
+    for (const { key, label: fieldLabel } of FDA_FIELDS) {
+      const val = label[key];
+      if (val) {
+        const text = Array.isArray(val) ? val.join(" ") : String(val);
+        extracted[fieldLabel] = text.slice(0, 600).trim();
       }
-
-      if (Object.keys(extracted).length > 0) {
-        return { found: true, source: "OpenFDA", data: extracted };
-      }
-    } catch {
-      // try next search variant
     }
+
+    if (Object.keys(extracted).length === 0) throw new Error("No relevant fields");
+    return { found: true, source: "OpenFDA", data: extracted };
+  });
+
+  try {
+    return await Promise.any(promises);
+  } catch (aggregateErr) {
+    return { found: false };
   }
-  return { found: false };
 }
 
 export const describeMed = tool({
@@ -72,23 +71,11 @@ export const describeMed = tool({
       const nameQuery = medicineName.trim();
       if (!nameQuery) return { description: "Please provide a medicine name." };
 
-      // Local DB lookup
-      const medicine = await Medicine.findOne({
-        name: { $regex: nameQuery, $options: "i" },
-      }).lean();
-
-      const localDescription = medicine?.description || null;
-      const localMeta = medicine
-        ? {
-            price: `₹${medicine.price}`,
-            stock: medicine.stock,
-            unitType: medicine.unitType,
-            prescriptionRequired: medicine.prescriptionRequired,
-          }
-        : null;
-
-      // FDA enrichment (runs in parallel with minimal latency)
-      const fdaInfo = await fetchFdaInfo(nameQuery);
+      // Run DB lookup and FDA enrichment in true parallel to minimize latency
+      const [medicine, fdaInfo] = await Promise.all([
+        Medicine.findOne({ name: { $regex: nameQuery, $options: "i" } }).lean(),
+        fetchFdaInfo(nameQuery)
+      ]);
 
       return {
         name: medicine?.name || nameQuery,

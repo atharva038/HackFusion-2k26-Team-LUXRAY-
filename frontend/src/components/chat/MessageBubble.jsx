@@ -142,12 +142,11 @@ const MessageBubble = ({ message }) => {
                         )}
 
                         {isStreaming ? (
-                            /* Streaming: typewriter effect */
-                            <TypewriterText
-                                text={message.text}
-                                delayStart={message.isVoice ? 800 : 0}
-                                typingSpeed={message.isVoice ? 30 : 15}
-                            />
+                            /* Streaming: Render raw Markdown text + Pulse Cursor */
+                            <div className="relative">
+                                <MarkdownText text={message.text} />
+                                <span className="inline-block w-1.5 h-4 bg-cyan-400 ml-1 animate-pulse align-middle shadow-[0_0_8px_theme('colors.cyan.400')]" />
+                            </div>
                         ) : isAi ? (
                             /* AI completed message: markdown rendering */
                             <MarkdownText text={message.text} />
