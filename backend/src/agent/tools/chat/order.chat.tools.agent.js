@@ -337,13 +337,19 @@ Error: ${paymentErr.message}`;
 
       const itemsList = processedItems.map(i => `${i.medicineName} (x${i.quantity})`).join(", ");
 
-      return `✅ Order placed successfully
+      let finalMessage = `✅ Order placed successfully
       
 Order ID: ${result.orderId}
 Items: ${itemsList}
 Total Price: ₹${totalOrderPrice}
 Status: ${result.status}
 Razorpay ID: ${razorpayOrderId}`;
+
+      if (blocks.length > 0) {
+        finalMessage += `\n\n⚠️ NOTE TO AI: The following items COULD NOT be ordered and must be communicated to the user:\n${blocks.join("\n")}`;
+      }
+
+      return finalMessage;
     } catch (error) {
       return `❌ ${error.message}`;
     }

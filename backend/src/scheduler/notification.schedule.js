@@ -15,7 +15,7 @@ const runMedicationCheck = async () => {
     console.log(`[${new Date().toISOString()}] ⏰ Dose Cron: Checking reminders for ${currentTime}`);
 
     try {
-        await run(notificationParentAgent,
+        const result = await run(notificationParentAgent,
             `The current time is ${currentTime}. 
              Use 'get_active_prescriptions_data' to find patients due for medicine now and send them a 'reminder' email.`
         );
@@ -58,7 +58,7 @@ const runRefillCheck = async () => {
     console.log(`[${new Date().toISOString()}] 📉 Refill Cron: Checking for low stock...`);
 
     try {
-        await run(notificationParentAgent,
+        const result = await run(notificationParentAgent,
             `Perform a refill check. 
              Use 'get_expiring_prescriptions' to find patients with <= 2 days left and send them a 'refill' alert.`
         );
