@@ -77,6 +77,16 @@ export const describeMed = tool({
         fetchFdaInfo(nameQuery)
       ]);
 
+      const localDescription = medicine?.description || null;
+      const localMeta = medicine
+        ? {
+            price: medicine.price,
+            stock: medicine.stock,
+            unitType: medicine.unitType,
+            prescriptionRequired: medicine.prescriptionRequired,
+          }
+        : null;
+
       return {
         name: medicine?.name || nameQuery,
         localDescription,
