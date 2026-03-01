@@ -9,43 +9,85 @@ The backend is a **Node.js ESM** application built with Express. It is organized
 
 ---
 
+## Demo
+
+[![Backend Architecture Deep Dive](https://img.shields.io/badge/▶_Backend_Deep_Dive-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_BACKEND)
+
+---
+
 ## Directory Structure
 
 ```
 backend/src/
-├── agent/                    # AI Agent system
-│   ├── orchestrator.agent.js # Main agentic loop entry point
-│   ├── parent/               # Parent orchestrators
-│   │   ├── chat.parent.js
-│   │   ├── notify.parent.js
-│   │   └── pharmacist.parent.js
-│   ├── child/                # Specialist child agents
-│   │   ├── order.child.js
-│   │   ├── receptionist.child.js
-│   │   ├── pharmacist.child.js
-│   │   └── notifications.child.js
-│   ├── guard/                # Safety filters
-│   │   ├── input.guard.js
-│   │   └── output.guard.js
-│   ├── service/              # Agent-internal services
+├── agent/                         # AI Agent system (OpenAI Agents SDK)
+│   ├── parent/                    # Parent router agents
+│   │   ├── parentChat.agent.js              # Routes customer chat intent
+│   │   ├── parentNotify.agent.js            # Routes notification tasks
+│   │   └── parentPharmacist.parent.agent.js # Routes pharmacist tasks
+│   │
+│   ├── child/                     # Specialist child agents
+│   │   ├── chat/
+│   │   │   ├── receptionist.child.js        # Q&A, medicine search, stock info
+│   │   │   └── orderMaker.child.js          # Order placement, payment, Rx check
+│   │   ├── notify/
+│   │   │   ├── medication.notify.child.js          # Daily 8 AM dose reminder emails
+│   │   │   ├── refillReminder.notify.child.js      # Daily 10 AM expiry/refill alerts
+│   │   │   └── img_data_extractor.notify.child.js  # Prescription OCR extraction
+│   │   └── pharamcist/
+│   │       ├── stockAdd.child.js
+│   │       ├── stockReduce.child.js
+│   │       ├── orderStatus.child.js
+│   │       ├── inventorySuggestion.child.js
+│   │       ├── placeOrder.child.js
+│   │       ├── addMedicine.child.js
+│   │       └── removeMedicine.child.js
+│   │
+│   ├── guard/                     # Safety filters
+│   │   ├── input.guard.agent.js               # Customer chat input guard
+│   │   ├── output.guard.agent.js              # Customer chat output guard
+│   │   ├── input.guard.pharmacist.agent.js    # Pharmacist input guard
+│   │   └── output.guard.pharmacist.agent.js   # Pharmacist output guard
+│   │
+│   ├── service/                   # Agent-internal services
 │   │   ├── chat.service.js
 │   │   ├── pharmacist.service.js
 │   │   ├── email.service.js
 │   │   └── transactions.service.js
-│   ├── tools/                # Tool definitions (JSON schemas + handlers)
-│   │   ├── chat.tools.js
-│   │   ├── pharmacist.tools.js
-│   │   └── notify.tools.js
-│   └── prompts.js            # System prompts for all agents
+│   │
+│   ├── tools/                     # Tool definitions (JSON schemas + handlers)
+│   │   ├── chat/                  # 6 chat tools
+│   │   │   ├── checkStock.tool.js
+│   │   │   ├── searchMedByDescription.tool.js
+│   │   │   ├── describeMed.tool.js
+│   │   │   ├── order_medicine.tool.js
+│   │   │   ├── checkPrescriptionOnFile.tool.js
+│   │   │   └── create_payment.tool.js
+│   │   ├── notify_tool/           # 5 notification tools
+│   │   │   ├── fetchDoses.notify.tool.agent.js
+│   │   │   ├── sendEmail.tool.agent.js
+│   │   │   ├── fetchRefills.notify.tool.agent.js
+│   │   │   ├── OCR.notify.tool.agent.js
+│   │   │   └── verifyPrescription.notify.tool.agent.js
+│   │   └── pharamcist/            # 7 pharmacist tools
+│   │       ├── addStockTool.js
+│   │       ├── reduceStockTool.js
+│   │       ├── getOrdersTool.js
+│   │       ├── changeOrderStatusTool.js
+│   │       ├── getRecentTransactionsTool.js
+│   │       ├── placeOrderTool.js
+│   │       ├── addMedicineTool.js
+│   │       └── removeMedicineTool.js
+│   │
+│   └── AGENT_ARCHITECTURE.md     # Visual Mermaid flowchart
 │
 ├── config/
-│   ├── db.js                 # MongoDB connection
-│   ├── openai.js             # OpenAI singleton
-│   ├── cloudinary.js         # Cloudinary config
-│   ├── redis.js              # Redis connection
-│   └── socket.js             # Socket.IO server init + all event handlers
+│   ├── db.js                  # MongoDB connection
+│   ├── openai.js              # OpenAI singleton
+│   ├── cloudinary.js          # Cloudinary config
+│   ├── redis.js               # Redis connection
+│   └── socket.js              # Socket.IO server init + all event handlers
 │
-├── controllers/              # HTTP request handlers
+├── controllers/               # HTTP request handlers
 │   ├── auth.controller.js
 │   ├── chat.controller.js
 │   ├── admin.controller.js
@@ -63,8 +105,9 @@ backend/src/
 │   ├── validate.middleware.js # Zod schema validation
 │   └── redisRateLimiter.js  # Per-user Redis rate limiter
 │
-├── models/                   # Mongoose schemas
+├── models/                   # Mongoose schemas (9 models)
 │   ├── user.model.js
+│   ├── doctor.model.js
 │   ├── medicine.model.js
 │   ├── order.model.js
 │   ├── prescription.model.js
@@ -73,7 +116,7 @@ backend/src/
 │   ├── inventoryLog.model.js
 │   └── agentAuditLog.model.js
 │
-├── routes/                   # Express routers
+├── routes/                   # Express routers (11 routes)
 │   ├── auth.routes.js
 │   ├── chat.routes.js
 │   ├── admin.routes.js
@@ -83,29 +126,24 @@ backend/src/
 │   ├── tts.routes.js
 │   ├── webhook.routes.js
 │   ├── trace.routes.js
+│   ├── invoice.routes.js
 │   └── recording.routes.js
 │
 ├── scheduler/
-│   ├── refill.scheduler.js   # Daily refill alerts (node-cron)
-│   └── notification.schedule.js
+│   ├── refill.scheduler.js           # Daily refill countdown (node-cron)
+│   └── notification.schedule.js      # 8 AM dose reminders + 10 AM refill alerts
 │
 ├── services/                 # Business logic
 │   ├── cloudinary.service.js
-│   ├── cache.service.js      # Redis session cache
+│   ├── cache.service.js               # Redis chat session cache
 │   ├── inventory.service.js
 │   ├── order.service.js
-│   ├── multilingual.service.js
-│   ├── email.service.agent.js
-│   ├── whatsapp.service.js
-│   ├── invoicePdf.service.js
-│   └── streamService.js
-│
-├── tools/                    # Agent tool implementations
-│   ├── inventory.tool.js
-│   ├── order.tool.js
-│   ├── prescription.tool.js
-│   ├── refill.tool.js
-│   └── warehouse.tool.js
+│   ├── multilingual.service.js        # Language detection + translation
+│   ├── email.fulfillment.service.js
+│   ├── whatsapp.service.js            # Twilio WhatsApp
+│   ├── warehouse.fulfillment.service.js
+│   ├── invoicePdf.service.js          # jsPDF invoice generation
+│   └── streamService.js               # SSE / ReadableStream helpers
 │
 ├── utils/
 │   ├── logger.js
@@ -145,12 +183,14 @@ backend/src/
 | `POST /api/chat/stream` | 20 req/user | 1 min |
 | `POST /api/tts` | 30 req/user | 1 min |
 | `POST /api/tts/stream` | 30 req/user | 1 min |
-| `POST /api/prescription/upload` | 10 req/IP | 1 min |
+| `POST /api/notification/upload` | 10 req/IP | 1 min |
 | `POST /api/auth/*` | 100 req/IP | 15 min |
 
 ---
 
-## Agent System Architecture
+## Agent System
+
+### Flow
 
 ```
 User message
@@ -159,16 +199,22 @@ User message
 Input Guard (injection detection, policy check)
     │
     ▼
-Parent Orchestrator (decides which child to invoke)
+Parent Agent (decides which child to invoke)
     │
     ├── Chat Parent → Receptionist Child
-    │                    └─ Tools: searchMedicine, checkInteractions
+    │                   └─ Tools: checkStock, searchMedByDescription, describeMed
     │
-    ├── Chat Parent → Order Child
-    │                    └─ Tools: checkStock, createOrder, validatePrescription
+    ├── Chat Parent → Order Maker Child
+    │                   └─ Tools: order_medicine, checkPrescriptionOnFile, create_payment
     │
-    └── Pharmacist Parent → Pharmacist Child
-                             └─ Tools: checkRefill, sendReminder, searchDrug
+    ├── Pharmacist Parent → 7 specialist child agents
+    │                   └─ Tools: addStock, reduceStock, getOrders, changeOrderStatus,
+    │                             getRecentTransactions, placeOrder, addMedicine, removeMedicine
+    │
+    └── Notification Dispatcher → 3 child agents
+                        ├─ Medication Notifier  → fetchDoses + sendEmail
+                        ├─ Refill Reminder      → fetchRefills + sendEmail
+                        └─ Image Data Extractor → OCR_Tool + verifyPrescription
     │
     ▼
 Output Guard (safety filter on agent response)
@@ -177,21 +223,32 @@ Output Guard (safety filter on agent response)
 Response (optionally translated via multilingual.service)
     │
     ▼
-AgentAuditLog saved (tools used, duration, tokens, traces)
+AgentAuditLog saved to MongoDB (tools used, duration, tokens, traces)
 ```
 
-### Tool Definitions
+### Complete Tool Reference
 
-Each tool is a JSON schema registered with the OpenAI Agents SDK:
-
-| Tool | Purpose |
-|---|---|
-| `checkStock` | Query medicine inventory by name or PZN |
-| `createOrder` | Place an order for the authenticated user |
-| `validatePrescription` | Check if user has valid prescription for Rx medicines |
-| `searchMedicine` | Fuzzy search medicine catalog |
-| `checkRefill` | Check refill eligibility based on last order date |
-| `checkWarehouse` | Query external warehouse for out-of-stock items |
+| Pipeline | Tool | Purpose |
+|---|---|---|
+| **Chat** | `checkStock` | Query medicine inventory by name |
+| **Chat** | `searchMedByDescription` | Fuzzy/semantic medicine search |
+| **Chat** | `describeMed` | Detailed medicine info + interactions |
+| **Chat** | `order_medicine` | Place an order for the authenticated user |
+| **Chat** | `checkPrescriptionOnFile` | Verify active Rx for restricted medicines |
+| **Chat** | `create_payment` | Create Razorpay payment order |
+| **Pharmacist** | `addStockTool` | Increase stock for a medicine |
+| **Pharmacist** | `reduceStockTool` | Decrease stock for a medicine |
+| **Pharmacist** | `getOrdersTool` | List all orders |
+| **Pharmacist** | `changeOrderStatusTool` | Update order status |
+| **Pharmacist** | `getRecentTransactionsTool` | Inventory transaction history |
+| **Pharmacist** | `placeOrderTool` | Place a wholesale restock order |
+| **Pharmacist** | `addMedicineTool` | Add a new medicine to catalog |
+| **Pharmacist** | `removeMedicineTool` | Remove a medicine from catalog |
+| **Notification** | `fetchDosesTool` | Fetch active prescriptions for dose reminders |
+| **Notification** | `sendEmailTool` | Send HTML email via Resend |
+| **Notification** | `fetchRefillsTool` | Fetch prescriptions expiring in 1–2 days |
+| **Notification** | `OCR_Tool` | Extract text from prescription image (Vision model) |
+| **Notification** | `verifyPrescriptionTool` | Validate extracted prescription data |
 
 ---
 
@@ -218,5 +275,7 @@ All socket event emissions happen inside controllers (e.g., `admin.controller.js
 
 | Job | Schedule | Action |
 |---|---|---|
-| Refill countdown | Daily (configurable) | Checks active RefillAlerts, sends email/WhatsApp if ≤3 days |
-| Low-stock sweep | On-demand (manual trigger) | Emails pharmacists about medicines below threshold |
+| Dose reminders | Daily 8:00 AM | AI Medication Notifier fetches active prescriptions → crafts custom HTML email → sends via Resend |
+| Refill alerts | Daily 10:00 AM | AI Refill Reminder finds prescriptions expiring in 1–2 days → sends urgent red-themed email |
+| Refill countdown | Daily (configurable) | Decrements `daysLeft` on Refill docs; triggers WhatsApp via Twilio when ≤3 days |
+| Low-stock sweep | Event-driven | Emails pharmacists when medicine stock drops below threshold |

@@ -9,6 +9,12 @@ MediSage records the user's chat session screen during pharmacist consultations.
 
 ---
 
+## Demo
+
+[![Session Recording Demo](https://img.shields.io/badge/▶_Session_Recording_Demo-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_RECORDING)
+
+---
+
 ## Flow
 
 ```

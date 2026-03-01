@@ -9,6 +9,15 @@ MediSage supports **English, Hindi, and Marathi**. Translation is fully transpar
 
 ---
 
+## Demo
+
+| Scenario | Video |
+|---|---|
+| Chat in Hindi — AI responds in Hindi voice | [![Watch](https://img.shields.io/badge/▶_Watch-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_HINDI) |
+| Voice input in Marathi + TTS reply | [![Watch](https://img.shields.io/badge/▶_Watch-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_MARATHI) |
+
+---
+
 ## Translation Flow
 
 ```

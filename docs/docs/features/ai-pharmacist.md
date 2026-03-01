@@ -9,6 +9,16 @@ The AI Pharmacist is the core of MediSage. It is a **multi-agent system** powere
 
 ---
 
+## Demo
+
+| Scenario | Video |
+|---|---|
+| Chat with AI pharmacist (English) | [![Watch](https://img.shields.io/badge/▶_Watch-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_CHAT_EN) |
+| Voice order in Hindi | [![Watch](https://img.shields.io/badge/▶_Watch-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_CHAT_HI) |
+| Pharmacist agent managing inventory | [![Watch](https://img.shields.io/badge/▶_Watch-YouTube-FF0000?style=flat&logo=youtube)](https://youtu.be/PLACEHOLDER_PHARMACIST) |
+
+---
+
 ## Agent Chain
 
 ```
@@ -180,6 +190,18 @@ Public traces are viewable at `GET /api/traces` (no auth required) and rendered 
 A separate agent interface available only to admin/pharmacist roles:
 
 - Endpoint: `POST /api/admin/agent/chat` (+ `/stream`)
-- Uses `pharmacist.parent.js` with clinical-grade system prompt
-- Tools: drug interaction checks, clinical dosage calculator, refill management
+- Uses `parentPharmacist.parent.agent.js` with clinical-grade system prompt
+- **7 specialist child agents** — each handles one narrow task:
+
+| Child Agent | Responsibility |
+|---|---|
+| `stockAddAgent` | Increase medicine stock |
+| `stockReduceAgent` | Decrease medicine stock |
+| `orderStatusChangeAgent` | Update order status |
+| `inventorySuggestionAgent` | Inventory trends and suggestions |
+| `placeOrderAgent` | Place wholesale restock orders |
+| `addMedicineAgent` | Add new medicines to catalog |
+| `removeMedicineAgent` | Remove medicines from catalog |
+
 - Separate session history under `agentType: "pharmacist"`
+- Pharmacist input/output guardrails prevent misuse of clinical tools
