@@ -1,4 +1,4 @@
-import { run } from "@openai/agents";
+import { run, InputGuardrailTripwireTriggered, OutputGuardrailTripwireTriggered } from "@openai/agents";
 import { parentAgent } from "../agent/parent/parentChat.agent.js";
 import { detectPromptInjection, logAgentRun } from "../utils/agentLogger.js";
 import User from "../models/user.model.js";
@@ -267,6 +267,27 @@ export async function* streamAgentResponse(messages, userId, sessionId) {
 
     yield { isCompleted: true, value: finalOutput };
   } catch (err) {
+    if (err instanceof InputGuardrailTripwireTriggered) {
+      // Guardrail blocked — treat as a clean blocked response, not an error
+      const blockedMsg = "Please ask only pharmacy or medicine related questions.";
+      capturedTraces = [
+        { agent: "User",     action: "💬 User Input",       data: messages[messages.length - 1]?.content || "" },
+        { agent: "Security", action: "🚨 Guardrail: Block", data: "Input Check: pharmacy_input_guardrail" },
+      ];
+      console.log("\n📍 --- STREAM EXECUTION TRACE (BLOCKED) ---");
+      capturedTraces.forEach((t, i) => console.log(`[${i}] ${String(t.agent).padEnd(15)} ➔ ${t.action}\n    └─ ${typeof t.data === 'string' ? t.data.substring(0, 80) : JSON.stringify(t.data).substring(0, 80)}`));
+      console.log("--------------------------\n");
+      if (isSocketInitialized()) emitToUser(userId, "agent:trace", { traces: capturedTraces, sessionId });
+      accumulatedText = blockedMsg;
+      yield { isCompleted: true, value: blockedMsg };
+      return;
+    }
+    if (err instanceof OutputGuardrailTripwireTriggered) {
+      const blockedMsg = "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.";
+      accumulatedText = blockedMsg;
+      yield { isCompleted: true, value: blockedMsg };
+      return;
+    }
     status = "error";
     errorMessage = err.message;
     logger.error(
