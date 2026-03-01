@@ -5,6 +5,10 @@ import * as pharmacistAgentController from '../controllers/pharmacistAgent.contr
 import { protect, restrictTo } from '../middleware/auth.middleware.js';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter.js';
 import { validate, chatSchema } from '../middleware/validate.middleware.js';
+import multer from 'multer';
+
+// Set up multer for memory storage (for Excel buffers)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // All admin routes require a valid JWT and admin/pharmacist role
 router.use(protect, restrictTo('admin', 'pharmacist'));
@@ -60,6 +64,16 @@ router.post('/low-stock-alert', adminController.triggerLowStockAlert);
 
 /** GET  /api/admin/traces — Get AI reasoning traces */
 router.get('/traces', adminController.getTraces);
+
+// ─── Excel Import/Export Routes ──────────────────────────────────────────
+/** POST /api/admin/medicines/import — Import medicines from Excel (AI mapping) */
+router.post('/medicines/import', upload.single('file'), adminController.importMedicinesExcel);
+
+/** GET /api/admin/medicines/export — Export medicines to Excel */
+router.get('/medicines/export', adminController.exportMedicinesExcel);
+
+/** GET /api/admin/orders/export — Export orders to Excel */
+router.get('/orders/export', adminController.exportOrdersExcel);
 
 // ─── Pharmacist AI Agent Routes ────────────────────────────────────────────
 /** POST /api/admin/agent/chat — Sync pharmacist agent message */

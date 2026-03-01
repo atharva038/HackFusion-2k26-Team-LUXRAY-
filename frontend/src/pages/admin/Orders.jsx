@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Truck, Loader2, Search, Filter, Wifi, WifiOff, PackageOpen } from 'lucide-react';
+import { Check, X, Truck, Loader2, Search, Filter, Wifi, WifiOff, PackageOpen, Download } from 'lucide-react';
 import { fetchOrders, updateOrderStatus } from '../../services/api';
 import ActionModal from '../../components/ui/ActionModal';
 import { useSocket } from '../../context/SocketContext';
@@ -22,6 +22,30 @@ const Orders = () => {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    const handleExportOrders = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/orders/export', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('pharmacy_token')}`
+                }
+            });
+            if (!response.ok) throw new Error('Export failed');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'orders.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Failed to export orders');
+        }
+    };
 
     // Shared helper to patch a single order in state
     const patchOrder = useCallback((orderId, patch) => {
@@ -134,15 +158,24 @@ const Orders = () => {
                     <h1 className="text-2xl font-extrabold tracking-tight text-text bg-gradient-to-r from-text to-text-muted bg-clip-text text-transparent">Orders Management</h1>
                     <p className="text-text-muted text-sm mt-1">Review and process all incoming pharmacy orders.</p>
                 </div>
-                {/* Real-time connection badge */}
-                <div className={`flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full ring-1 ${isConnected
-                    ? 'bg-green-500/10 text-green-600 dark:text-green-400 ring-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
-                    : 'bg-red-500/10 text-red-600 dark:text-red-400 ring-red-500/30'
-                    }`}>
-                    {isConnected
-                        ? <><Wifi className="w-3.5 h-3.5 animate-pulse" /> Live</>
-                        : <><WifiOff className="w-3.5 h-3.5" /> Offline</>
-                    }
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={handleExportOrders}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/10 text-text hover:bg-slate-200 dark:hover:bg-white/20 rounded-xl text-sm font-medium transition-colors border border-black/10 dark:border-white/10"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export
+                    </button>
+                    {/* Real-time connection badge */}
+                    <div className={`flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full ring-1 ${isConnected
+                        ? 'bg-green-500/10 text-green-600 dark:text-green-400 ring-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                        : 'bg-red-500/10 text-red-600 dark:text-red-400 ring-red-500/30'
+                        }`}>
+                        {isConnected
+                            ? <><Wifi className="w-3.5 h-3.5 animate-pulse" /> Live</>
+                            : <><WifiOff className="w-3.5 h-3.5" /> Offline</>
+                        }
+                    </div>
                 </div>
             </div>
 

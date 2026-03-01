@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Loader2, Search, Filter, Package, AlertTriangle, TrendingUp, Plus, X, Trash2 } from 'lucide-react';
+import { Edit2, Loader2, Search, Filter, Package, AlertTriangle, TrendingUp, Plus, X, Trash2, Upload, Download } from 'lucide-react';
 import { fetchInventory, restockMedicine, addMedicine, deleteMedicine } from '../../services/api';
 import InventoryStockModal from '../../components/ui/InventoryStockModal';
+import { useRef } from 'react';
 import { useSocket } from '../../context/SocketContext';
 
 const Inventory = () => {
@@ -20,6 +21,10 @@ const Inventory = () => {
     const [addLoading, setAddLoading] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
     const [deleteLoading, setDeleteLoading] = useState(false);
+    
+    // Excel features
+    const fileInputRef = useRef(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const { on, off } = useSocket();
 
@@ -131,6 +136,61 @@ const Inventory = () => {
         }
     };
 
+    const handleExportMedicines = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/medicines/export', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('pharmacy_token')}`
+                }
+            });
+            if (!response.ok) throw new Error('Export failed');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'medicines_inventory.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Failed to export medicines');
+        }
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/medicines/import', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('pharmacy_token')}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Import failed');
+
+            alert(`Import successful! ${result.message}`);
+            load(); // Reload inventory
+        } catch (error) {
+            console.error('Import error:', error);
+            alert(`Failed to import medicines: ${error.message}`);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     const getStockStatusColor = (stock, threshold) => {
         if (stock <= threshold * 0.2) return 'text-red-600 dark:text-red-400 font-semibold';
         if (stock <= threshold) return 'text-amber-600 dark:text-amber-400 font-semibold';
@@ -163,13 +223,40 @@ const Inventory = () => {
                     <h1 className="text-2xl font-extrabold tracking-tight text-text bg-gradient-to-r from-text to-text-muted bg-clip-text text-transparent">Inventory Control</h1>
                     <p className="text-text-muted text-sm mt-1">Manage medicine stock levels and configuration.</p>
                 </div>
-                <button
-                    onClick={() => setAddModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-blue-600 transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:-translate-y-0.5"
-                >
-                    <Plus className="w-4 h-4" />
-                    Add Medicine
-                </button>
+                <div className="flex items-center gap-3">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileUpload} 
+                        accept=".xlsx, .xls"
+                        className="hidden" 
+                    />
+                    
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/10 text-text hover:bg-slate-200 dark:hover:bg-white/20 rounded-xl text-sm font-medium transition-colors border border-black/10 dark:border-white/10 disabled:opacity-50"
+                    >
+                        <Upload className="w-4 h-4" />
+                        {isUploading ? 'Uploading...' : 'Import'}
+                    </button>
+                    
+                    <button 
+                        onClick={handleExportMedicines}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/10 text-text hover:bg-slate-200 dark:hover:bg-white/20 rounded-xl text-sm font-medium transition-colors border border-black/10 dark:border-white/10"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export
+                    </button>
+
+                    <button
+                        onClick={() => setAddModal(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-blue-600 transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:-translate-y-0.5"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Medicine
+                    </button>
+                </div>
             </div>
 
             {/* ── Real-time Stats Bar ── */}
