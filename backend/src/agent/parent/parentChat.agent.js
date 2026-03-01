@@ -36,6 +36,7 @@ HANDOFF to "medicine_advisor_stock_reader" when the user:
 - Asks about availability or stock
 - Searches for a medicine
 - Asks to describe or explain about a medicine
+- Asks whether two or more medicines can be taken together (drug interaction check)
 
 HANDOFF to "order_maker" when the user:
 - Wants to buy medicine

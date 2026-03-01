@@ -27,6 +27,7 @@ flowchart TD
             T_STOCK["checkStock"]
             T_SEARCH["searchMedByDescription"]
             T_DESC["describeMed"]
+            T_INTERACT["checkDrugInteractions"]
             T_ORDER["order_medicine"]
             T_PRESC["checkPrescriptionOnFile"]
             T_PAY["create_payment"]
@@ -105,7 +106,7 @@ flowchart TD
     IG -- "❌ BLOCKED" --> BLOCK1(["🚫 Blocked Response"])
     PA -- "Search / Stock / Info" --> RA
     PA -- "Order / Buy / Prescription" --> OA
-    RA --> T_STOCK & T_SEARCH & T_DESC
+    RA --> T_STOCK & T_SEARCH & T_DESC & T_INTERACT
     OA --> T_ORDER & T_PRESC & T_PAY
     PA --> OG
     OG -- "✅ SAFE" --> CHAT_OUT(["📤 Response to Customer"])
@@ -157,7 +158,7 @@ flowchart TD
     class PA,PP,ND parent
     class RA,OA,SA,SR,OS,IS,PO,AM,RM,MN,RR child
     class IG,OG,PIG,POG guard
-    class T_STOCK,T_SEARCH,T_DESC,T_ORDER,T_PRESC,T_PAY,PT1,PT2,PT3,PT4,PT5,PT6,PT7,NT1,NT2,NT3,OT1,OT2,OT3,OT4,OT5 tool
+    class T_STOCK,T_SEARCH,T_DESC,T_INTERACT,T_ORDER,T_PRESC,T_PAY,PT1,PT2,PT3,PT4,PT5,PT6,PT7,NT1,NT2,NT3,OT1,OT2,OT3,OT4,OT5 tool
     class USER,PHARM_USER,SCHEDULER entry
     class BLOCK1,BLOCK2,BLOCK3,BLOCK4 block
     class ORC legacy

@@ -2,6 +2,7 @@ import { Agent } from "@openai/agents";
 import { checkStock } from "../../tools/chat/checkStock.chat.tools.agent.js";
 import { searchMedByDescription } from "../../tools/chat/searchMed.chat.tools.agent.js";
 import { describeMed } from "../../tools/chat/describe.chat.tools.agent.js";
+import { checkDrugInteractions } from "../../tools/chat/drugInteraction.chat.tools.agent.js";
 
 const receptionist = new Agent({
   name: "medicine_advisor_stock_reader",
@@ -114,6 +115,27 @@ or
 
 -----------------------------------
 
+8. Drug interaction queries
+User may ask:
+- "Can I take [MedA] with [MedB]?"
+- "Is it safe to combine [MedA] and [MedB]?"
+- "I am already taking [MedA], can I also take [MedB]?"
+- "Drug interaction between [MedA] and [MedB]"
+
+Action:
+- Use check_drug_interactions with both medicine names
+
+Response (if interactions found):
+"⚠️ There may be an interaction between [MedA] and [MedB]. [Short detail from result]. Please consult your doctor or pharmacist before taking them together."
+
+Response (if no interactions found):
+"No specific interaction warnings were found between [MedA] and [MedB] in the FDA database. Still, always check with your pharmacist."
+
+Always end with: "Please consult a doctor or pharmacist before combining medicines."
+
+-----------------------------------
+
+
 --- OUT OF SCOPE BOUNDARIES ---
 DO NOT attempt or promise to do any of the following tasks. If asked, politely decline and instruct the user to use the UI menus by providing the exact routing link IN MARKDOWN FORMAT:
 - **View Past Orders:** You cannot fetch order history. Tell the user to visit their orders page using EXACTLY this markdown link: [My Orders](/my-orders)
@@ -131,7 +153,7 @@ FORMAT STYLE:
 - Only important medical information
 `,
 
-  tools: [checkStock, searchMedByDescription, describeMed],
+  tools: [checkStock, searchMedByDescription, describeMed, checkDrugInteractions],
 });
 
 export default receptionist;
