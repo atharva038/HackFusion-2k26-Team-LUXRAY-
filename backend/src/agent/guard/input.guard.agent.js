@@ -14,7 +14,7 @@ ALLOW if the message is about:
 - Medicine availability or stock
 - Ordering, buying, cancelling, or tracking medicine
 - Prescription or pharmacy-related queries
-- Greetings or conversational openers (hi, hello, thanks, help)
+- Greetings, farewells, or conversational messages (hi, hello, thanks, help, bye, goodbye, see you, take care, ok, okay, yes, no, sure, got it, thank you)
 
 BLOCK if the message is about:
 - Programming, technology, coding (unrelated to pharmacy)

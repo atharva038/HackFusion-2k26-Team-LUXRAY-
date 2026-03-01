@@ -192,124 +192,148 @@ const InputArea = () => {
         }
     }, [setActiveSubtitle, setAiStatus, startListening, playAudioBlob]);
 
-    // ─── Send Message Logic ─────────────────────────────────────
-    const processSend = async (userText, isVoiceInput = false, imageUrl = null, skipLocalDisplay = false) => {
-        if (!userText.trim()) return;
+   const processSend = async (
+  userText,
+  isVoiceInput = false,
+  imageUrl = null,
+  skipLocalDisplay = false
+) => {
+  if (!userText.trim()) return;
 
-        if (!skipLocalDisplay) {
-            addMessage({ id: Date.now(), role: 'user', text: userText, imagePreview: imageUrl });
+  const store = useAppStore.getState();
+
+  // Unique IDs (no collision)
+  const userMsgId = crypto.randomUUID();
+  const aiMsgId = crypto.randomUUID();
+
+  // 1. Add user message
+  if (!skipLocalDisplay) {
+    addMessage({
+      id: userMsgId,
+      role: "user",
+      text: userText,
+      imagePreview: imageUrl,
+    });
+  }
+
+  // 2. Set AI state
+  setAiStatus(AI_STATUS.PROCESSING);
+  setTyping(true);
+
+  // 3. Create AI placeholder ONCE (prevents duplicates)
+  addMessage({
+    id: aiMsgId,
+    role: "ai",
+    text: "",
+    tools: [],
+    structured: null,
+    isStreaming: true,
+    isVoice: isVoiceInput,
+    requiresPrescription: false,
+  });
+
+  // Hide thinking dots once streaming starts
+  let firstChunkReceived = false;
+
+  streamChatMessage(
+    userText,
+    currentSessionId,
+    {
+      // ───────── STREAM CHUNKS ─────────
+      onChunk: (chunk) => {
+        if (!firstChunkReceived) {
+          setTyping(false);
+          firstChunkReceived = true;
         }
 
-        setAiStatus(AI_STATUS.PROCESSING);
-        setTyping(true);
+        useAppStore
+          .getState()
+          .updateStreamingMessage(aiMsgId, chunk);
+      },
 
-        const aiMsgId = Date.now() + 1;
-        const store = useAppStore.getState();
-        let bubbleCreated = false;
+      // ───────── STREAM DONE ─────────
+      onDone: (result) => {
+        const currentState = useAppStore.getState();
 
-        streamChatMessage(
-            userText,
-            currentSessionId,
-            {
-                onChunk: (chunk) => {
-                    if (!bubbleCreated) {
-                        setTyping(false); // Hide thinking dots when first byte arrives
-                        // Create the placeholder message exactly when streaming starts
-                        addMessage({
-                            id: aiMsgId,
-                            role: 'ai',
-                            text: '',
-                            tools: [],
-                            structured: null,
-                            isStreaming: true,
-                            isVoice: isVoiceInput,
-                            requiresPrescription: false
-                        });
-                        bubbleCreated = true;
-                    }
-                    store.updateStreamingMessage(aiMsgId, chunk);
-                },
-                onDone: (result) => {
-                    if (!bubbleCreated) {
-                        // Edge case: if stream finished immediately without chunks
-                        setTyping(false);
-                        addMessage({
-                            id: aiMsgId,
-                            role: 'ai',
-                            text: '',
-                            tools: [],
-                            structured: null,
-                            isStreaming: true,
-                            isVoice: isVoiceInput,
-                            requiresPrescription: false
-                        });
-                    }
+        // Update session if needed
+        if (result.sessionId && result.sessionId !== currentSessionId) {
+          setCurrentSessionId(result.sessionId);
+        }
 
-                    if (result.sessionId && result.sessionId !== currentSessionId) {
-                        setCurrentSessionId(result.sessionId);
-                    }
-
-                    // Grab the fully stitched text from the store to parse for actions/structure
-                    const finalState = useAppStore.getState();
-                    const finalMessageObj = finalState.messages.find(m => m.id === aiMsgId);
-                    let finalAiText = finalMessageObj ? finalMessageObj.text : '';
-
-                    let requiresPrescription = false;
-                    const REQUIRE_ACTION = '[ACTION: REQUIRE_PRESCRIPTION]';
-                    if (finalAiText.includes(REQUIRE_ACTION)) {
-                        finalAiText = finalAiText.replace(REQUIRE_ACTION, '').trim();
-                        requiresPrescription = true;
-                    }
-
-                    const tools = (result.toolCalls || []).map(step => ({
-                        icon: 'success',
-                        text: step.name || step.toolName || step,
-                        status: 'success'
-                    }));
-
-                    const structured = parseStructuredOutput(finalAiText);
-
-                    let orderCard = undefined;
-                    if (result.order || result.orderCard) {
-                        const o = result.order || result.orderCard;
-                        orderCard = {
-                            orderId: o.orderId || o._id || 'N/A',
-                            medicine: o.medicine || o.items?.map(i => i.name || i.medicine).join(', ') || 'N/A',
-                            status: o.status || 'Confirmed',
-                            eta: o.eta || 'Processing',
-                            razorpayOrderId: o.razorpayOrderId || result.razorpayOrderId,
-                            amount: o.totalAmount || o.amount || result.amount
-                        };
-                    }
-
-                    // Finalize the message with any parsed tools, structural components, etc.
-                    store.finalizeStreamingMessage(aiMsgId, {
-                        text: finalAiText,
-                        tools,
-                        structured,
-                        requiresPrescription,
-                        ...(orderCard ? { orderCard } : {})
-                    });
-
-                    if (isVoiceInput) {
-                        speakText(finalAiText);
-                    } else {
-                        setAiStatus(AI_STATUS.READY);
-                        setTimeout(() => inputRef.current?.focus(), 100);
-                    }
-                },
-                onError: (err) => {
-                    setTyping(false);
-                    setAiStatus(AI_STATUS.READY);
-                    store.finalizeStreamingMessage(aiMsgId, {
-                        text: 'Sorry, I encountered an error stream. Please try again.',
-                        tools: []
-                    });
-                }
-            },
-            selectedLanguage
+        // Get final stitched text
+        const finalMessageObj = currentState.messages.find(
+          (m) => m.id === aiMsgId
         );
-    };
+
+        let finalAiText = finalMessageObj ? finalMessageObj.text : "";
+
+        // Check special action
+        let requiresPrescription = false;
+        const REQUIRE_ACTION = "[ACTION: REQUIRE_PRESCRIPTION]";
+        if (finalAiText.includes(REQUIRE_ACTION)) {
+          finalAiText = finalAiText.replace(REQUIRE_ACTION, "").trim();
+          requiresPrescription = true;
+        }
+
+        // Tool steps
+        const tools = (result.toolCalls || []).map((step) => ({
+          icon: "success",
+          text: step.name || step.toolName || step,
+          status: "success",
+        }));
+
+        // Structured parsing
+        const structured = parseStructuredOutput(finalAiText);
+
+        // Order card support
+        let orderCard = undefined;
+        if (result.order || result.orderCard) {
+          const o = result.order || result.orderCard;
+          orderCard = {
+            orderId: o.orderId || o._id || "N/A",
+            medicine:
+              o.medicine ||
+              o.items?.map((i) => i.name || i.medicine).join(", ") ||
+              "N/A",
+            status: o.status || "Confirmed",
+            eta: o.eta || "Processing",
+            razorpayOrderId: o.razorpayOrderId || result.razorpayOrderId,
+            amount: o.totalAmount || o.amount || result.amount,
+          };
+        }
+
+        // Finalize message
+        currentState.finalizeStreamingMessage(aiMsgId, {
+          text: finalAiText,
+          tools,
+          structured,
+          requiresPrescription,
+          ...(orderCard ? { orderCard } : {}),
+        });
+
+        // Voice or normal finish
+        if (isVoiceInput) {
+          speakText(finalAiText);
+        } else {
+          setAiStatus(AI_STATUS.READY);
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }
+      },
+
+      // ───────── ERROR ─────────
+      onError: () => {
+        setTyping(false);
+        setAiStatus(AI_STATUS.READY);
+
+        useAppStore.getState().finalizeStreamingMessage(aiMsgId, {
+          text: "Sorry, I encountered an error. Please try again.",
+          tools: [],
+        });
+      },
+    },
+    selectedLanguage
+  );
+};
 
     // Keep ref up to date so the mount effect can call the latest processSend
     processSendRef.current = processSend;
