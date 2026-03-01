@@ -154,7 +154,7 @@ export const order = tool({
         let medicine = await Medicine.findOne({
           name: { $regex: productName, $options: "i" },
         });
-
+     console.log("hi",medicine);
         if (!medicine) {
           // Fallback: fetch all and fuzzy match
           // Extract the base medicine name (e.g. "Amlodipine 5 mg" -> "Amlodipine")
@@ -185,7 +185,6 @@ export const order = tool({
 
         const prescriptionFlag = medicine.prescriptionRequired || false;
 
-        // 2. PRESCRIPTION GATE — never allow a controlled medicine without validated proof
         if (prescriptionFlag && !prescriptionProof) {
           return JSON.stringify({
             blocked: true,

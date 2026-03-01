@@ -18,6 +18,7 @@ import Inventory from './pages/admin/Inventory';
 import Alerts from './pages/admin/Alerts';
 import Logs from './pages/admin/Logs';
 import PharmacistAgent from './pages/admin/PharmacistAgent';
+import AdminTraces from './pages/admin/AdminTraces';
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -151,6 +152,7 @@ function App() {
             <Route path="inventory" element={<Inventory />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="logs" element={<Logs />} />
+            <Route path="traces" element={<AdminTraces />} />
             <Route path="agent" element={<PharmacistAgent />} />
             <Route path="settings" element={<div className="p-4 text-text">Settings Content</div>} />
           </Route>

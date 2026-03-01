@@ -8,6 +8,7 @@ import logger from '../utils/logger.js';
 import { checkAndAlertLowStock } from '../scheduler/refill.scheduler.js';
 import { sendLowStockAlert } from '../agent/service/email.service.agent.js';
 import { emitToUser, isSocketInitialized, getIO } from '../config/socket.js';
+import { processExcelImport, generateMedicinesExcel, generateOrdersExcel } from '../agent/service/excel.agent.service.js';
 
 import AgentAuditLog from '../models/agentAuditLog.model.js';
 
@@ -538,6 +539,55 @@ export const triggerLowStockAlert = async (req, res) => {
   } catch (err) {
     logger.error('Manual low-stock alert error:', err);
     res.status(500).json({ error: 'Failed to trigger low-stock alert' });
+  }
+};
+
+// ─── Excel Import/Export ─────────────────────────────────────
+export const importMedicinesExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No Excel file uploaded' });
+    }
+    
+    // Process the excel file buffer using AI service
+    const result = await processExcelImport(req.file.buffer);
+    
+    if (isSocketInitialized()) {
+      getIO().emit('inventory:bulk-updated', { message: 'Medicines imported via Excel.' });
+    }
+    
+    res.json(result);
+  } catch (error) {
+    logger.error('Import Medicines Excel error:', error);
+    res.status(500).json({ error: error.message || 'Failed to import Excel' });
+  }
+};
+
+export const exportMedicinesExcel = async (req, res) => {
+  try {
+    const excelBuffer = await generateMedicinesExcel();
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="medicines_inventory.xlsx"');
+    
+    res.send(excelBuffer);
+  } catch (error) {
+    logger.error('Export Medicines Excel error:', error);
+    res.status(500).json({ error: 'Failed to export Medicines Excel' });
+  }
+};
+
+export const exportOrdersExcel = async (req, res) => {
+  try {
+    const excelBuffer = await generateOrdersExcel();
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="orders.xlsx"');
+    
+    res.send(excelBuffer);
+  } catch (error) {
+    logger.error('Export Orders Excel error:', error);
+    res.status(500).json({ error: 'Failed to export Orders Excel' });
   }
 };
 

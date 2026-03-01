@@ -8,6 +8,7 @@ import { stockReduceAgent } from "../child/pharamcist/stockReduce.pharamcist.chi
 import { placeOrderAgent } from "../child/pharamcist/placeOrder.pharamcist.child.agent.js";
 import { addMedicineAgent } from "../child/pharamcist/addMedicine.pharamcist.child.agent.js";
 import { removeMedicineAgent } from "../child/pharamcist/removeMedicine.pharamcist.child.agent.js";
+import { exportExcelAgent } from "../child/pharamcist/exportExcel.pharmacist.child.agent.js";
 import {
   InputGuardrailTripwireTriggered,
   OutputGuardrailTripwireTriggered,
@@ -87,6 +88,9 @@ User wants to add/increase/restock stock.
 
 7️⃣ REMOVE MEDICINE → removeMedicineAgent
 
+8️⃣ EXPORT DATA TO EXCEL → exportExcelAgent
+User wants to export or download medicines or orders data to excel or an excel sheet.
+
 (Use the same trigger conditions as defined earlier.)
 
 -----------------------------------------
@@ -109,7 +113,7 @@ CRITICAL BEHAVIOR
 Your job is routing and delegation — not execution.
 `,
 
-  handoffs: [stockAddAgent, stockReduceAgent, inventorySuggestionAgent, orderStatusChangeAgent, placeOrderAgent, addMedicineAgent, removeMedicineAgent],
+  handoffs: [stockAddAgent, stockReduceAgent, inventorySuggestionAgent, orderStatusChangeAgent, placeOrderAgent, addMedicineAgent, removeMedicineAgent, exportExcelAgent],
   inputGuardrails: [pharmacistInputGuardrail],
   outputGuardrails: [pharmacistOutputGuardrail],
 });
