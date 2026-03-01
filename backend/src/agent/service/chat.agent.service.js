@@ -58,8 +58,10 @@ export async function runChatAgent({ userId, sessionId, message, history = [] })
 
   try {
     const agentOutcome = await chatPharma(messages);
+    console.log("this is chat.agent.services working")
     reply = agentOutcome.output;
     traces = agentOutcome.traces || [];
+    console.log("traces if chatPharma", traces);
   } catch (err) {
     status = 'error';
     errorMessage = err.message;

@@ -6,6 +6,7 @@ import { sendPaymentInvoice } from "../services/whatsapp.service.js";
 import { sendInvoiceWithPdf } from "../agent/service/email.service.agent.js";
 import { isSocketInitialized, getIO, emitToUser } from "../config/socket.js";
 import { triggerWarehouseFulfillment } from "../services/warehouse.fulfillment.service.js";
+import { logAgentRun } from "../utils/agentLogger.js";
 
 /** Emit payment-confirmed socket events to both the customer and all admins */
 function emitPaymentConfirmed(order) {
@@ -71,12 +72,39 @@ export const handleRazorpayWebhook = async (req, res) => {
                 // Generate simple invoice ID
                 const invoiceId = `INV-${Math.floor(Date.now() / 1000).toString().substring(2)}${Math.floor(Math.random() * 1000)}`;
 
-                order.paymentStatus = "paid";
-                order.status = "paid";
-                order.razorpayPaymentId = paymentId;
-                order.razorpaySignature = signature;
-                order.invoiceId = invoiceId;
-                await order.save();
+        order.paymentStatus = "paid";
+        order.status = "paid";
+        order.razorpayPaymentId = paymentId;
+        order.razorpaySignature = signature;
+        order.invoiceId = invoiceId;
+        await order.save();
+
+        // ── Payment Trace ────────────────────────────────────────────────────
+        const webhookTraces = [
+          { agent: "Razorpay", action: "🔐 Signature Verified", data: `Webhook event: ${event}` },
+          { agent: "System",   action: "🗄️ Order Updated",      data: `OrderID: ${order._id} → status: paid, paymentStatus: paid` },
+          { agent: "System",   action: "🧾 Invoice Generated",  data: `InvoiceID: ${invoiceId}` },
+          { agent: "System",   action: "📡 Socket Emitted",     data: `order:status-updated + order:new sent to user & admins` },
+          { agent: "System",   action: "📦 Warehouse Triggered", data: "Auto-fulfillment dispatched (fire-and-forget)" },
+        ];
+        const orderUserId = order.user?._id?.toString() || order.user?.toString();
+        console.log("\n📍 --- WEBHOOK PAYMENT TRACE ---");
+        webhookTraces.forEach((t, i) => {
+          console.log(`[${i}] ${String(t.agent).padEnd(12)} ➔ ${t.action}`);
+          console.log(`    └─ ${t.data}`);
+        });
+        console.log("--------------------------\n");
+        logAgentRun({
+          userId: orderUserId,
+          sessionId: `payment_webhook_${order._id}`,
+          userMessage: `Razorpay webhook payment.captured — OrderID: ${order._id}, PaymentID: ${paymentId}`,
+          agentResponse: `Payment confirmed. InvoiceID: ${invoiceId}`,
+          agentChain: ["Razorpay", "System"],
+          status: "success",
+          durationMs: 0,
+          traces: webhookTraces,
+        }).catch(() => {});
+        // ────────────────────────────────────────────────────────────────────
 
                 // Real-time update for admin Orders table + customer MyOrders page
                 emitPaymentConfirmed(order);
@@ -258,6 +286,33 @@ export const verifyPayment = async (req, res) => {
         order.razorpaySignature = razorpay_signature;
         order.invoiceId = invoiceId;
         await order.save();
+
+        // ── Payment Trace ────────────────────────────────────────────────────
+        const verifyTraces = [
+          { agent: "Razorpay",  action: "🔐 Signature Verified", data: `HMAC-SHA256 signature matched for order ${razorpay_order_id}` },
+          { agent: "System",    action: "🗄️ Order Updated",      data: `OrderID: ${order._id} → status: paid, paymentStatus: paid` },
+          { agent: "System",    action: "🧾 Invoice Generated",  data: `InvoiceID: ${invoiceId}` },
+          { agent: "System",    action: "📡 Socket Emitted",     data: `order:status-updated + order:new sent to user & admins` },
+          { agent: "System",    action: "📦 Warehouse Triggered", data: "Auto-fulfillment dispatched (fire-and-forget)" },
+        ];
+        const verifyUserId = order.user?._id?.toString() || order.user?.toString();
+        console.log("\n📍 --- VERIFY PAYMENT TRACE ---");
+        verifyTraces.forEach((t, i) => {
+            console.log(`[${i}] ${String(t.agent).padEnd(12)} ➔ ${t.action}`);
+            console.log(`    └─ ${t.data}`);
+        });
+        console.log("--------------------------\n");
+        logAgentRun({
+            userId: verifyUserId,
+            sessionId: `payment_verify_${order._id}`,
+            userMessage: `Client payment verify — OrderID: ${order._id}, PaymentID: ${razorpay_payment_id}`,
+            agentResponse: `Payment confirmed. InvoiceID: ${invoiceId}`,
+            agentChain: ["Razorpay", "System"],
+            status: "success",
+            durationMs: 0,
+            traces: verifyTraces,
+        }).catch(() => {});
+        // ────────────────────────────────────────────────────────────────────
 
         // Real-time update for admin Orders table + customer MyOrders page
         emitPaymentConfirmed(order);

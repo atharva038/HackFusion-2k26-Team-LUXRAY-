@@ -143,7 +143,7 @@ Routes customer queries to the correct pharmacy agent:
 async function chatPharma(messages = []) {
   try {
     const result = await run(parentAgent, messages);
-
+    console.log("this is chatPharma being called")
     ///////////////////////
     //MONITOR PHASE
     ///////////////////////
@@ -161,8 +161,8 @@ async function chatPharma(messages = []) {
       result.state._inputGuardrailResults.forEach((g) => {
         traces.push({
           agent: "Security",
-          action: g.passed ? "🛡️ Guardrail: Pass" : "🚨 Guardrail: Block",
-          data: `Input Check: ${g.guardrailName || 'Pharmacy Filter'}`
+          action: !g.tripwireTriggered ? "🛡️ Guardrail: Pass" : "🚨 Guardrail: Block",
+          data: `Input Check: ${g.guardrail?.name || g.guardrailName || 'Pharmacy Filter'}`
         });
       });
     }
@@ -216,13 +216,31 @@ async function chatPharma(messages = []) {
       result.state._outputGuardrailResults.forEach((g) => {
         traces.push({
           agent: "Security",
-          action: g.passed ? "🛡️ Output: Safe" : "🚨 Output: Risky",
-          data: `Validation: ${g.guardrailName || 'Medical Safety'}`
+          action: !g.tripwireTriggered ? "🛡️ Output: Safe" : "🚨 Output: Risky",
+          data: `Validation: ${g.guardrail?.name || g.guardrailName || 'Medical Safety'}`
         });
       });
     }
 
     const monitorTraces = traces;
+
+    // Prepend user input as first trace node
+    const lastUserMsg = messages[messages.length - 1];
+    let userInputText = "";
+    if (lastUserMsg) {
+      if (typeof lastUserMsg.content === "string") {
+        userInputText = lastUserMsg.content;
+      } else if (Array.isArray(lastUserMsg.content)) {
+        userInputText = lastUserMsg.content.map((c) => c.text || c.content || "").join(" ");
+      }
+      const userMsgMatch = userInputText.match(/User Message:\s*([\s\S]*)$/i);
+      if (userMsgMatch) userInputText = userMsgMatch[1].trim();
+    }
+    monitorTraces.unshift({
+      agent: "User",
+      action: "💬 User Input",
+      data: userInputText || "(empty message)",
+    });
 
     console.log("\n📍 --- EXECUTION TRACE ---");
     monitorTraces.forEach((t, i) => {
@@ -262,4 +280,4 @@ async function chatPharma(messages = []) {
 // );
 
 export { parentAgent };
-export default chatPharma;
+export default chatPharma;  

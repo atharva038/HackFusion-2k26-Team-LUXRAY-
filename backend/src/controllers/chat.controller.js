@@ -42,7 +42,7 @@ export const handleMessage = async (req, res) => {
     }
 
     const agentHistory = redisHistory || history;
-
+    console.log("call from chat.contorller to runChtAgent for calling chatpharma ")
     // Run through the agent service (handles injection guard + audit log)
     const { reply, blocked, durationMs } = await runChatAgent({
       userId,

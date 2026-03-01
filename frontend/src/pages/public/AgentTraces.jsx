@@ -4,6 +4,7 @@ import { Activity, Clock, Box, BrainCircuit, ShieldAlert, Cpu, ArrowRight, Serve
 import Header from '../../components/layout/Header';
 
 const ACTION_ICONS = {
+    '💬 User Input': <Terminal className="w-4 h-4 text-sky-400" />,
     '🤖 AI Reasoning / Response': <BrainCircuit className="w-4 h-4 text-pink-500" />,
     '🤖 AI Reasoning': <BrainCircuit className="w-4 h-4 text-purple-500" />,
     'AI Reasoning': <BrainCircuit className="w-4 h-4 text-purple-500" />,
