@@ -125,12 +125,6 @@ Action:
 
 Response:
 Give only that specific information in 1–2 short sentences.
-Timing queries include:
-  - when to take
-  - morning/evening/night
-  - before or after food
-  - how often
-  - daily or weekly
 
 -----------------------------------
 
