@@ -1,7 +1,7 @@
 import logger from "../utils/logger.js";
 import { runChatAgent } from "../agent/service/chat.agent.service.js";
 import ChatSession from "../models/chatSession.model.js";
-import { translateToEnglish, translateFromEnglish } from "../services/multilingual.service.js";
+// Implied translations natively supported by the agent SDK
 import { getSessionHistory, appendSessionMessages } from "../services/cache.service.js";
 import { streamAgentResponse, prepareAgentMessages } from "../services/streamService.js";
 
@@ -19,44 +19,42 @@ export const handleMessage = async (req, res) => {
 
     let session;
     let sessionId;
+    let history = [];
+    let redisHistory = null;
+
     if (reqSessionId) {
-      session = await ChatSession.findOne({ _id: reqSessionId, user: userId }).select('_id messages').lean();
-      if (!session) return res.status(404).json({ error: "Session not found." });
-      sessionId = session._id.toString();
+      sessionId = reqSessionId;
+      // Fetch DB and Redis perfectly in parallel
+      const [dbSession, cachedHistory] = await Promise.all([
+        ChatSession.findOne({ _id: sessionId, user: userId }).select('_id messages').lean(),
+        getSessionHistory(sessionId)
+      ]);
+      if (!dbSession) return res.status(404).json({ error: "Session not found." });
+      session = dbSession;
+      history = session.messages || [];
+      redisHistory = cachedHistory;
     } else {
       const title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
       const newSession = await ChatSession.create({ user: userId, title, messages: [] });
       session = newSession.toObject();
       sessionId = session._id.toString();
+      history = [];
     }
-    const history = session?.messages || [];
 
-    // ── Session Memory: try Redis first, fall back to MongoDB history ───
-    const redisHistory = await getSessionHistory(sessionId);
     const agentHistory = redisHistory || history;
-
-    // ── Multilingual Pre-Agent Translation ───────────────────────
-    const { translatedText: englishMessage, latencyMs: preTranslateMs } = await translateToEnglish(message, language);
 
     // Run through the agent service (handles injection guard + audit log)
     const { reply, blocked, durationMs } = await runChatAgent({
       userId,
       sessionId,
-      message: englishMessage,
+      message: message.trim(), // Raw user message
       history: agentHistory,
     });
-
-    // ── Multilingual Post-Agent Translation ──────────────────────
-    const { translatedText: translatedReply, latencyMs: postTranslateMs } = await translateFromEnglish(reply, language);
-
-    if (language !== 'en') {
-      logger.info(`[Multilingual Trace] lang=${language} preTranslate=${preTranslateMs}ms postTranslate=${postTranslateMs}ms`);
-    }
 
     // Persist both turns ──────────────────────────────────────────────────
     const newMessages = [
       { role: 'user', content: message, ...(imageUrl ? { imageUrl } : {}) },
-      { role: 'ai', content: translatedReply },
+      { role: 'ai', content: reply },
     ];
 
     // Redis session (fast, temporary)
@@ -68,9 +66,9 @@ export const handleMessage = async (req, res) => {
       { $push: { messages: { $each: newMessages } } }
     );
 
-    logger.info(`[Chat] Agent replied in ${durationMs}ms for user [${userId}]${blocked ? ' [BLOCKED]' : ''}`);
+    logger.info(`[Chat] Agent replied natively in ${durationMs}ms for user [${userId}]${blocked ? ' [BLOCKED]' : ''}`);
 
-    res.json({ text: translatedReply, blocked, sessionId, language });
+    res.json({ text: reply, blocked, sessionId, language });
   } catch (err) {
     logger.error("[Chat] handleMessage error:", err);
     res.status(500).json({ error: "AI agent is temporarily unavailable. Please try again." });
@@ -100,20 +98,29 @@ export const handleStreamMessage = async (req, res) => {
 
     // ── Session Lookup / Creation ────────────────────────────────────────
     let session, sessionId;
+    let history = [];
+    let redisHistory = null;
+
     if (reqSessionId) {
-      session = await ChatSession.findOne({ _id: reqSessionId, user: userId }).select('_id messages').lean();
-      if (!session) return res.status(404).json({ error: "Session not found." });
-      sessionId = session._id.toString();
+      sessionId = reqSessionId;
+      // Fetch DB and Redis perfectly in parallel
+      const [dbSession, cachedHistory] = await Promise.all([
+        ChatSession.findOne({ _id: sessionId, user: userId }).select('_id messages').lean(),
+        getSessionHistory(sessionId)
+      ]);
+      if (!dbSession) return res.status(404).json({ error: "Session not found." });
+      session = dbSession;
+      history = session.messages || [];
+      redisHistory = cachedHistory;
     } else {
       const title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
       const newSession = await ChatSession.create({ user: userId, title, messages: [] });
       session = newSession.toObject();
       sessionId = session._id.toString();
+      history = [];
     }
-    const history = session?.messages || [];
 
     // ── Session Memory: try Redis first, fall back to MongoDB ────────────
-    const redisHistory = await getSessionHistory(sessionId);
     const agentHistory = redisHistory || history;
 
     // ── SSE headers ──────────────────────────────────────────────────────
@@ -124,14 +131,11 @@ export const handleStreamMessage = async (req, res) => {
     res.flushHeaders();
     res.write('event: ping\ndata: {}\n\n');
 
-    // ── Multilingual Pre-Agent Translation (non-streamed) ────────────────
-    const { translatedText: englishMessage } = await translateToEnglish(message.trim(), language);
-
     // ── Injection check + user context injection ─────────────────────────
     const { messages: agentMessages, blocked, blockReply } = await prepareAgentMessages({
       userId,
       sessionId,
-      message: englishMessage,
+      message: message.trim(), // Multilingual direct query
       history: agentHistory,
     });
 
@@ -141,17 +145,16 @@ export const handleStreamMessage = async (req, res) => {
       return;
     }
 
-    // ── Real Agent Streaming ─────────────────────────────────────────────
-    let finalEnglishOutput = '';
+    // ── Real Native Agent Streaming ──────────────────────────────────────
+    let finalOutput = '';
     try {
       for await (const chunk of streamAgentResponse(agentMessages, userId, sessionId)) {
         if (chunk.isCompleted) {
-          finalEnglishOutput = chunk.value;
-        } else if (language === 'en') {
-          // English: forward real-time chunks directly to the frontend
+          finalOutput = chunk.value;
+        } else {
+          // Stream real-time chunks natively directly to the frontend
           res.write(`data: ${JSON.stringify({ isCompleted: false, value: chunk.value })}\n\n`);
         }
-        // Non-English: silently buffer; finalOutput set by the isCompleted chunk above
       }
     } catch (streamErr) {
       // ── Fallback: synchronous agent call ─────────────────────────────
@@ -159,29 +162,17 @@ export const handleStreamMessage = async (req, res) => {
       const { reply } = await runChatAgent({
         userId,
         sessionId,
-        message: englishMessage,
+        message: message.trim(),
         history: agentHistory,
       });
-      finalEnglishOutput = reply;
-    }
-
-    // ── Multilingual Post-Agent Translation (non-streamed) ───────────────
-    const { translatedText: finalReply, latencyMs: postTranslateMs } = await translateFromEnglish(finalEnglishOutput, language);
-
-    if (language !== 'en') {
-      logger.info(`[Chat-Stream] Post-translate ${language} in ${postTranslateMs}ms`);
-      // Stream translated words progressively (simulated reveal for non-English)
-      const words = finalReply.split(' ');
-      for (const word of words) {
-        res.write(`data: ${JSON.stringify({ isCompleted: false, value: word + ' ' })}\n\n`);
-        await new Promise(r => setTimeout(r, 15));
-      }
+      finalOutput = reply;
+      res.write(`data: ${JSON.stringify({ isCompleted: false, value: finalOutput })}\n\n`);
     }
 
     // ── Persist to Redis + MongoDB ONLY after full completion ────────────
     const newMessages = [
       { role: 'user', content: message, ...(imageUrl ? { imageUrl } : {}) },
-      { role: 'ai', content: finalReply },
+      { role: 'ai', content: finalOutput },
     ];
     appendSessionMessages(sessionId, newMessages);
     await ChatSession.findByIdAndUpdate(
@@ -190,7 +181,7 @@ export const handleStreamMessage = async (req, res) => {
     );
 
     // ── Final completion signal ──────────────────────────────────────────
-    res.write(`data: ${JSON.stringify({ isCompleted: true, value: finalReply, blocked: false, sessionId, language })}\n\n`);
+    res.write(`data: ${JSON.stringify({ isCompleted: true, value: finalOutput, blocked: false, sessionId, language })}\n\n`);
     res.end();
   } catch (err) {
     logger.error("[Chat-Stream] SSE stream error:", err);

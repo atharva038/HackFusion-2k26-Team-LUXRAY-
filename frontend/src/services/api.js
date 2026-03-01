@@ -2,10 +2,10 @@ import axios from 'axios';
 
 const BASE = import.meta.env.VITE_API_URL || '/api';
 
-// Create axios instance with defaults
 const api = axios.create({
   baseURL: BASE,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 45000, // 45 second timeout so UI doesn't hang indefinitely
 });
 
 // Attach JWT token to every request
@@ -21,8 +21,18 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res.data,
   (err) => {
+    let message = 'Request failed';
+
+    if (err.code === 'ECONNABORTED') {
+      message = 'The server took too long to respond. The system might be busy.';
+    } else if (err.message === 'Network Error') {
+      message = 'Could not connect to the server. Please check your connection.';
+    } else {
+      message = err.response?.data?.error || err.message || 'Request failed';
+    }
+
     const status = err.response?.status;
-    const message = err.response?.data?.error || err.message || 'Request failed';
+
     // Surface rate limit errors with clear context
     if (status === 429) {
       return Promise.reject(new Error('Too many requests. Please wait a moment before trying again.'));
@@ -98,37 +108,70 @@ export const deleteChatSession = (sessionId) => api.delete(`/chat/sessions/${ses
  * @param {{ onChunk: (text: string) => void, onDone: (blocked: boolean, sessionId?: string) => void, onError: (msg: string) => void }} handlers
  * @returns {EventSource} — call .close() to manually stop
  */
-export const streamChatMessage = (message, sessionId, { onChunk, onDone, onError }, language = 'en') => {
+export const streamChatMessage = async (message, sessionId, { onChunk, onDone, onError }, language = 'en') => {
   const token = localStorage.getItem('pharmacy_token');
-  const urlParams = new URLSearchParams({ message, token: token || '', language });
-  if (sessionId) urlParams.append('sessionId', sessionId);
+  try {
+    const res = await fetch(`${BASE}/chat/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ message, sessionId, language })
+    });
 
-  const url = `${BASE}/chat/stream?${urlParams.toString()}`;
-  const es = new EventSource(url);
-
-  es.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.error) {
-        onError?.(data.error);
-        es.close();
-      } else if (data.done) {
-        onDone?.(data.blocked || false, data.sessionId);
-        es.close();
-      } else if (data.chunk) {
-        onChunk?.(data.chunk);
+    if (!res.ok) {
+      if (res.status === 401) {
+        onError?.('Session expired or Invalid Token. Please log in again.');
+        return;
       }
-    } catch (e) {
-      // Ignore malformed events
+      onError?.(`Error: ${res.statusText}`);
+      return;
     }
-  };
 
-  es.onerror = () => {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep partial line
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.substring(6).trim();
+          if (!dataStr) continue;
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.error) {
+              onError?.(data.error);
+              return;
+            } else if (data.isCompleted) {
+              onDone?.({
+                blocked: data.blocked || false,
+                sessionId: data.sessionId,
+                finalText: data.value,
+                language: data.language
+              });
+              return;
+            } else if (data.value) {
+              onChunk?.(data.value);
+              // Force React to paint this frame before parsing the next chunk if OS batched packets
+              await new Promise(r => setTimeout(r, 15));
+            }
+          } catch (e) {
+            // Ignore incomplete chunks
+          }
+        }
+      }
+    }
+  } catch (err) {
     onError?.('Connection error. Please try again.');
-    es.close();
-  };
-
-  return es;
+  }
 };
 
 // ─── TTS (OpenAI Voice) ──────────────────────────────────────

@@ -88,6 +88,16 @@ const useAppStore = create((set) => ({
   setMessages: (msgs) => set({ messages: msgs, aiStatus: AI_STATUS.READY, isTyping: false }),
   isTyping: false,
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+  updateStreamingMessage: (msgId, chunk) => set((state) => ({
+    messages: state.messages.map(msg =>
+      msg.id === msgId ? { ...msg, text: msg.text + chunk } : msg
+    )
+  })),
+  finalizeStreamingMessage: (msgId, finalData = {}) => set((state) => ({
+    messages: state.messages.map(msg =>
+      msg.id === msgId ? { ...msg, isStreaming: false, ...finalData } : msg
+    )
+  })),
   setTyping: (isTyping) => set({ isTyping }),
   clearMessages: () => set((state) => {
     const lang = state.selectedLanguage || 'en';
