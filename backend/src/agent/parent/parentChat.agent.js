@@ -255,4 +255,4 @@ async function chatPharma(messages = []) {
 // );
 
 export { parentAgent };
-export default chatPharma;
+export default chatPharma;  
