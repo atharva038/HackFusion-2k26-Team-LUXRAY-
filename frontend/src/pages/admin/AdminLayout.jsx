@@ -18,7 +18,8 @@ import {
     Menu,
     X,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    TerminalSquare
 } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -121,6 +122,7 @@ const AdminLayout = () => {
                     <NavItem to="/admin/inventory" icon={Boxes} label="Inventory" isCollapsed={isCollapsed} />
                     <NavItem to="/admin/alerts" icon={BellRing} label="Refill Alerts" isCollapsed={isCollapsed} />
                     <NavItem to="/admin/logs" icon={History} label="Inventory Logs" isCollapsed={isCollapsed} />
+                    <NavItem to="/admin/traces" icon={TerminalSquare} label="Agent Traces" isCollapsed={isCollapsed} />
                     <NavItem to="/admin/agent" icon={Bot} label="AI Assistant" isCollapsed={isCollapsed} />
                 </nav>
 

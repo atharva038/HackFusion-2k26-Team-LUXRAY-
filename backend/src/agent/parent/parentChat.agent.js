@@ -177,30 +177,37 @@ async function chatPharma(messages = []) {
 
       if (item.rawItem?.type === 'function_call' && !item.rawItem.name.includes('transfer_to')) {
         actionName = `⚙️ Tool: ${item.rawItem.name}`;
-        detailData = item.rawItem.arguments || "Initiating...";
+        detailData = {
+           input: item.rawItem.arguments || "Initiating..."
+        };
       }
-      else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output') {
+      else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output' || item.rawItem?.role === 'tool') {
         const isError = item.rawItem.status === 'error' || !!item.rawItem.error;
-        actionName = isError ? `❌ Fail: ${item.rawItem.name}` : `📦 Result: ${item.rawItem.name}`;
-        detailData = item.rawItem.error || item.rawItem.output?.text || item.rawItem.output || "No data returned";
+        actionName = isError ? `❌ Fail: ${item.rawItem.name || 'Tool'}` : `📦 Result: ${item.rawItem.name || 'Tool'}`;
+        detailData = {
+           output: item.rawItem.error || item.rawItem.output?.text || item.rawItem.output || item.rawItem.content || "No data returned"
+        };
       }
       else if (item.rawItem?.name?.startsWith('transfer_to_')) {
         const target = item.rawItem.name.replace('transfer_to_', '');
         actionName = "🤝 Handoff";
-        detailData = `Routing context to: ${target}`;
+        detailData = { target, message: `Routing context to: ${target}` };
       }
-      else if (itemType === 'message_output_item' || item.rawItem?.type === 'message') {
-        actionName = "💬 Response";
-        const messageText = item.rawItem?.content?.[0]?.text || item.content;
-        detailData = typeof messageText === 'object' ? JSON.stringify(messageText) : messageText;
+      else if (itemType === 'message_output_item' || item.rawItem?.type === 'message' || item.rawItem?.role === 'assistant') {
+        actionName = item.rawItem?.role === 'assistant' && !item.rawItem?.tool_calls ? "🤖 AI Reasoning / Response" : "💬 Response";
+        const messageText = item.rawItem?.content?.[0]?.text || item.content || item.rawItem?.content;
+        detailData = {
+            text: typeof messageText === 'object' ? JSON.stringify(messageText) : messageText,
+            parsed_reasoning: true 
+        };
       }
       else if (itemType === 'handoff_output_item') {
         actionName = "🔄 System";
-        detailData = `Agent ${item.targetAgent?.name || 'Specialist'} activated.`;
+        detailData = { message: `Agent ${item.targetAgent?.name || 'Specialist'} activated.` };
       }
 
       return { agent: actor, action: actionName, data: detailData };
-    }).filter(t => t.action !== "AI Reasoning");
+    }); // removed .filter(t => t.action !== "AI Reasoning")
 
     traces.push(...generatedTraces);
 

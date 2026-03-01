@@ -76,6 +76,47 @@ const MarkdownText = ({ text }) => {
                     u: ({ ...props }) => <u className="underline decoration-primary/60 underline-offset-2 font-medium" {...props} />,
                     ins: ({ ...props }) => <ins className="underline decoration-primary/60 underline-offset-2 font-medium no-underline" {...props} />,
                     a: ({ href, children, ...props }) => {
+                        // AI Agent exports
+                        if (href === '#export-medicines' || href === '#export-orders') {
+                            const isMedicines = href === '#export-medicines';
+                            const endpoint = isMedicines 
+                                ? 'http://localhost:5000/api/admin/medicines/export'
+                                : 'http://localhost:5000/api/admin/orders/export';
+                            const filename = isMedicines ? 'medicines_inventory.xlsx' : 'orders.xlsx';
+
+                            return (
+                                <button
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        try {
+                                            const response = await fetch(endpoint, {
+                                                headers: {
+                                                    'Authorization': `Bearer ${localStorage.getItem('pharmacy_token')}`
+                                                }
+                                            });
+                                            if (!response.ok) throw new Error('Export failed');
+                                            
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = filename;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            a.remove();
+                                            window.URL.revokeObjectURL(url);
+                                        } catch (error) {
+                                            console.error('Export error:', error);
+                                            alert('Failed to export. Please try again.');
+                                        }
+                                    }}
+                                    className="inline-flex items-center justify-center px-4 py-1.5 mt-2 bg-green-600 text-white text-[14px] font-medium rounded-xl shadow-soft hover:bg-green-500 active:scale-95 transition-all no-underline"
+                                >
+                                    {children} <span className="ml-1.5 opacity-80 text-[16px] leading-none">↓</span>
+                                </button>
+                            );
+                        }
+
                         // If it's a specific routing link to orders or prescriptions, use the Slide-Over to maintain chat context
                         if (href === '/my-orders' || href === '/my-prescriptions') {
                             const slideOverType = href.replace('/', '');
