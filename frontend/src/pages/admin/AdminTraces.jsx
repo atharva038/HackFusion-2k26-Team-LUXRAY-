@@ -341,7 +341,7 @@ const TraceDetailView = ({ trace, onBack }) => {
                                         <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Agent Decision & Reason</span>
                                     </div>
                                     <div className="p-4 bg-bg/50 font-sans text-sm text-text whitespace-pre-wrap leading-relaxed">
-                                        {activeStep.data?.text || activeStep.data || "No explicit reasoning logged."}
+                                        {activeStep.data?.text || (typeof activeStep.data === 'string' ? activeStep.data : JSON.stringify(activeStep.data, null, 2)) || "No explicit reasoning logged."}
                                     </div>
                                 </div>
                             )}
@@ -414,7 +414,7 @@ const CheckCircle2Icon = ({ status }) => (
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         className={status === 'success' ? 'text-emerald-500' : 'text-amber-500'}
     >
-        <path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+        <path d="m9 12 2 2 4-4"></path>
     </svg>
 );

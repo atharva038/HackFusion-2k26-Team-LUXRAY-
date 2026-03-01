@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Clock, Box, BrainCircuit, ShieldAlert, Cpu, ArrowRight, Server, Repeat, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Activity, Clock, Box, BrainCircuit, ShieldAlert, Cpu, ArrowRight, Server, Repeat, Terminal, Search, Code, KeyRound, Workflow, Play, FileJson } from 'lucide-react';
 import Header from '../../components/layout/Header';
 
 const ACTION_ICONS = {
+    '🤖 AI Reasoning / Response': <BrainCircuit className="w-4 h-4 text-pink-500" />,
+    '🤖 AI Reasoning': <BrainCircuit className="w-4 h-4 text-purple-500" />,
     'AI Reasoning': <BrainCircuit className="w-4 h-4 text-purple-500" />,
     '⚙️ Tool: order_medicine': <Box className="w-4 h-4 text-amber-500" />,
     '⚙️ Tool: create_payment': <Activity className="w-4 h-4 text-green-500" />,
@@ -24,6 +26,9 @@ export default function AgentTraces() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    
+    // Master-Detail State
+    const [selectedTraceId, setSelectedTraceId] = useState(null);
 
     const fetchTraces = async () => {
         setIsRefreshing(true);
@@ -34,27 +39,36 @@ export default function AgentTraces() {
             if (!res.ok) throw new Error('Failed to load traces');
             const data = await res.json();
             setLogs(data.traces || []);
+            setError(null);
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
-            setTimeout(() => setIsRefreshing(false), 500); // UI feel
+            setTimeout(() => setIsRefreshing(false), 500);
         }
     };
 
     useEffect(() => {
         fetchTraces();
-        // Auto-refresh every 10 seconds for a "live monitor" feel
-        const interval = setInterval(fetchTraces, 10000);
+        const interval = setInterval(() => {
+            if (!selectedTraceId) {
+                fetchTraces(); // Auto-refresh only if not looking at a detail view
+            }
+        }, 10000);
         return () => clearInterval(interval);
-    }, []);
+    }, [selectedTraceId]);
+
+    const selectedTrace = logs.find(l => l._id === selectedTraceId);
 
     if (loading && !logs.length) {
         return (
-            <div className="min-h-screen bg-bg text-text p-8 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <Activity className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-text-muted font-medium">Connecting to system logs...</p>
+            <div className="flex flex-col h-screen w-full bg-bg font-sans overflow-hidden">
+                <Header />
+                <div className="flex-1 flex items-center justify-center p-8">
+                    <div className="flex flex-col items-center gap-4">
+                        <Activity className="w-8 h-8 text-primary animate-spin" />
+                        <p className="text-text-muted font-medium">Connecting to trace server...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -62,194 +76,355 @@ export default function AgentTraces() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-bg text-text p-8 flex flex-col items-center justify-center">
-                <ShieldAlert className="w-12 h-12 text-red-500 mb-4" />
-                <h2 className="text-xl font-bold mb-2">Monitor Connection Lost</h2>
-                <p className="text-text-muted">{error}</p>
-                <button
-                    onClick={fetchTraces}
-                    className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium"
-                >
-                    Retry Connection
-                </button>
+            <div className="flex flex-col h-screen w-full bg-bg font-sans overflow-hidden">
+                <Header />
+                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card font-sans">
+                    <ShieldAlert className="w-12 h-12 text-red-500 mb-4" />
+                    <h2 className="text-xl font-bold mb-2 text-text">Trace Server Unreachable</h2>
+                    <p className="text-text-muted">{error}</p>
+                    <button onClick={fetchTraces} className="mt-6 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors font-medium shadow-sm">
+                        Retry Connection
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Detail view active
+    if (selectedTrace) {
+        return (
+            <div className="flex flex-col h-screen w-full bg-bg font-sans overflow-hidden">
+                <Header />
+                <div className="flex-1 flex overflow-hidden">
+                     <TraceDetailView trace={selectedTrace} onBack={() => setSelectedTraceId(null)} />
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-bg text-text font-sans selection:bg-primary/30">
+        <div className="flex flex-col h-screen w-full bg-bg font-sans overflow-hidden">
             <Header />
-            <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto flex-1 z-10">
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 mb-8 border-b border-black/5 dark:border-white/5">
-
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
-                                <Terminal className="w-6 h-6 text-primary" />
-                            </div>
-                            <h1 className="text-3xl font-bold tracking-tight text-text">
-                                Agent Traces
-                            </h1>
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Master View Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-black/5 dark:border-white/5 bg-card/50 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                            <Workflow className="w-4 h-4 text-primary" />
                         </div>
-                        <p className="text-text-muted text-base max-w-2xl pl-1">
-                            Real-time observability into the conversational reasoning, tool execution, and orchestration.
-                        </p>
+                        <div>
+                            <h1 className="text-lg font-bold text-text leading-tight">Observable Traces</h1>
+                            <p className="text-xs text-text-muted font-medium">Langfuse-style run monitoring</p>
+                        </div>
                     </div>
 
-                    <button
-                        onClick={fetchTraces}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-2 px-4 py-2 bg-card border border-black/10 dark:border-white/10 hover:border-primary/30 hover:bg-primary/5 rounded-xl text-sm font-medium transition-all duration-200 w-fit disabled:opacity-50 text-text shadow-sm"
-                    >
-                        <Repeat className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        {isRefreshing ? 'Syncing...' : 'Refresh'}
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                        <div className="relative">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                            <input 
+                                type="text" 
+                                placeholder="Search traces (ID, user, query)..." 
+                                className="bg-bg border border-black/5 dark:border-white/5 rounded-lg pl-9 pr-4 py-1.5 text-sm w-full sm:w-64 focus:outline-none focus:border-primary/50 text-text transition-colors"
+                            />
+                        </div>
+                        <button
+                            onClick={fetchTraces}
+                            disabled={isRefreshing}
+                            className="flex items-center justify-center w-8 h-8 bg-card border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-text-muted transition-colors"
+                        >
+                            <Repeat className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Logs Feed */}
-                <div className="space-y-6">
-                    <AnimatePresence>
-                        {logs.length === 0 ? (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="text-center py-16 text-text-muted bg-card border border-black/5 dark:border-white/5 rounded-2xl shadow-soft"
-                            >
-                                <Terminal className="w-10 h-10 mx-auto mb-3 text-primary/40" />
-                                <p className="text-base font-medium text-text">No system traces found.</p>
-                                <p className="text-sm">Interact with the assistant to generate logs.</p>
-                            </motion.div>
-                        ) : (
-                            logs.map((log) => (
-                                <TraceCard key={log._id} log={log} />
-                            ))
-                        )}
-                    </AnimatePresence>
+                {/* Traces Table / List */}
+                <div className="flex-1 overflow-auto bg-card">
+                    {logs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                            <Terminal className="w-12 h-12 text-black/10 dark:text-white/10 mb-4" />
+                            <h2 className="text-base font-semibold text-text mb-1">No Traces Yet</h2>
+                            <p className="text-sm text-text-muted">Once agents execute tasks, their execution graphs will appear here.</p>
+                        </div>
+                    ) : (
+                        <div className="min-w-full inline-block align-middle">
+                            <div className="overflow-hidden">
+                                <table className="min-w-full text-left text-sm whitespace-nowrap">
+                                    <thead className="bg-bg/50 sticky top-0 z-10 text-xs uppercase tracking-wider text-text-muted font-semibold border-y border-black/5 dark:border-white/5">
+                                        <tr>
+                                            <th className="px-6 py-3 font-medium">Status</th>
+                                            <th className="px-6 py-3 font-medium">Time (ms)</th>
+                                            <th className="px-6 py-3 font-medium">Input Query</th>
+                                            <th className="px-6 py-3 font-medium">User</th>
+                                            <th className="px-6 py-3 font-medium">Created At</th>
+                                            <th className="px-6 py-3 font-medium">Steps</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                                        {logs.map((log) => {
+                                            const isSuccess = log.status === 'success';
+                                            const isBlocked = log.status === 'blocked';
+                                            
+                                            return (
+                                                <tr 
+                                                    key={log._id} 
+                                                    onClick={() => setSelectedTraceId(log._id)}
+                                                    className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] cursor-pointer transition-colors group"
+                                                >
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-2 h-2 rounded-full ${isSuccess ? 'bg-emerald-500' : isBlocked ? 'bg-amber-500' : 'bg-red-500'}`} />
+                                                            <span className={`font-medium ${isSuccess ? 'text-emerald-700 dark:text-emerald-400' : isBlocked ? 'text-amber-700 dark:text-amber-400' : 'text-red-700 dark:text-red-400'}`}>
+                                                                {log.status.toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="font-mono text-text bg-bg px-2 py-0.5 rounded border border-black/5 dark:border-white/5">
+                                                            {log.durationMs}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 max-w-sm truncate text-text font-medium group-hover:text-primary transition-colors">
+                                                        {log.userMessage}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-text-muted text-xs font-mono">
+                                                        {log.userName || log.userId}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-text-muted">
+                                                        {new Date(log.createdAt).toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-semibold">
+                                                            {log.traces?.length || 0} nodes
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-const TraceCard = ({ log }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+const TraceDetailView = ({ trace, onBack }) => {
+    // Left pane active step
+    const [activeStepIdx, setActiveStepIdx] = useState(0);
 
-    // Determine overall status color
-    const statusColor =
-        log.status === 'success' ? 'bg-green-500' :
-            log.status === 'blocked' ? 'bg-amber-500' : 'bg-red-500';
+    const activeStep = trace.traces?.[activeStepIdx] || null;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="group rounded-xl border border-black/5 dark:border-white/5 bg-card overflow-hidden shadow-soft transition-all duration-300 hover:shadow-md"
-        >
-            {/* Run Header (Clickable to toggle) */}
-            <div
-                className={`px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-colors duration-200 ${isExpanded ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'hover:bg-black/[0.01] dark:hover:bg-white/[0.01]'} border-b border-black/5 dark:border-white/5`}
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
-                <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
-                        <h3 className="font-semibold text-text text-sm uppercase tracking-wider">
-                            {log.sessionId === 'prescription_upload' ? 'Prescription OCR' : 'Chat Interaction'}
-                        </h3>
-                    </div>
-                    <p className="text-[15px] text-text font-medium truncate w-full">
-                        "{log.userMessage}"
-                    </p>
+        <div className="flex flex-col h-full w-full bg-bg font-sans overflow-hidden">
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/5 bg-card shrink-0">
+                <div className="flex items-center gap-3">
+                    <button onClick={onBack} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-text-muted transition-colors">
+                        <ArrowRight className="w-5 h-5 rotate-180" />
+                    </button>
+                    <div className="h-5 w-px bg-black/10 dark:bg-white/10 mx-1" />
+                    <span className="font-mono text-xs text-text-muted hidden sm:inline-block">Run ID: {trace._id}</span>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-text-muted mt-1 sm:mt-0">
-                    <span className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-md border border-black/5 dark:border-white/5">
-                        <Activity className="w-3.5 h-3.5" />
-                        {log.durationMs}ms
-                    </span>
-                    <span className="flex items-center gap-1.5 bg-bg px-2.5 py-1 rounded-md border border-black/5 dark:border-white/5">
-                        <Clock className="w-3.5 h-3.5" />
-                        {new Date(log.createdAt).toLocaleTimeString()}
-                    </span>
-                    <div className="ml-1 text-text-muted">
-                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                    </div>
+                <div className="flex items-center gap-4 text-xs font-mono text-text-muted bg-bg/50 px-3 py-1.5 rounded-md border border-black/5 dark:border-white/5">
+                    <span className="flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> {trace.durationMs}ms</span>
+                    <div className="h-3 w-px bg-black/10 dark:bg-white/10 hidden sm:block" />
+                    <span className="hidden sm:flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {new Date(trace.createdAt).toLocaleString()}</span>
                 </div>
             </div>
 
-            {/* Trace Steps / Timeline (Animated Dropdown) */}
-            <AnimatePresence initial={false}>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden bg-bg"
-                    >
-                        <div className="p-5 md:p-6 text-[13px]">
-                            <div className="relative pl-5 space-y-6 before:absolute before:inset-y-2 before:left-[9px] before:w-[2px] before:bg-black/10 dark:before:bg-white/10 rounded">
-                                {log.traces.map((trace, idx) => {
-                                    const icon = ACTION_ICONS[trace.action] || ACTION_ICONS[trace.action.replace(/:.*/, ':')] || ACTION_ICONS['default'];
+            {/* Split View */}
+            <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
+                {/* LEFT: Waterfall / Step Tree */}
+                <div className="w-full md:w-1/3 md:min-w-[300px] border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 flex flex-col bg-card/30 max-h-[40vh] md:max-h-full h-full">
+                    <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 shrink-0 bg-card">
+                        <h2 className="text-xs font-semibold text-text uppercase tracking-wider">Execution Graph</h2>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                        <div className="relative pl-6 space-y-4 before:absolute before:inset-y-3 before:left-[11px] before:w-[2px] before:bg-black/5 dark:before:bg-white/5 rounded">
+                            
+                            {/* Input Node */}
+                            <div className="relative">
+                                <div className="absolute -left-[30px] w-[6px] h-[6px] rounded-full bg-black/20 dark:bg-white/20 mt-[8px] ring-4 ring-bg" />
+                                <div className="bg-bg border border-black/5 dark:border-white/5 rounded-lg p-3 w-full shadow-sm text-sm">
+                                    <div className="font-semibold text-text flex items-center gap-2 mb-1">
+                                        <Play className="w-3.5 h-3.5 text-primary" /> Input
+                                    </div>
+                                    <p className="text-text-muted text-xs truncate">"{trace.userMessage}"</p>
+                                </div>
+                            </div>
 
-                                    return (
-                                        <div key={idx} className="relative">
-                                            {/* Timeline Dot */}
-                                            <div className="absolute -left-[29px] mt-[2px] bg-card p-1 rounded-full border border-black/5 dark:border-white/5 z-10 ring-4 ring-bg">
-                                                {icon}
+                            {/* Trace Steps */}
+                            {trace.traces && trace.traces.map((step, idx) => {
+                                const isSelected = idx === activeStepIdx;
+                                const actionType = step.action || 'Unknown';
+                                const isGuardrail = actionType.includes('Guardrail');
+                                const isTool = actionType.includes('Tool');
+                                const isResult = actionType.includes('Result');
+                                const hasError = actionType.includes('Fail') || actionType.includes('Block');
+                                
+                                const icon = ACTION_ICONS[actionType] || 
+                                    Object.entries(ACTION_ICONS).find(([key, _]) => actionType.includes(key))?.[1] || 
+                                    <Box className="w-3.5 h-3.5" />;
+
+                                return (
+                                    <div 
+                                        key={idx} 
+                                        className="relative group cursor-pointer"
+                                        onClick={() => setActiveStepIdx(idx)}
+                                    >
+                                        <div className={`absolute -left-[35px] mt-[4px] p-1 rounded bg-card border ${isSelected ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'border-black/10 dark:border-white/10 ring-4 ring-bg'} z-10 transition-all`}>
+                                            {icon}
+                                        </div>
+
+                                        <div className={`rounded-lg p-3 w-full transition-all border ${isSelected ? 'border-primary/50 bg-primary/[0.02] shadow-sm' : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5'}`}>
+                                            <div className="flex items-center justify-between gap-2 mb-1">
+                                                <span className={`text-[13px] font-semibold truncate ${isSelected ? 'text-primary' : 'text-text'}`}>
+                                                    {isTool && !isResult ? 'Call: ' : ''}
+                                                    {actionType.replace('⚙️ Tool: ', '').replace('📦 Result: ', '').replace('🛡️ ', '').replace('🚨 ', '')}
+                                                </span>
+                                                {hasError && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />}
                                             </div>
-
-                                            <div className="space-y-2 w-full min-w-0">
-                                                <div className="flex flex-wrap items-center gap-2 text-[13px]">
-                                                    <span className="font-semibold text-text">{trace.agent}</span>
-                                                    <span className="text-text-muted">→</span>
-                                                    <span className="font-medium text-text-muted">
-                                                        {trace.action}
-                                                    </span>
-                                                </div>
-
-                                                <div className="bg-card rounded-lg p-3.5 text-text-muted border border-black/5 dark:border-white/5 whitespace-pre-wrap break-words max-h-64 overflow-y-auto w-full custom-scrollbar leading-relaxed font-mono text-[12px]">
-                                                    {formatData(trace.data)}
-                                                </div>
+                                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-muted font-mono uppercase">
+                                                <span>{step.agent}</span>
+                                                <span>•</span>
+                                                <span className={isGuardrail ? 'text-amber-500' : isTool ? 'text-blue-500' : 'text-purple-500'}>
+                                                    {isGuardrail ? 'EVAL' : isTool ? (isResult ? 'OUTPUT' : 'EXECUTE') : 'GENERATION'}
+                                                </span>
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Output Node */}
+                            {trace.agentResponse && (
+                                <div className="relative">
+                                    <div className="absolute -left-[30px] w-[6px] h-[6px] rounded-full bg-black/20 dark:bg-white/20 mt-[8px] ring-4 ring-bg" />
+                                    <div className="bg-bg border border-black/5 dark:border-white/5 rounded-lg p-3 w-full shadow-sm text-sm">
+                                        <div className="font-semibold text-text flex items-center gap-2 mb-1">
+                                            <CheckCircle2Icon status={trace.status} /> Output
+                                        </div>
+                                        <p className="text-text-muted text-xs truncate">{trace.agentResponse}</p>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Final Answer Footer */}
-            {log.agentResponse && log.sessionId !== 'prescription_upload' && (
-                <div className="px-5 py-4 border-t border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
-                    <h4 className="text-[12px] font-semibold tracking-wide mb-1.5 flex items-center gap-1.5 text-text">
-                        <CheckCircle2Icon status={log.status} /> Final Response
-                    </h4>
-                    <p className="text-[14px] text-text-muted leading-relaxed">
-                        {log.agentResponse}
-                    </p>
+                    </div>
                 </div>
-            )}
-        </motion.div>
-    );
-};
 
-// Helper to format unstructured trace data beautifully
-const formatData = (data) => {
+                {/* RIGHT: Inspector View */}
+                <div className="w-full md:flex-1 flex flex-col bg-bg h-full p-4 md:p-0 overflow-y-auto">
+                    {/* Inspector Header */}
+                    <div className="px-6 py-4 border-b border-black/5 dark:border-white/5 bg-card w-full shrink-0 flex items-center justify-between hidden md:flex">
+                        <div className="flex items-center gap-3">
+                            <FileJson className="w-5 h-5 text-text-muted" />
+                            <h2 className="text-base font-semibold text-text">Inspector</h2>
+                        </div>
+                        <div className="text-xs font-mono bg-bg px-2 py-1 rounded text-text-muted border border-black/5 dark:border-white/5">
+                            Step {activeStepIdx + 1} of {trace.traces?.length || 0}
+                        </div>
+                    </div>
+
+                    {/* Active Step Details */}
+                    {activeStep ? (
+                        <div className="flex-1 overflow-auto md:p-6 space-y-6 custom-scrollbar">
+                            
+                            {/* Metadata Row */}
+                            <div className="flex flex-wrap gap-4">
+                                <div className="bg-card px-4 py-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm min-w-[150px] flex-1">
+                                    <span className="text-[11px] text-text-muted uppercase tracking-wider font-semibold block mb-1">Agent / Parent</span>
+                                    <span className="text-sm font-semibold text-text">{activeStep.agent}</span>
+                                </div>
+                                <div className="bg-card px-4 py-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm min-w-[150px] flex-1">
+                                    <span className="text-[11px] text-text-muted uppercase tracking-wider font-semibold block mb-1">Action Type</span>
+                                    <span className="text-sm font-semibold text-text flex items-center gap-2">
+                                        {activeStep.action}
+                                    </span>
+                                </div>
+                                <div className="bg-card px-4 py-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm min-w-[150px] flex-1">
+                                    <span className="text-[11px] text-text-muted uppercase tracking-wider font-semibold block mb-1">Step Latency</span>
+                                    <span className="text-sm font-semibold text-text flex items-center gap-2">
+                                        {trace.durationMs ? `~${Math.round(trace.durationMs / (trace.traces?.length || 1))}ms (Est)` : 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Reasoning Highlight View */}
+                            {activeStep.action?.includes('Reasoning') && (
+                                <div className="flex flex-col bg-purple-500/5 rounded-xl border border-purple-500/20 shadow-sm overflow-hidden mb-4">
+                                    <div className="px-4 py-2 border-b border-purple-500/20 bg-purple-500/10 flex items-center gap-2">
+                                        <BrainCircuit className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                        <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Agent Decision & Reason</span>
+                                    </div>
+                                    <div className="p-4 bg-bg/50 font-sans text-sm text-text whitespace-pre-wrap leading-relaxed">
+                                        {activeStep.data?.text || (typeof activeStep.data === 'string' ? activeStep.data : JSON.stringify(activeStep.data, null, 2)) || "No explicit reasoning logged."}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Payload Data View */}
+                            {(!activeStep.action?.includes('Reasoning')) && (
+                                <div className="flex flex-col bg-card rounded-xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+                                    <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Code className="w-4 h-4 text-text-muted" />
+                                            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                                                {activeStep.action?.includes('Tool') ? 'Input Arguments' : activeStep.action?.includes('Result') ? 'Output Response' : 'Payload'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="p-4 bg-bg font-mono text-sm text-text whitespace-pre-wrap overflow-x-auto leading-relaxed custom-scrollbar max-h-[500px] overflow-y-auto">
+                                        {formatDataLong(activeStep.data)}
+                                    </div>
+                                </div>
+                            )}
+                            
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center text-text-muted">
+                            Select a step in the graph to inspect its payload.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const formatDataLong = (data) => {
+    if (!data) return "No payload data available.";
+    
+    // If it's explicitly parsed reasoning or text block
+    if (data.parsed_reasoning || data.text) {
+        return data.text || (typeof data === 'string' ? data : JSON.stringify(data, null, 4));
+    }
+    
+    // If there is an explicit input block (from tool calls)
+    if (data.input) {
+         try {
+            const parsed = typeof data.input === 'string' ? JSON.parse(data.input) : data.input;
+            return JSON.stringify({ input: parsed }, null, 4);
+        } catch {
+            return JSON.stringify({ input: data.input }, null, 4);
+        }
+    }
+    
+    // Try to parse stringified JSON first
     if (typeof data === 'string') {
         try {
             const parsed = JSON.parse(data);
-            return JSON.stringify(parsed, null, 2);
+            return JSON.stringify(parsed, null, 4);
         } catch {
             return data;
         }
     }
-    return JSON.stringify(data, null, 2);
+    return JSON.stringify(data, null, 4);
 };
 
 const CheckCircle2Icon = ({ status }) => (
@@ -258,9 +433,9 @@ const CheckCircle2Icon = ({ status }) => (
         width="14" height="14"
         viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        className={status === 'success' ? 'text-green-500' : 'text-amber-500'}
+        className={status === 'success' ? 'text-emerald-500' : 'text-amber-500'}
     >
-        <path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+        <path d="m9 12 2 2 4-4"></path>
     </svg>
 );
