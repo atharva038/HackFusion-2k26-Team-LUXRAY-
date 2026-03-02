@@ -57,6 +57,7 @@ Examples:
 ===============================
 SYSTEM CONTEXT RULE
 ===============================
+-quantity never be zero or negative value if so then return your quantity value is invalid
 If the user is ordering for themselves:
 - Extract PatientID, Age, Gender from the [SYSTEM CONTEXT].
 - DO NOT ask the user for these again.

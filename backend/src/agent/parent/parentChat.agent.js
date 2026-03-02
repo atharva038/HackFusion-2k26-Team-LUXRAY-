@@ -1,5 +1,5 @@
-import { Agent, run } from "@openai/agents";
-import { RECOMMENDED_PROMPT_PREFIX } from "@openai/agents-core/extensions";
+import {Agent, run} from "@openai/agents";
+import {RECOMMENDED_PROMPT_PREFIX} from "@openai/agents-core/extensions";
 import receptionist from "../child/chat/receptionist.chat.child.agent.js";
 import orderAgent from "../child/chat/order.chat.child.agent.js";
 import mongoose from "mongoose";
@@ -7,10 +7,8 @@ import {
   InputGuardrailTripwireTriggered,
   OutputGuardrailTripwireTriggered,
 } from "@openai/agents";
-import { pharmacyInputGuardrail } from "../guard/input.guard.agent.js";
-import { pharmacyOutputGuardrail } from "../guard/output.guard.agent.js";
-
-import dotenv from "dotenv";
+import {pharmacyInputGuardrail} from "../guard/input.guard.agent.js";
+import {pharmacyOutputGuardrail} from "../guard/output.guard.agent.js";import enforceLanguage from "../service/force.service.agent.js";import dotenv from "dotenv";
 dotenv.config();
 const parentAgent = new Agent({
   name: "Parent_Agent",
@@ -88,6 +86,7 @@ HANDOFF to "medicine_advisor_stock_reader" when user:
 - Asks what medicine to take
 - Searches a medicine by name
 - Asks uses, details, side effects, or explanation of a medicine
+-whatever language of reply from  medicine_advisor_stock_reader return in input language script that has to be otherwisee do not return input.
 
 HANDOFF to "order_maker" when user:
 - Wants to buy / order / purchase / refill medicine
@@ -97,6 +96,7 @@ HANDOFF to "order_maker" when user:
 - Uploads a prescription for ordering
 - Responds with age/gender/quantity as a follow-up to an order question
 - Says "for me", "yes" after being asked about an order
+-whatever language of reply from  medicine_advisor_stock_reader return in input language script that has to be otherwisee do not return input.
 
 
 
@@ -139,11 +139,11 @@ Routes customer queries to the correct pharmacy agent:
   outputGuardrails: [pharmacyOutputGuardrail],
 });
 
-
 async function chatPharma(messages = []) {
   try {
+    
     const result = await run(parentAgent, messages);
-    console.log("this is chatPharma being called")
+    console.log("this is chatPharma being called");
     ///////////////////////
     //MONITOR PHASE
     ///////////////////////
@@ -161,8 +161,10 @@ async function chatPharma(messages = []) {
       result.state._inputGuardrailResults.forEach((g) => {
         traces.push({
           agent: "Security",
-          action: !g.tripwireTriggered ? "🛡️ Guardrail: Pass" : "🚨 Guardrail: Block",
-          data: `Input Check: ${g.guardrail?.name || g.guardrailName || 'Pharmacy Filter'}`
+          action: !g.tripwireTriggered
+            ? "🛡️ Guardrail: Pass"
+            : "🚨 Guardrail: Block",
+          data: `Input Check: ${g.guardrail?.name || g.guardrailName || "Pharmacy Filter"}`,
         });
       });
     }
@@ -175,38 +177,63 @@ async function chatPharma(messages = []) {
       let actionName = "AI Reasoning";
       let detailData = "Processing...";
 
-      if (item.rawItem?.type === 'function_call' && !item.rawItem.name.includes('transfer_to')) {
+      if (
+        item.rawItem?.type === "function_call" &&
+        !item.rawItem.name.includes("transfer_to")
+      ) {
         actionName = `⚙️ Tool: ${item.rawItem.name}`;
         detailData = {
-           input: item.rawItem.arguments || "Initiating..."
+          input: item.rawItem.arguments || "Initiating...",
         };
-      }
-      else if (item.rawItem?.type === 'function_call_result' || item.rawItem?.type === 'function_output' || item.rawItem?.role === 'tool') {
-        const isError = item.rawItem.status === 'error' || !!item.rawItem.error;
-        actionName = isError ? `❌ Fail: ${item.rawItem.name || 'Tool'}` : `📦 Result: ${item.rawItem.name || 'Tool'}`;
+      } else if (
+        item.rawItem?.type === "function_call_result" ||
+        item.rawItem?.type === "function_output" ||
+        item.rawItem?.role === "tool"
+      ) {
+        const isError = item.rawItem.status === "error" || !!item.rawItem.error;
+        actionName = isError
+          ? `❌ Fail: ${item.rawItem.name || "Tool"}`
+          : `📦 Result: ${item.rawItem.name || "Tool"}`;
         detailData = {
-           output: item.rawItem.error || item.rawItem.output?.text || item.rawItem.output || item.rawItem.content || "No data returned"
+          output:
+            item.rawItem.error ||
+            item.rawItem.output?.text ||
+            item.rawItem.output ||
+            item.rawItem.content ||
+            "No data returned",
         };
-      }
-      else if (item.rawItem?.name?.startsWith('transfer_to_')) {
-        const target = item.rawItem.name.replace('transfer_to_', '');
+      } else if (item.rawItem?.name?.startsWith("transfer_to_")) {
+        const target = item.rawItem.name.replace("transfer_to_", "");
         actionName = "🤝 Handoff";
-        detailData = { target, message: `Routing context to: ${target}` };
-      }
-      else if (itemType === 'message_output_item' || item.rawItem?.type === 'message' || item.rawItem?.role === 'assistant') {
-        actionName = item.rawItem?.role === 'assistant' && !item.rawItem?.tool_calls ? "🤖 AI Reasoning / Response" : "💬 Response";
-        const messageText = item.rawItem?.content?.[0]?.text || item.content || item.rawItem?.content;
+        detailData = {target, message: `Routing context to: ${target}`};
+      } else if (
+        itemType === "message_output_item" ||
+        item.rawItem?.type === "message" ||
+        item.rawItem?.role === "assistant"
+      ) {
+        actionName =
+          item.rawItem?.role === "assistant" && !item.rawItem?.tool_calls
+            ? "🤖 AI Reasoning / Response"
+            : "💬 Response";
+        const messageText =
+          item.rawItem?.content?.[0]?.text ||
+          item.content ||
+          item.rawItem?.content;
         detailData = {
-            text: typeof messageText === 'object' ? JSON.stringify(messageText) : messageText,
-            parsed_reasoning: true 
+          text:
+            typeof messageText === "object"
+              ? JSON.stringify(messageText)
+              : messageText,
+          parsed_reasoning: true,
         };
-      }
-      else if (itemType === 'handoff_output_item') {
+      } else if (itemType === "handoff_output_item") {
         actionName = "🔄 System";
-        detailData = { message: `Agent ${item.targetAgent?.name || 'Specialist'} activated.` };
+        detailData = {
+          message: `Agent ${item.targetAgent?.name || "Specialist"} activated.`,
+        };
       }
 
-      return { agent: actor, action: actionName, data: detailData };
+      return {agent: actor, action: actionName, data: detailData};
     }); // removed .filter(t => t.action !== "AI Reasoning")
 
     traces.push(...generatedTraces);
@@ -217,7 +244,7 @@ async function chatPharma(messages = []) {
         traces.push({
           agent: "Security",
           action: !g.tripwireTriggered ? "🛡️ Output: Safe" : "🚨 Output: Risky",
-          data: `Validation: ${g.guardrail?.name || g.guardrailName || 'Medical Safety'}`
+          data: `Validation: ${g.guardrail?.name || g.guardrailName || "Medical Safety"}`,
         });
       });
     }
@@ -231,7 +258,9 @@ async function chatPharma(messages = []) {
       if (typeof lastUserMsg.content === "string") {
         userInputText = lastUserMsg.content;
       } else if (Array.isArray(lastUserMsg.content)) {
-        userInputText = lastUserMsg.content.map((c) => c.text || c.content || "").join(" ");
+        userInputText = lastUserMsg.content
+          .map((c) => c.text || c.content || "")
+          .join(" ");
       }
       const userMsgMatch = userInputText.match(/User Message:\s*([\s\S]*)$/i);
       if (userMsgMatch) userInputText = userMsgMatch[1].trim();
@@ -244,24 +273,34 @@ async function chatPharma(messages = []) {
 
     console.log("\n📍 --- EXECUTION TRACE ---");
     monitorTraces.forEach((t, i) => {
-      const shortData = typeof t.data === 'string'
-        ? (t.data.substring(0, 80) + (t.data.length > 80 ? "..." : ""))
-        : JSON.stringify(t.data);
+      const shortData =
+        typeof t.data === "string"
+          ? t.data.substring(0, 80) + (t.data.length > 80 ? "..." : "")
+          : JSON.stringify(t.data);
 
       console.log(`[${i}] ${t.agent.padEnd(15)} ➔ ${t.action}`);
       console.log(`    └─ Result: ${shortData}`);
     });
     console.log("--------------------------\n");
+      
 
-
-    console.log(result.finalOutput);
-    return { output: result.finalOutput, traces: monitorTraces };
+    // Enforce that the output language matches the user's input language
+    const enforcedOutput = await enforceLanguage(userInputText, result.finalOutput);
+    console.log(enforcedOutput);
+    return {output: enforcedOutput, traces: monitorTraces};
   } catch (err) {
     if (err instanceof InputGuardrailTripwireTriggered) {
-      return { output: "Please ask only safe medicine or pharmacy related questions.", traces: [] };
+      return {
+        output: "Please ask only safe medicine or pharmacy related questions.",
+        traces: [],
+      };
     }
     if (err instanceof OutputGuardrailTripwireTriggered) {
-      return { output: "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.", traces: [] };
+      return {
+        output:
+          "I can only provide safe pharmacy-related information. Please consult a doctor for medical advice.",
+        traces: [],
+      };
     }
 
     throw err;
@@ -279,5 +318,5 @@ async function chatPharma(messages = []) {
 // "Order medicine NORSAN Omega-3 total, userId 65f1c2a9e4b0c123456789ab, age 25, gender M, quantity 1, dosage 2 times daily, prescription no"
 // );
 
-export { parentAgent };
-export default chatPharma;  
+export {parentAgent};
+export default chatPharma;

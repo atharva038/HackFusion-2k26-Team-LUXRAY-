@@ -4,6 +4,7 @@ import { detectPromptInjection, logAgentRun } from "../utils/agentLogger.js";
 import User from "../models/user.model.js";
 import logger from "../utils/logger.js";
 import { isSocketInitialized, emitToUser } from "../config/socket.js";
+import enforceLanguage from "../agent/service/force.service.agent.js";
 
 const SAFE_FALLBACK =
   "I encountered an issue processing your request safely. Please try again.";
@@ -254,16 +255,20 @@ export async function* streamAgentResponse(messages, userId, sessionId) {
     }
 
     // Prefer result.finalOutput (authoritative) over accumulated chunks
-    const finalOutput = result.finalOutput || accumulatedText;
+    const rawFinalOutput = result.finalOutput || accumulatedText;
 
     // ── Medical Safety Guard ──────────────────────────────────────────
-    if (!validateMedicalOutput(finalOutput)) {
+    if (!validateMedicalOutput(rawFinalOutput)) {
       logger.warn(
         `[StreamService] Medical safety guard triggered for user ${userId}`
       );
       yield { isCompleted: true, value: SAFE_FALLBACK };
       return;
     }
+
+    // ── Enforce output language matches user input language ───────────
+    const finalOutput = await enforceLanguage(userInputText, rawFinalOutput);
+    accumulatedText = finalOutput; // update for logAgentRun
 
     yield { isCompleted: true, value: finalOutput };
   } catch (err) {
