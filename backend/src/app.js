@@ -37,6 +37,8 @@ app.use(cors({
     const normalizedOrigin = origin.replace(/\/$/, '');
 
     const allowed = [
+      'http://localhost',
+      'http://127.0.0.1',
       'http://localhost:5173',
       'http://localhost:3000',
       'https://hack-fusion-2k26-team-luxray.vercel.app',

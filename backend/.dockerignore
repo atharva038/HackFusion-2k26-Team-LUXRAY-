@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.*
+*.local
+.DS_Store
+coverage
+testing/
+*.test.*
+*.spec.*
+trace_dump.json
+chat_history.json
+logs/
