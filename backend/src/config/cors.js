@@ -7,6 +7,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://coral-app-neg9t.ondigitalocean.app',
   'https://www.medisage.me',
   'https://medisage.me',
+  'http://64.227.154.228:3000/'
 ];
 
 const VERCEL_PROJECT_KEYWORD = 'hack-fusion-2k26';
