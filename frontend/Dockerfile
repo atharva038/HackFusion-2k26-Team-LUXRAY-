@@ -12,9 +12,12 @@ RUN npm ci --ignore-scripts
 # Copy source and build
 COPY . .
 
-# Accept build-time env vars (e.g. VITE_RAZORPAY_KEY_ID)
+# Accept build-time env vars
 ARG VITE_RAZORPAY_KEY_ID
 ENV VITE_RAZORPAY_KEY_ID=$VITE_RAZORPAY_KEY_ID
+
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
 
