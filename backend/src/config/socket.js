@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import logger from '../utils/logger.js';
+import { corsOriginHandler } from './cors.js';
 
 let io;
 
@@ -219,33 +220,7 @@ const handleDisconnect = async (socket) => {
 export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: function (origin, callback) {
-        // Allow requests with no origin
-        if (!origin) return callback(null, true);
-
-        const normalizedOrigin = origin.replace(/\/$/, '');
-        const allowed = [
-          'http://localhost',
-          'http://127.0.0.1',
-          'http://localhost:5173',
-          'http://localhost:3000',
-          'https://hack-fusion-2k26-team-luxray.vercel.app',
-          'https://coral-app-neg9t.ondigitalocean.app',
-          'https://www.medisage.me',
-          'https://medisage.me',
-        ];
-
-        // Allow Vercel preview deployments
-        if (normalizedOrigin.includes('hack-fusion-2k26') && normalizedOrigin.includes('vercel.app')) {
-          return callback(null, true);
-        }
-
-        if (allowed.includes(normalizedOrigin)) {
-          return callback(null, true);
-        }
-
-        callback(new Error('Not allowed by CORS'));
-      },
+      origin: corsOriginHandler,
       methods: ['GET', 'POST'],
       credentials: true,
       allowedHeaders: ['Authorization', 'Content-Type']

@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { connectDB } from './config/db.js';
 import { closeRedis } from './config/redis.js';
+import { corsOriginHandler } from './config/cors.js';
 import { createRedisRateLimiter } from './middleware/redisRateLimiter.js';
 import { initScheduler } from './scheduler/refill.scheduler.js';
 import { initNotificationScheduler } from './scheduler/notification.schedule.js';
@@ -29,35 +30,7 @@ app.set('trust proxy', 1); // Trust first proxy (e.g. DigitalOcean, Vercel, Ngin
 
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-
-    // Normalize: strip trailing slash
-    const normalizedOrigin = origin.replace(/\/$/, '');
-
-    const allowed = [
-      'http://localhost',
-      'http://127.0.0.1',
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://hack-fusion-2k26-team-luxray.vercel.app',
-      'https://coral-app-neg9t.ondigitalocean.app',
-      'https://www.medisage.me',
-      'https://medisage.me',
-    ];
-
-    // Allow all Vercel preview deployments for this project
-    if (normalizedOrigin.includes('hack-fusion-2k26') && normalizedOrigin.includes('vercel.app')) {
-      return callback(null, true);
-    }
-
-    if (allowed.includes(normalizedOrigin)) {
-      return callback(null, true);
-    }
-
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: corsOriginHandler,
   credentials: true,
 }));
 app.use(express.json({

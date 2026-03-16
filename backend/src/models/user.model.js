@@ -78,7 +78,12 @@ userSchema.pre("save", async function (next) {
 // Guard: if the stored password is undefined (legacy user without password), return false
 userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.password) return false;
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch {
+    // Legacy or malformed hash should fail auth, not crash the request.
+    return false;
+  }
 };
 
 export default mongoose.model("User", userSchema);
