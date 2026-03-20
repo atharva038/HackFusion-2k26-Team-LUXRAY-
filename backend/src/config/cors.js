@@ -3,6 +3,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://127.0.0.1',
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://medisage.me',
+  'https://www.medisage.me'
 ];
 
 const VERCEL_PROJECT_KEYWORD = 'hack-fusion-2k26';
