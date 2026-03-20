@@ -30,7 +30,7 @@ app.set('trust proxy', 1); // Trust first proxy (e.g. DigitalOcean, Vercel, Ngin
 
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
-  origin: corsOriginHandler,
+  origin: true,
   credentials: true,
 }));
 app.use(express.json({
